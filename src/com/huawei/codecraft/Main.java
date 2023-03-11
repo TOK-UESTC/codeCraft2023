@@ -8,7 +8,8 @@ public class Main {
 
     private static final Scanner inStream = new Scanner(System.in);
 
-    private static final PrintStream outStream = new PrintStream(new BufferedOutputStream(System.out));
+    private static final PrintStream outStream =
+            new PrintStream(new BufferedOutputStream(System.out));
 
     public static void main(String[] args) {
         schedule();
