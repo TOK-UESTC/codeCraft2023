@@ -8,8 +8,7 @@ public class Main {
 
     private static final Scanner inStream = new Scanner(System.in);
 
-    private static final PrintStream outStream =
-            new PrintStream(new BufferedOutputStream(System.out));
+    private static final PrintStream outStream = new PrintStream(new BufferedOutputStream(System.out));
 
     public static void main(String[] args) {
         schedule();
@@ -30,6 +29,7 @@ public class Main {
             outStream.printf("%d\n", frameID);
             int lineSpeed = 7;
             double angleSpeed = 1.5;
+
             for (int robotId = 0; robotId < 4; robotId++) {
                 outStream.printf("forward %d %d\n", robotId, lineSpeed);
                 outStream.printf("rotate %d %f\n", robotId, angleSpeed);
