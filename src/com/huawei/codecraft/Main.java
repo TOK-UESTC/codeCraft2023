@@ -26,8 +26,9 @@ public class Main {
         // 经验证，答题器并不会输出第0帧的信息，故可以忽略控制台输出的
         // player skipped frames: 0
         while (ctx.getFrame() < totalFrame) {
+            // 更新信息
             ctx.update();
-
+            // 输出策略
             ctx.step();
 
             if (showTime) {
