@@ -2,6 +2,7 @@ package com.huawei.codecraft;
 
 import java.io.*;
 import java.util.*;
+import java.util.concurrent.Exchanger;
 
 public class Main {
 
@@ -17,32 +18,41 @@ public class Main {
     private static Map<Integer, List<Workbench>> workbenchTypeMap = new HashMap<Integer, List<Workbench>>();
 
     public static void main(String[] args) {
+        // outStream.println("[INFO] 12343124");
         schedule();
     }
 
     private static void schedule() {
-        readUtilOK(true);
+        // readUtilOK(true);
         outStream.println("OK");
         outStream.flush();
 
         int frameID;
-        while (inStream.hasNextLine()) {
-            String line = inStream.nextLine();
-            String[] parts = line.split(" ");
-            frameID = Integer.parseInt(parts[0]);
-            readUtilOK(false);
-
-            outStream.printf("%d\n", frameID);
-            int lineSpeed = 3;
-            double angleSpeed = 1.5;
-
-            for (int robotId = 0; robotId < 4; robotId++) {
-                outStream.printf("forward %d %d\n", robotId, lineSpeed);
-                outStream.printf("rotate %d %f\n", robotId, angleSpeed);
+        while (true) {
+            System.out.println("12312");
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
             }
-            outStream.print("OK\n");
-            outStream.flush();
         }
+        // while (inStream.hasNextLine()) {
+        // String line = inStream.nextLine();
+        // String[] parts = line.split(" ");
+        // frameID = Integer.parseInt(parts[0]);
+        // readUtilOK(false);
+
+        // outStream.printf("%d\n", frameID);
+        // int lineSpeed = 3;
+        // double angleSpeed = 1.5;
+
+        // for (int robotId = 0; robotId < 4; robotId++) {
+        // outStream.printf("forward %d %d\n", robotId, lineSpeed);
+        // outStream.printf("rotate %d %f\n", robotId, angleSpeed);
+        // }
+        // outStream.print("OK\n");
+        // outStream.flush();
+        // }
     }
 
     private static boolean readUtilOK(boolean init) {
@@ -82,8 +92,8 @@ public class Main {
                     // 位置是工作台
                     int workbenchType = line.charAt(i) - '0';
                     Workbench workbench = new Workbench(workbenchType, new Coordinate(x, y), workbenchId);
-                    workbenchId = workbenchId + 1;
                     workbenchMap.put(workbenchId, workbench);
+                    workbenchId = workbenchId + 1;
                     try {
                         workbenchTypeMap.get(workbenchType).add(workbench);
                     } catch (Exception e) {

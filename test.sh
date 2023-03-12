@@ -7,4 +7,4 @@ then
     name=$1
 fi
 
-../robot.exe "java -classpath ./bin --enable-preview com.huawei.codecraft.Main" -f -m ../maps/$name.txt
+../robot.exe "java -agentlib:jdwp=transport=dt_socket,address=5005,server=y,suspend=n -classpath ./bin com.huawei.codecraft.Main" -f -d -m ../maps/$name.txt
