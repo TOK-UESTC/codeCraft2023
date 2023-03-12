@@ -1,7 +1,9 @@
-package com.huawei.codecraft;
+package com.huawei.codecraft.utils;
 
 import java.util.List;
 import java.util.Map;
+
+import com.huawei.codecraft.agent.Workbench;
 
 public class Utils {
 
@@ -13,8 +15,8 @@ public class Utils {
          * workbenchMap: 一个hashmap, key：工作台ID, value: 工作台对象
          * workbenchTypeMap: 一个hashmap, key: 工作台类型，value: 该类型工作台对象列表
          */
-        for (Integer WorkbenchId : workbenchMap.keySet()) {
-            Workbench wb = workbenchMap.get(WorkbenchId);
+        for (Integer workbenchIdx : workbenchMap.keySet()) {
+            Workbench wb = workbenchMap.get(workbenchIdx);
             int[] ids = null;
             switch (wb.getType()) {
                 case 1: // 类型4，5，9可回收1类型工作台的产品
@@ -69,5 +71,4 @@ public class Utils {
             }
         }
     }
-
 }

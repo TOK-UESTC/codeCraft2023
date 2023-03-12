@@ -1,9 +1,12 @@
-package com.huawei.codecraft;
+package com.huawei.codecraft.agent;
+
+import com.huawei.codecraft.utils.Coordinate;
+import com.huawei.codecraft.utils.Velocity;
 
 public class Robot {
 
-    private int robotId; // 机器人编号
-    private int workbenchId; // 所处工作台ID, -1表示没有处于任何工作台, [0, K-1]表是某工作台下标
+    private int robotIdx; // 机器人下标
+    private int workbenchIdx; // 所处工作台下标, -1表示没有处于任何工作台, [0, K-1]表是某工作台下标
     private int productType; // 携带物品类型[0, 7], 0表示未携带物品
     private double timeCoefficients; // 时间价值系数 [0.8, 1]
     private double collisionCoefficients; // 碰撞价值系数 [0.8, 1]
@@ -12,10 +15,10 @@ public class Robot {
     private double forward; // 朝向 [-pi, pi] 0 表示右方向, pi/2表示上方向
     private Coordinate pos; // 机器人坐标位置
 
-    Robot(Coordinate pos, int robotId) {
+    public Robot(Coordinate pos, int robotIdx) {
         this.pos = pos;
-        this.robotId = robotId;
-        this.workbenchId = -1;
+        this.robotIdx = robotIdx;
+        this.workbenchIdx = -1;
         this.productType = 0;
         this.timeCoefficients = 1;
         this.collisionCoefficients = 1;
@@ -24,12 +27,24 @@ public class Robot {
         this.forward = 0;
     }
 
-    public int getWorkbenchId() {
-        return workbenchId;
+    // 更新所有数据
+    public void update(String[] info) {
+        this.workbenchIdx = Integer.parseInt(info[0]);
+        this.productType = Integer.parseInt(info[1]);
+        this.timeCoefficients = Double.parseDouble(info[2]);
+        this.collisionCoefficients = Double.parseDouble(info[3]);
+        this.angularVelocity = Double.parseDouble(info[4]);
+        this.velocity = new Velocity(Double.parseDouble(info[5]), Double.parseDouble(info[6]));
+        this.forward = Double.parseDouble(info[7]);
+        this.pos = new Coordinate(Double.parseDouble(info[8]), Double.parseDouble(info[9]));
     }
 
-    public void setWorkbenchId(int workbenchId) {
-        this.workbenchId = workbenchId;
+    public int getworkbenchIdx() {
+        return workbenchIdx;
+    }
+
+    public void setworkbenchIdx(int workbenchIdx) {
+        this.workbenchIdx = workbenchIdx;
     }
 
     public int getProductType() {
@@ -88,12 +103,12 @@ public class Robot {
         this.pos = pos;
     }
 
-    public int getRobotId() {
-        return robotId;
+    public int getRobotIdx() {
+        return robotIdx;
     }
 
     public void setRobotId(int robotId) {
-        this.robotId = robotId;
+        this.robotIdx = robotId;
     }
 
 }
