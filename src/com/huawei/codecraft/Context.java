@@ -138,6 +138,10 @@ public class Context {
         return frameId;
     }
 
+    public int getMoney() {
+        return money;
+    }
+
     public void endStep() {
         printLine("OK");
         outStream.flush();
