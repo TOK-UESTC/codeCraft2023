@@ -37,7 +37,7 @@ public class Context {
 
         // 创建输入输出日志文件
         if (saveLog) {
-            initLog();
+            initLogger();
         }
     }
 
@@ -50,7 +50,7 @@ public class Context {
         String line;
 
         while (inStream.hasNextLine()) {
-            line = inStream.nextLine();
+            line = readLine();
 
             // 地图数据读取完毕
             if (line.equals("OK")) {
@@ -89,7 +89,7 @@ public class Context {
     // 与判题器交互，更新信息
     public void update() {
         String line;
-        line = inStream.nextLine();
+        line = readLine();
 
         // 更新state
         String[] parts = line.split(" ");
@@ -97,9 +97,9 @@ public class Context {
         money = Integer.parseInt(parts[1]);
 
         // 更新工作台信息
-        int k = Integer.parseInt(inStream.nextLine());
+        int k = Integer.parseInt(readLine());
         for (int i = 0; i < k; i++) {
-            line = inStream.nextLine();
+            line = readLine();
 
             // 按照顺序读取
             Workbench wb = workbenchList.get(i);
@@ -108,7 +108,7 @@ public class Context {
 
         // 更新机器人信息
         for (int i = 0; i < 4; i++) {
-            line = inStream.nextLine();
+            line = readLine();
 
             // 按照顺序读取
             Robot rb = robotList.get(i);
@@ -116,19 +116,19 @@ public class Context {
         }
 
         // 更新结尾异常
-        if (!inStream.nextLine().equals("OK")) {
+        if (!readLine().equals("OK")) {
             System.err.println("update failed");
         }
     }
 
     public void step() {
-        outStream.printf("%d\n", frameId);
+        printLine(String.format("%d", frameId));
         int lineSpeed = 3;
         double angleSpeed = 1.5;
 
         for (int i = 0; i < 4; i++) {
-            outStream.printf("forward %d %d\n", i, lineSpeed);
-            outStream.printf("rotate %d %f\n", i, angleSpeed);
+            printLine(String.format("forward %d %d", i, lineSpeed));
+            printLine(String.format("rotate %d %f", i, angleSpeed));
         }
 
         endStep();
@@ -139,11 +139,11 @@ public class Context {
     }
 
     public void endStep() {
-        outStream.println("OK");
+        printLine("OK");
         outStream.flush();
     }
 
-    public void initLog() {
+    public void initLogger() {
         try {
             File inFile = new File(inFilePath);
             File outFile = new File(outFilePath);
@@ -151,9 +151,14 @@ public class Context {
             if (!inFile.exists()) {
                 File dir = new File(inFile.getParent());
                 dir.mkdirs();
-                inFile.createNewFile();
-                outFile.createNewFile();
+            } else {
+                // 文件存在，删除文件
+                inFile.delete();
+                outFile.delete();
             }
+            // 创建新的日志文件
+            inFile.createNewFile();
+            outFile.createNewFile();
 
             loginStream = new FileOutputStream(inFile);
             logoutStream = new FileOutputStream(outFile);
@@ -166,11 +171,22 @@ public class Context {
         String line = inStream.nextLine();
         if (saveLog) {
             try {
-                loginStream.write(line.getBytes());
+                loginStream.write((line + '\n').getBytes());
             } catch (IOException e) {
                 e.printStackTrace();
             }
         }
         return line;
+    }
+
+    public void printLine(String out) {
+        outStream.println(out);
+        if (saveLog) {
+            try {
+                logoutStream.write((out + '\n').getBytes());
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
     }
 }
