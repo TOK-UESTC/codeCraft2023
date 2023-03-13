@@ -1,4 +1,4 @@
-package com.huawei.codecraft.Task;
+package com.huawei.codecraft.task;
 
 import java.util.List;
 import java.util.Map;

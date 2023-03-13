@@ -2,7 +2,7 @@ package com.huawei.codecraft.agent;
 
 import java.util.ArrayList;
 
-import com.huawei.codecraft.Task.Task;
+import com.huawei.codecraft.task.Task;
 import com.huawei.codecraft.utils.Action;
 import com.huawei.codecraft.utils.Coordinate;
 import com.huawei.codecraft.utils.Velocity;

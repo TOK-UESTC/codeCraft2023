@@ -3,9 +3,9 @@ package com.huawei.codecraft;
 import java.io.*;
 import java.util.*;
 
-import com.huawei.codecraft.Task.Despatcher;
 import com.huawei.codecraft.agent.Robot;
 import com.huawei.codecraft.agent.Workbench;
+import com.huawei.codecraft.task.Despatcher;
 import com.huawei.codecraft.utils.Action;
 import com.huawei.codecraft.utils.Coordinate;
 

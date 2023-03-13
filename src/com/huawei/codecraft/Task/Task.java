@@ -1,4 +1,4 @@
-package com.huawei.codecraft.Task;
+package com.huawei.codecraft.task;
 
 import com.huawei.codecraft.agent.Workbench;
 import com.huawei.codecraft.utils.Utils;
