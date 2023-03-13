@@ -4,5 +4,7 @@
     "java.format.settings.url": "./java-google.style.xml",
     "[java]": {
         "editor.formatOnSave": true
-    }
+    },
+    // 行尾结束符号，保持和linux一致
+    "files.eol": "\n"
 }

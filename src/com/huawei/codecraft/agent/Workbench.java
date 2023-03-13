@@ -1,10 +1,12 @@
-package com.huawei.codecraft;
+package com.huawei.codecraft.agent;
 
 import java.util.LinkedList;
 import java.util.List;
 
+import com.huawei.codecraft.utils.Coordinate;
+
 public class Workbench {
-    private int workbenchId; // 工作台ID
+    private int workbenchIdx; // 工作台ID
     private int type; // 工作台类型 [1-9]
     private Coordinate pos; // 工作台位置
     private int rest; // 生产剩余时间 -1表示没有生产；0表示生产因输出格满而受阻塞；>=0 表示剩余生产帧数
@@ -13,15 +15,24 @@ public class Workbench {
     private List<Integer> consumerIdList; // 能够消耗本工作台生产的产品的工作台ID列表
     private List<Double> consumerDistanceList; // 上面consumer对应于本工作台的距离
 
-    Workbench(int type, Coordinate pos, int workbenchId) {
+    public Workbench(Coordinate pos, int type, int workbenchIdx) {
         this.type = type;
         this.pos = pos;
-        this.workbenchId = workbenchId;
+        this.workbenchIdx = workbenchIdx;
         this.consumerIdList = new LinkedList<Integer>();
         this.consumerDistanceList = new LinkedList<Double>();
         this.rest = -1;
         this.materialStatus = 0;
         this.productStatus = 0;
+    }
+
+    /**
+     * @apiNote 只更新剩余生产时间，原材料状态以及产品格状态
+     */
+    public void update(String[] info) {
+        this.rest = Integer.parseInt(info[3]);
+        this.materialStatus = Integer.parseInt(info[4]);
+        this.productStatus = Integer.parseInt(info[5]);
     }
 
     public List<Integer> getConsumerIdList() {
@@ -80,12 +91,12 @@ public class Workbench {
         this.productStatus = productStatus;
     }
 
-    public int getWorkbenchId() {
-        return workbenchId;
+    public int getworkbenchIdx() {
+        return workbenchIdx;
     }
 
-    public void setWorkbenchId(int workbenchId) {
-        this.workbenchId = workbenchId;
+    public void setworkbenchIdx(int workbenchIdx) {
+        this.workbenchIdx = workbenchIdx;
     }
 
 }

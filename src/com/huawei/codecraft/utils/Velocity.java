@@ -1,16 +1,16 @@
-package com.huawei.codecraft;
+package com.huawei.codecraft.utils;
 
 public class Velocity {
 
     private double vx; // x方向上线速度 m/s
     private double vy; // y方向上线速度 m/s
 
-    Velocity() {
+    public Velocity() {
         vx = 0;
         vy = 0;
     }
 
-    Velocity(double vx, double vy) {
+    public Velocity(double vx, double vy) {
         this.vx = vx;
         this.vy = vy;
     }

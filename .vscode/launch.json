@@ -6,23 +6,10 @@
     "configurations": [
         {
             "type": "java",
-            "name": "Main",
-            "request": "launch",
-            "mainClass": "com.huawei.codecraft.Main",
-            "projectName": "codeCraft2023_14eb6c5a"
-        },
-        {
-            "type": "java",
-            "name": "Current File",
-            "request": "launch",
-            "mainClass": "${file}"
-        },
-        {
-            "type": "java",
-            "name": "debugger",
+            "name": "attach",
             "request": "attach",
-            "projectName": "codeCraft2023_14eb6c5a",
             "hostName": "localhost",
+            "projectName": "codeCraft2023_14eb6c5a",
             "port": 5005
         }
     ]

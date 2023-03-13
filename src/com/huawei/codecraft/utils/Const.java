@@ -1,4 +1,4 @@
-package com.huawei.codecraft;
+package com.huawei.codecraft.utils;
 
 public class Const {
     static final int DURATION_OF_GAME = 180000; // 比赛时长，单位: ms
