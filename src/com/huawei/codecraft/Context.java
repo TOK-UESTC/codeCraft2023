@@ -44,8 +44,8 @@ public class Context {
     public void init() {
         int row = 0; // 地图行数
         double x, y; // 地图坐标
-        int robotCount = 0;
-        int workbenchCount = 0;
+        int robotCount = 0; // 机器人数量
+        int workbenchCount = 0; // 工作台数量
 
         String line;
 
@@ -123,12 +123,18 @@ public class Context {
 
     public void step() {
         printLine(String.format("%d", frameId));
+        /*
+         * TODO: 机器人类封装doActiono(), 给出每个机器人该帧的动作
+         */
+
         int lineSpeed = 3;
         double angleSpeed = 1.5;
 
         for (int i = 0; i < 4; i++) {
             printLine(String.format("forward %d %d", i, lineSpeed));
             printLine(String.format("rotate %d %f", i, angleSpeed));
+            // 建议最终代码样式
+            // robotList.get(i).doAction()
         }
 
         endStep();

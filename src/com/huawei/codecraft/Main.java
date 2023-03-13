@@ -21,7 +21,7 @@ public class Main {
     private static final MyTimer timer = new MyTimer(totalFrame);
 
     public static void main(String[] args) {
-        ctx.init();
+        ctx.init(); // 初始化地图
 
         // 经验证，答题器并不会输出第0帧的信息，故可以忽略控制台输出的
         // player skipped frames: 0
