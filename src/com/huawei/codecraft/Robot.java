@@ -12,6 +12,19 @@ public class Robot {
     private double forward; // 朝向 [-pi, pi] 0 表示右方向, pi/2表示上方向
     private Coordinate pos; // 机器人坐标位置
 
+    private int taskWorkbenchId; // 任务工作台ID
+    private double taskDistance; // 到任务工作台距离
+
+
+    public int getTaskWorkbenchId() {
+        return taskWorkbenchId;
+    }
+
+    public void setTaskWorkbenchId(int taskWorkbenchId) {
+        this.taskWorkbenchId = taskWorkbenchId;
+    }
+
+
     Robot(Coordinate pos, int robotId) {
         this.pos = pos;
         this.robotId = robotId;
@@ -94,6 +107,14 @@ public class Robot {
 
     public void setRobotId(int robotId) {
         this.robotId = robotId;
+    }
+
+    public void setTaskDistance(double taskDistance) {
+        this.taskDistance = taskDistance;
+    }
+
+    public double getTaskDistance() {
+        return taskDistance;
     }
 
 }

@@ -23,7 +23,7 @@ public class Main {
     }
 
     private static void schedule() {
-        // readUtilOK(true);
+        readUtilOK(true);
         outStream.println("OK");
         outStream.flush();
 
@@ -84,8 +84,8 @@ public class Main {
                     y = row * 0.5 - 0.25;
                     if (line.charAt(i) == 'A') { // 该位置是机器人
                         Robot robot = new Robot(new Coordinate(x, y), robotId);
-                        robotId = robotId + 1;
                         robotMap.put(robotId, robot);
+                        robotId = robotId + 1;
                         continue;
                     }
 
@@ -114,8 +114,7 @@ public class Main {
                     // 下面更新工作台信息
                     Workbench wb = workbenchMap.get(workbenchId);
                     // wb.setType(Integer.parseInt(parts[0])); // 解析工作台类别 工作台类型 [1-9]
-                    // wb.setPos(new Coordinate(Double.parseDouble(parts[1]),
-                    // Double.parseDouble(parts[2]))); // 解析工作台位置
+                    // wb.setPos(new Coordinate(Double.parseDouble(parts[1]),Double.parseDouble(parts[2]))); // 解析工作台位置
                     wb.setRest(Integer.parseInt(parts[3])); // 解析生产剩余时间 -1表示没有生产；0表示生产因输出格满而受阻塞；>=0 表示剩余生产帧数
                     wb.setMaterialStatus(Integer.parseInt(parts[4])); // 解析原材料格状态；二进制为表示，例如 48(110000),表示拥有物品4和5
                     wb.setProductStatus(Integer.parseInt(parts[5])); // 解析产品格状态 0 表示无 1 表示有

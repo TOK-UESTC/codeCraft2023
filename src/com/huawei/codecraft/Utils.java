@@ -1,5 +1,7 @@
 package com.huawei.codecraft;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -68,6 +70,87 @@ public class Utils {
 
             }
         }
+    }
+
+    static List<Robot> collectUnloadRobot(List<Robot> robotList) {
+        /*
+         * 得到空载机器人列表, 用于后面接受任务。
+         * 
+         */
+        List<Robot> unloadRobotList = new ArrayList<Robot>();
+        for (Robot robot : robotList) {
+            if (robot.getProductType() == 0) {
+                unloadRobotList.add(robot);
+            }
+        }
+        return unloadRobotList;
+    }
+
+    static List<Robot> collectLoadedRobot(List<Robot> robotList) {
+        /*
+         * 得到负载机器人列表, 用于后面接受任务。
+         * 
+         */
+        List<Robot> loadedRobotList = new ArrayList<Robot>();
+        for (Robot robot : robotList) {
+            if (robot.getProductType() != 0) {
+                loadedRobotList.add(robot);
+            }
+        }
+        return loadedRobotList;
+    }
+
+    static void assignTask(List<Robot> unloadRobotList, Map<Integer, Workbench> workbenchMap) {
+        /*
+         * 分配任务，将最近的任务分配给机器人
+         * 
+         */
+        if (unloadRobotList.size() == 0) {
+            return;
+        }
+        for (Robot robot : unloadRobotList) {
+            robot.setTaskDistance(Const.MAX_DISTANCE);
+        }
+        for (Integer WorkbenchId : workbenchMap.keySet()) {
+            Workbench wb = workbenchMap.get(WorkbenchId);
+            if (wb.getRest() == -1) {
+                continue;
+            }
+            List<Double> distanceList = new ArrayList<Double>();
+            for (Robot robot : unloadRobotList) {
+                distanceList.add(computeDistance(robot.getPos(), wb.getPos()));
+            }
+            List<Double> copyDistanceList = new ArrayList<Double>(distanceList);
+            Collections.sort(distanceList);
+
+            for (double distance : copyDistanceList) {
+                int index = copyDistanceList.indexOf(distance);
+                if (unloadRobotList.get(index).getTaskDistance() > distance) {
+                    unloadRobotList.get(index).setTaskDistance(distance);
+                    unloadRobotList.get(index).setTaskWorkbenchId(wb.getWorkbenchId());
+                    break;
+                }
+            }
+
+        }
+    }
+
+    static void collectBlockWorkbench() {
+        /*
+         * 收集阻塞的工作台或者即将阻塞的工作台
+         * 
+         */
+    }
+
+    static void dealBlockWorkbench() {
+        /*
+         * 处理阻塞的工作台或者即将阻塞的工作台
+         * 
+         */
+    }
+
+    static void dealLoadedRobot() {
+
     }
 
 }
