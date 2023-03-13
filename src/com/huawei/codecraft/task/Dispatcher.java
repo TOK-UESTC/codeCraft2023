@@ -9,7 +9,7 @@ import com.huawei.codecraft.agent.Workbench;
 /*
  * @Description: 调度器类
  */
-public class Despatcher {
+public class Dispatcher {
     private List<Robot> robotList;
     private List<Workbench> workbenchList;
     private Map<Integer, List<Workbench>> workbenchTypeMap;
@@ -17,7 +17,7 @@ public class Despatcher {
     private List<Task> optionalTask;
 
     // 初始化调度器，按照自己的想法储存Task
-    public Despatcher(List<Robot> robotList, List<Workbench> workbenchList,
+    public Dispatcher(List<Robot> robotList, List<Workbench> workbenchList,
             Map<Integer, List<Workbench>> workbenchTypeMap) {
         this.robotList = robotList;
         this.workbenchList = workbenchList;
