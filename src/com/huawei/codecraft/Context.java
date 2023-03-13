@@ -3,8 +3,10 @@ package com.huawei.codecraft;
 import java.io.*;
 import java.util.*;
 
+import com.huawei.codecraft.Task.Despatcher;
 import com.huawei.codecraft.agent.Robot;
 import com.huawei.codecraft.agent.Workbench;
+import com.huawei.codecraft.utils.Action;
 import com.huawei.codecraft.utils.Coordinate;
 
 public class Context {
@@ -26,6 +28,8 @@ public class Context {
     private List<Workbench> workbenchList = new ArrayList<Workbench>();
     // key: 工作台类型 value: 工作台对象列表
     private Map<Integer, List<Workbench>> workbenchTypeMap = new HashMap<Integer, List<Workbench>>();
+
+    private Despatcher despatcher;
 
     Context(Scanner inStream, PrintStream outStream, boolean saveLog) {
         frameId = 0;
@@ -83,6 +87,8 @@ public class Context {
             row++;
         }
 
+        despatcher = new Despatcher(robotList, workbenchList, workbenchTypeMap);
+
         endStep();
     }
 
@@ -123,6 +129,10 @@ public class Context {
 
     public void step() {
         printLine(String.format("%d", frameId));
+
+        // 调度器分配任务
+        despatcher.dispatch();
+
         /*
          * TODO: 机器人类封装doActiono(), 给出每个机器人该帧的动作
          */
@@ -131,10 +141,14 @@ public class Context {
         double angleSpeed = 1.5;
 
         for (int i = 0; i < 4; i++) {
-            printLine(String.format("forward %d %d", i, lineSpeed));
-            printLine(String.format("rotate %d %f", i, angleSpeed));
-            // 建议最终代码样式
-            // robotList.get(i).doAction()
+            Robot rb = robotList.get(i);
+            // 决策
+            rb.step();
+
+            // 打印决策
+            for (Action a : rb.getActions()) {
+                printLine(a.toString(i));
+            }
         }
 
         endStep();

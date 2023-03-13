@@ -1,5 +1,9 @@
 package com.huawei.codecraft.agent;
 
+import java.util.ArrayList;
+
+import com.huawei.codecraft.Task.Task;
+import com.huawei.codecraft.utils.Action;
 import com.huawei.codecraft.utils.Coordinate;
 import com.huawei.codecraft.utils.Velocity;
 
@@ -14,6 +18,8 @@ public class Robot {
     private Velocity velocity; // 线速度， 二维向量描述, m/s
     private double forward; // 朝向 [-pi, pi] 0 表示右方向, pi/2表示上方向
     private Coordinate pos; // 机器人坐标位置
+    private Task task; // 机器人当前任务
+    private ArrayList<Action> actions; // 机器人当前动作序列
 
     public Robot(Coordinate pos, int robotIdx) {
         this.pos = pos;
@@ -25,6 +31,8 @@ public class Robot {
         this.angularVelocity = 0;
         this.velocity = null;
         this.forward = 0;
+        this.task = null;
+        this.actions = new ArrayList<Action>();
     }
 
     // 更新所有数据
@@ -37,6 +45,25 @@ public class Robot {
         this.velocity = new Velocity(Double.parseDouble(info[5]), Double.parseDouble(info[6]));
         this.forward = Double.parseDouble(info[7]);
         this.pos = new Coordinate(Double.parseDouble(info[8]), Double.parseDouble(info[9]));
+    }
+
+    /*
+     * @Description: 机器人根据当前任务和状态进行动作决策
+     * 将决策Action输入到列表中，等待执行
+     */
+    public void step() {
+        // 清空动作列表
+        actions.clear();
+
+        // TODO: 决策，添加到Actions中
+    }
+
+    public ArrayList<Action> getActions() {
+        return actions;
+    }
+
+    public boolean isBusy() {
+        return task == null;
     }
 
     public int getworkbenchIdx() {
@@ -111,4 +138,11 @@ public class Robot {
         this.robotIdx = robotId;
     }
 
+    public void setTask(Task task) {
+        this.task = task;
+    }
+
+    public Task getTask() {
+        return task;
+    }
 }

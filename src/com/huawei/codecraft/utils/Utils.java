@@ -7,7 +7,8 @@ import com.huawei.codecraft.agent.Workbench;
 
 public class Utils {
 
-    static void initWorkbench(Map<Integer, Workbench> workbenchMap, Map<Integer, List<Workbench>> workbenchTypeMap) {
+    public static void initWorkbench(Map<Integer, Workbench> workbenchMap,
+            Map<Integer, List<Workbench>> workbenchTypeMap) {
         /*
          * 初始化每个工作台的内容，主要完成每个工作台的产品去向以及他们之间的距离初始化，方便后面复用。
          * 
@@ -43,7 +44,7 @@ public class Utils {
         }
     }
 
-    static double computeDistance(Coordinate p1, Coordinate p2) {
+    public static double computeDistance(Coordinate p1, Coordinate p2) {
         /*
          * 计算点p1 与 p2的距离
          * Args:
@@ -56,7 +57,8 @@ public class Utils {
         return Math.sqrt(Math.pow(p1.getX() - p2.getX(), 2) + Math.pow(p1.getY() - p2.getY(), 2));
     }
 
-    static void initWorkbenchConsumerInfo(int[] ids, Map<Integer, List<Workbench>> workbenchTypeMap, Workbench wb) {
+    public static void initWorkbenchConsumerInfo(int[] ids, Map<Integer, List<Workbench>> workbenchTypeMap,
+            Workbench wb) {
         if (ids == null) {
             return;
         }

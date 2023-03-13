@@ -12,3 +12,6 @@ vscode装java全套拓展`Extension Pack for Java`，编辑器在保存的同时
 `./test.sh [map name]`
 
 e.g. `./test.sh 1`
+
+## log
+在Main.java中修改对应flag即可
