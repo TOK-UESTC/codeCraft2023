@@ -16,6 +16,8 @@ public class Const {
     public static final double MAX_BACKWARD_VELOCITY = 2; // 机器人最大后退速度
     public static final double MAX_ROTATION_VELOCITY = Math.PI; // 机器人最大后退速度
     public static final double MAX_DISTANCE = 100; // 最大距离100， 大于50*sqrt(2)即可
+    // 机器人最大前进速度/frame
+    public static final double MAX_FORWARD_FRAME = MAX_FORWARD_VELOCITY / FRAME_PER_SECOND;
 
     // key: 物品类型， value: [购买价格， 售出价格]
     public static final Map<Integer, Integer[]> priceMapper;

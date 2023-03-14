@@ -11,19 +11,23 @@ public class TaskChain {
     private Robot Robot;
     // 用来存储任务链中的任务
     private List<Task> taskChain;
-    // 在已有任务链的条件下，完成任务最快的时间
-    private double finishTime;
+    // 在已有任务链的条件下，完成任务所需最快帧数
+    private double totalFrame;
 
     public TaskChain(Robot Robot) {
         this.Robot = Robot;
         this.taskChain = new ArrayList<Task>();
-        this.finishTime = 0.;
+        this.totalFrame = 0.;
     }
 
     public TaskChain(TaskChain chain) {
         this.Robot = chain.getRobot();
         this.taskChain = chain.getTaskChain();
-        this.finishTime = chain.getFinishTime();
+        this.totalFrame = chain.getTotalFrame();
+    }
+
+    public void addTask(Task task) {
+        this.taskChain.add(task);
     }
 
     public List<Task> getTaskChain() {
@@ -34,12 +38,12 @@ public class TaskChain {
         this.taskChain = taskChain;
     }
 
-    public double getFinishTime() {
-        return finishTime;
+    public double getTotalFrame() {
+        return totalFrame;
     }
 
-    public void setFinishTime(double finishTime) {
-        this.finishTime = finishTime;
+    public void setFinishTime(double totalFrame) {
+        this.totalFrame = totalFrame;
     }
 
     public Robot getRobot() {
@@ -51,13 +55,13 @@ public class TaskChain {
     }
 
     // 在初始化的时候调用
-    public double getReward() {
-        double reward = 0.0;
+    public double getProfit() {
+        double profit = 0.0;
 
-        for (Task metaTask : taskChain) {
-            reward = reward + metaTask.makePredict();
+        for (Task task : taskChain) {
+            profit += task.makePredict();
         }
-        return reward;
+        return profit;
     }
 
 }

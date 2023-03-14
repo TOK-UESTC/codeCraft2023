@@ -1,12 +1,11 @@
 package com.huawei.codecraft.task;
 
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.PriorityQueue;
+import java.util.stream.Collectors;
 
 import com.huawei.codecraft.agent.Robot;
 import com.huawei.codecraft.agent.Workbench;
@@ -15,18 +14,16 @@ import com.huawei.codecraft.utils.Coordinate;
 import com.huawei.codecraft.utils.Utils;
 
 /*
- * @Description: 调度器类
+ * @description: 调度器类
  */
 public class Dispatcher {
     private List<Robot> robotList;
     private List<Workbench> workbenchList;
-    private List<TaskChain> taskChainList;
 
     private Map<Integer, List<Workbench>> workbenchTypeMap;
     // key: 工作台种类, value: 以工作台产物为原料的所有任务
     private Map<Integer, List<Task>> taskTypeMap;
 
-    // 初始化调度器，按照自己的想法储存Task
     public Dispatcher(List<Robot> robotList, List<Workbench> workbenchList,
             Map<Integer, List<Workbench>> workbenchTypeMap) {
         this.robotList = robotList;
@@ -35,91 +32,15 @@ public class Dispatcher {
         this.workbenchTypeMap = workbenchTypeMap;
         this.taskTypeMap = new HashMap<>();
 
+        // 初始化所有任务
         init();
+
+        // 构建任务链
+        generateTaskChains();
     }
 
     // 任务分配
     public void dispatch() {
-    }
-
-    /**
-     * @description: 通过任务建图
-     */
-
-    /**
-     * 获得任务链列表
-     * 
-     * @param unLoadRobotList 空闲机器人列表
-     * @return 任务链列表的映射图 key: 执行任务的机器人对象 value: 机器人可执行的任务链队列
-     */
-    public Map<Robot, PriorityQueue<TaskChain>> getTaskChainListMap(List<Robot> unLoadRobotList) {
-        // 如果没有空闲的机器人，直接返回
-        if (unLoadRobotList.isEmpty()) {
-            return null;
-        }
-        // key: 执行任务的机器人 value：任务链列表
-        Map<Robot, PriorityQueue<TaskChain>> taskChainQueueMap = new HashMap<>();
-        // new PriorityQueue<TaskChain>((a, b)-> Double.compare(b.getReward(),
-        // a.getReward())); // 降序
-
-        for (int i = 1; i < 8; i++) {
-            // taskType是指类型为type的工作台生产出来的任务, 如果没有该类型工作台, 那么访问下一个工作台类型
-            List<Task> taskTypeList = taskTypeMap.get(i);
-            if (taskTypeList == null) {
-                continue;
-            }
-            for (Task taskType : taskTypeList) {
-                // taskType选择最近的机器人
-                if (taskType.getFrom().getRest() == -1
-                        || ((1 << taskType.getFrom().getType()) & taskType.getTo().getMaterialStatus()) != 0
-                        || taskType.getFrom().isInTaskChain()) {
-                    // 工作台未生产 或者 该任务的接受处已满 或者 这个工作已经被选中正在执行
-                    continue;
-                }
-
-                // 如果工作台投入生产
-                double minTime = (double) Const.FRAME_PER_SECOND * 180;
-                Robot taskReceiver = null;
-                // 遍历空闲机器人列表，选取最近的任务链
-                for (Robot unloadRobot : unLoadRobotList) {
-                    Coordinate robotPos = unloadRobot.getPos();
-                    Coordinate taskPos = taskType.getFrom().getPos();
-                    // 这里的receiveTaskTime指得是机器人到初始任务所需最短时间
-                    double receiveTaskTime = Utils.computeDistance(robotPos, taskPos) / Const.MAX_BACKWARD_VELOCITY
-                            * Const.FRAME_PER_SECOND;
-                    // 运输时间小于生产剩余时间，那么需要等待，直接放弃该任务
-                    if (receiveTaskTime < taskType.getFrom().getRest()) {
-                        continue;
-                    }
-                    // 运输时间大于生产剩余时间，那么到达该任务后直接可以接收该任务，该把这个任务分给哪个机器人？
-                    if (receiveTaskTime < minTime) {
-                        taskReceiver = unloadRobot;
-                        minTime = receiveTaskTime;
-                    }
-                }
-                // 更新该任务最早完成时间
-                double finishTime = minTime
-                        + taskType.getDistance() / Const.MAX_BACKWARD_VELOCITY * Const.FRAME_PER_SECOND;
-                TaskChain taskChain = new TaskChain(taskReceiver);
-                taskChain.getTaskChain().add(taskType);
-                taskChain.setFinishTime(finishTime);
-                if (taskChainQueueMap.get(taskReceiver) == null) {
-                    // 未添加该对象， TODO: Heap
-                    PriorityQueue<TaskChain> taskChainQueue = new PriorityQueue<TaskChain>(
-                            (a, b) -> Double.compare(b.getReward(), a.getReward())); // 降序
-                    taskChainQueue.add(taskChain);
-                    taskChainQueueMap.put(taskReceiver, taskChainQueue);
-                } else {
-                    taskChainQueueMap.get(taskReceiver).add(taskChain);
-                }
-            }
-        }
-
-        // 这里更新两次是因为最长链长为3，减去初始链长1, 所以两次
-        updateTaskChain(unLoadRobotList, taskChainQueueMap);
-        updateTaskChain(unLoadRobotList, taskChainQueueMap);
-
-        return taskChainQueueMap;
     }
 
     /**
@@ -153,7 +74,7 @@ public class Dispatcher {
                     // 更新任务最早完成时间，并把该任务加入到这条任务链中
                     TaskChain newTaskChain = new TaskChain(taskChain);
                     newTaskChain.setFinishTime(taskChain.getFinishTime()
-                            + postTask.getDistance() / Const.MAX_BACKWARD_VELOCITY * Const.FRAME_PER_SECOND);
+                            + postTask.getDistance() / Const.MAX_FORWARD_FRAME);
                     newTaskChain.getTaskChain().add(postTask);
                     newTaskChainList.add(newTaskChain);
                     addNewTaskChain = true;
@@ -209,11 +130,75 @@ public class Dispatcher {
                 task.setPostTaskList(task.getTo().getTasks());
             }
         }
-
-        generateTaskLinks();
     }
 
-    public void generateTaskLinks() {
+    public Map<Robot, PriorityQueue<TaskChain>> generateTaskChains() {
+        // 筛选空闲机器人
+        List<Robot> freeRobots = robotList.stream()
+                .filter((Robot rb) -> rb.isBusy())
+                .collect(Collectors.toList());
+
+        if (freeRobots.isEmpty()) {
+            return null;
+        }
+
+        // key: 执行任务的机器人, value: 任务链列表
+        Map<Robot, PriorityQueue<TaskChain>> taskChainQueueMap = new HashMap<>();
+
+        // 遍历所有task
+        for (List<Task> taskList : taskTypeMap.values()) {
+            for (Task task : taskList) {
+                Workbench from = task.getFrom();
+                Workbench to = task.getTo();
+
+                // 工作台未生产 或者 该任务的接受处已满 或者 这个工作已经被选中正在执行
+                if (from.isFree() || to.hasMaterial(from.getType()) || from.isInTaskChain()) {
+                    continue;
+                }
+
+                // 如果工作台可以投入生产，继续进行判断
+                double minFrame = 180 * Const.FRAME_PER_SECOND;
+                Robot taskReceiver = null;
+
+                // 遍历机器人列表，选择最近的任务链
+                for (Robot rb : freeRobots) {
+                    double distance = Utils.computeDistance(from.getPos(), rb.getPos());
+                    double receiveTaskFrame = distance / Const.MAX_FORWARD_FRAME;
+
+                    // 接收时间小于生产时间，需要等待，直接放弃
+                    if (receiveTaskFrame < from.getRest()) {
+                        continue;
+                    }
+                    // 接受时间大于生产剩余时间，到达之后可以直接接受任务
+                    if (receiveTaskFrame < minFrame) {
+                        taskReceiver = rb;
+                        minFrame = receiveTaskFrame;
+                    }
+                }
+
+                // 更新任务最快完成时间
+                double finishFrame = minFrame + task.getDistance() / Const.MAX_FORWARD_FRAME;
+                TaskChain taskChain = new TaskChain(taskReceiver);
+                taskChain.addTask(task);
+                taskChain.setFinishTime(finishFrame);
+
+                // 保存任务链
+                if (taskChainQueueMap.containsKey(taskReceiver)) {
+                    taskChainQueueMap.get(taskReceiver).add(taskChain);
+                } else {
+                    PriorityQueue<TaskChain> taskChainQueue = new PriorityQueue<TaskChain>(
+                            (a, b) -> Double.compare(b.getProfit(), a.getProfit())); // 降序
+                    taskChainQueue.add(taskChain);
+                    taskChainQueueMap.put(taskReceiver, taskChainQueue);
+                }
+            }
+        }
+
+        // 这里更新两次是因为最长链长为3，减去初始链长1, 所以两次
+        updateTaskChain(freeRobots, taskChainQueueMap);
+        updateTaskChain(freeRobots, taskChainQueueMap);
+
+        return taskChainQueueMap;
 
     }
 }

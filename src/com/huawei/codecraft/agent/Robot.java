@@ -48,9 +48,9 @@ public class Robot {
         this.pos = new Coordinate(Double.parseDouble(info[8]), Double.parseDouble(info[9]));
     }
 
-    /*
-     * @Description: 机器人根据当前任务和状态进行动作决策
-     * 将决策Action输入到列表中，等待执行
+    /**
+     * @description: 机器人根据当前任务和状态进行动作决策
+     *               将决策Action输入到列表中，等待执行
      */
     public void step() {
         // 清空动作列表
@@ -68,8 +68,8 @@ public class Robot {
         return task == null;
     }
 
-    /*
-     * @Description: 获取机器人当前收益
+    /**
+     * @description: 获取机器人当前收益
      *
      * @param: Max，当两个系数都为1的时候的最大收益
      */

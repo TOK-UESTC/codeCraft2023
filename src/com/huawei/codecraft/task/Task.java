@@ -8,7 +8,7 @@ import com.huawei.codecraft.constants.Const;
 import com.huawei.codecraft.utils.Utils;
 
 /**
- * @Description: 模型结构，主要对地图信息数据结构建模
+ * @description: 模型结构，主要对地图信息数据结构建模
  */
 public class Task {
     private Workbench from; // 任务来源
@@ -79,9 +79,10 @@ public class Task {
         return sellPrice * timeCoefficients * collisionCoefficients - price;
     }
 
-    /*
-     * 根据当前已知信息预测到达时的盈利价格
-     * 当前假定速度为最大，计算时间因子
+    /**
+     * @description: 根据当前已知信息预测到达时的盈利价格
+     *               当前假定速度为最大，计算时间因子
+     * @return 最大收益
      */
     public double makePredict() {
         double timeCoefficient;
