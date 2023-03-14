@@ -74,4 +74,57 @@ public class Utils {
         }
     }
 
+    public static void computePriority(){
+        /* 计算优先级
+         * 
+        */
+    }
+
+    public static double computeAward(Workbench wb, double timeCoefficient){
+        /* 计算收益
+         * 
+        */
+        double award=0.0;
+        // TODO:下面的实现不优雅，但暂时不打算在类中添加属性，因此使用原始数据
+        switch(wb.getType()){
+            case 1:
+                award = 6000*timeCoefficient - 3000;
+                break;
+            case 2:
+                award = 7600*timeCoefficient - 4400;
+                break;
+            case 3:
+                award = 9200*timeCoefficient - 5800;
+                break;
+            case 4:
+                award = 22500*timeCoefficient - 15400;
+                break;
+            case 5:
+                award = 25000*timeCoefficient - 17200; 
+                break;
+            case 6:
+                award = 27500*timeCoefficient - 19200;
+                break;
+            case 7:
+                award = 105000*timeCoefficient - 76000;
+                break;
+            default:
+                break;
+        }
+
+        return award;
+    }
+
+    public static double timeCoefficient(double frame){
+        /* 时间
+         * 
+        */
+
+        if(frame >= 9000){
+            return 0.8;
+        }
+
+        return (1-Math.sqrt(1-Math.pow((1 - frame/9000), 2)))*0.2+0.8;
+    }
+
 }

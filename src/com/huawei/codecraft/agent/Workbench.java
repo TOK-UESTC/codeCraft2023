@@ -14,6 +14,7 @@ public class Workbench {
     private int productStatus; // 产品格状态 0 表示无 1 表示有
     private List<Integer> consumerIdList; // 能够消耗本工作台生产的产品的工作台ID列表
     private List<Double> consumerDistanceList; // 上面consumer对应于本工作台的距离
+    private boolean inTaskChain; // true: 说明已经有机器人领取了任务，后面派遣任务需要跳过此工作台，每次提交任务都应该重置标志位
 
     public Workbench(Coordinate pos, int type, int workbenchIdx) {
         this.type = type;
@@ -24,6 +25,7 @@ public class Workbench {
         this.rest = -1;
         this.materialStatus = 0;
         this.productStatus = 0;
+        this.inTaskChain = false;
     }
 
     /**
@@ -99,4 +101,13 @@ public class Workbench {
         this.workbenchIdx = workbenchIdx;
     }
 
+    public boolean isInTaskChain() {
+        return inTaskChain;
+    }
+
+    public void setInTaskChain(boolean inTaskChain) {
+        this.inTaskChain = inTaskChain;
+    }
+
+    
 }

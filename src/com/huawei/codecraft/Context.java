@@ -5,7 +5,7 @@ import java.util.*;
 
 import com.huawei.codecraft.agent.Robot;
 import com.huawei.codecraft.agent.Workbench;
-import com.huawei.codecraft.task.Despatcher;
+import com.huawei.codecraft.task.Dispatcher;
 import com.huawei.codecraft.utils.Action;
 import com.huawei.codecraft.utils.Coordinate;
 
@@ -29,7 +29,7 @@ public class Context {
     // key: 工作台类型 value: 工作台对象列表
     private Map<Integer, List<Workbench>> workbenchTypeMap = new HashMap<Integer, List<Workbench>>();
 
-    private Despatcher despatcher;
+    private Dispatcher despatcher;
 
     Context(Scanner inStream, PrintStream outStream, boolean saveLog) {
         frameId = 0;
@@ -87,7 +87,7 @@ public class Context {
             row++;
         }
 
-        despatcher = new Despatcher(robotList, workbenchList, workbenchTypeMap);
+        // despatcher = new Dispatcher(robotList, workbenchList, workbenchTypeMap);
 
         endStep();
     }
