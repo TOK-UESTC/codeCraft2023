@@ -83,7 +83,7 @@ public class Robot {
         }
     }
 
-    public int getworkbenchIdx() {
+    public int getWorkbenchIdx() {
         return workbenchIdx;
     }
 

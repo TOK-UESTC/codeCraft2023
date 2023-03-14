@@ -66,12 +66,8 @@ public class Workbench {
         return productStatus;
     }
 
-    public int getworkbenchIdx() {
+    public int getWorkbenchIdx() {
         return workbenchIdx;
-    }
-
-    public void setworkbenchIdx(int workbenchIdx) {
-        this.workbenchIdx = workbenchIdx;
     }
 
     public boolean isInTaskChain() {
