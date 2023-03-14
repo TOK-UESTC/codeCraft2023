@@ -14,6 +14,7 @@ public class Dispatcher {
     private List<Robot> robotList;
     private List<Workbench> workbenchList;
     private Map<Integer, List<Workbench>> workbenchTypeMap;
+    private List<TaskLink> taskLinks;
 
     // 初始化调度器，按照自己的想法储存Task
     public Dispatcher(List<Robot> robotList, List<Workbench> workbenchList,
@@ -74,5 +75,11 @@ public class Dispatcher {
                 }
             }
         }
+
+        generateTaskLinks();
+    }
+
+    public void generateTaskLinks() {
+
     }
 }

@@ -64,6 +64,19 @@ public class Task {
         return sellPrice * timeCoefficients * collisionCoefficients - price;
     }
 
+    /*
+     * 根据当前已知信息预测到达时的盈利价格
+     * 当前假定速度为最大，计算时间因子
+     */
+    public double makePredict() {
+        double predictedFrame = distance / Const.MAX_FORWARD_VELOCITY * Const.FRAME_PER_SECOND;
+        if (predictedFrame >= 9000) {
+            return 0.8;
+        } else {
+            return (1 - Math.sqrt(1 - Math.pow(1 - (predictedFrame / 9000), 2))) * (1 - 0.8) + 0.8;
+        }
+    }
+
     public double getPrice() {
         return price;
     }
