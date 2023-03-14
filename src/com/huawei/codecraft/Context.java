@@ -28,7 +28,7 @@ public class Context {
     private List<Workbench> workbenchList = new ArrayList<Workbench>();
     // key: 工作台类型 value: 工作台对象列表
     private Map<Integer, List<Workbench>> workbenchTypeMap = new HashMap<Integer, List<Workbench>>();
-
+    
     private Dispatcher despatcher;
 
     Context(Scanner inStream, PrintStream outStream, boolean saveLog) {
@@ -131,7 +131,7 @@ public class Context {
         printLine(String.format("%d", frameId));
 
         // 调度器分配任务
-        despatcher.dispatch();
+        dispatcher.dispatch();
 
         /*
          * TODO: 机器人类封装doActiono(), 给出每个机器人该帧的动作

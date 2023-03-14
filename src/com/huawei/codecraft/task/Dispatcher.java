@@ -11,6 +11,7 @@ import com.huawei.codecraft.agent.Workbench;
  */
 public class Dispatcher {
     private List<Robot> robotList;
+    
     private Map<Integer, List<Node>> graph;
     
 
@@ -23,6 +24,4 @@ public class Dispatcher {
     public void dispatch() {
 
     }
-
-    
 }
