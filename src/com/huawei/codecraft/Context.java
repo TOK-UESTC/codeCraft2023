@@ -28,8 +28,8 @@ public class Context {
     private List<Workbench> workbenchList = new ArrayList<Workbench>();
     // key: 工作台类型 value: 工作台对象列表
     private Map<Integer, List<Workbench>> workbenchTypeMap = new HashMap<Integer, List<Workbench>>();
-
-    private Dispatcher dispatcher;
+    
+    private Dispatcher despatcher;
 
     Context(Scanner inStream, PrintStream outStream, boolean saveLog) {
         frameId = 0;
@@ -87,7 +87,7 @@ public class Context {
             row++;
         }
 
-        dispatcher = new Dispatcher(robotList, workbenchList, workbenchTypeMap);
+        // despatcher = new Dispatcher(robotList, workbenchList, workbenchTypeMap);
 
         endStep();
     }
