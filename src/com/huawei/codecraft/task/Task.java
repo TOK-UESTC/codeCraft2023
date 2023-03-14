@@ -1,6 +1,10 @@
 package com.huawei.codecraft.task;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import com.huawei.codecraft.agent.Workbench;
+import com.huawei.codecraft.utils.Const;
 import com.huawei.codecraft.utils.Utils;
 
 /*
@@ -11,19 +15,28 @@ import com.huawei.codecraft.utils.Utils;
 public class Task {
     private Workbench from; // 任务来源
     private Workbench to; // 任务目的
-    private int productType;// 物品型号
     private double priority;// 优先级
-    private int award; // 完成任务所获得的最大奖励
+    private double price; // 原始价格
+    private double sellPrice; // 完成任务所获得的最大奖励
     private double distance; // 完成任务所需要的距离
 
-    public Task(Workbench from, Workbench to, int productType, double priority, int award) {
+    public Task(Workbench from, Workbench to) {
         this.from = from;
         this.to = to;
-        this.productType = productType;
-        this.priority = priority;
-        this.award = award;
 
+        // 根据控制台类型确定价格
+        Integer[] priceInfo = Const.priceMapper.get(from.getType());
+        this.price = priceInfo[0];
+        this.sellPrice = priceInfo[1];
+
+        // 计算工作台距离
         this.distance = Utils.computeDistance(from.getPos(), to.getPos());
+
+        /*
+         * 给同等类型但是距离较短的任务较高的优先级
+         * 给不同类型但是生产成品类型更复杂的任务较高的优先级
+         */
+        this.priority = (sellPrice - price) / distance + from.getType();
     }
 
     public Workbench from() {
@@ -34,8 +47,9 @@ public class Task {
         return to;
     }
 
+    // 返回生产物品，实则就是工作台类型
     public int getProductType() {
-        return productType;
+        return from.getType();
     }
 
     public double getPriority() {
@@ -46,8 +60,12 @@ public class Task {
         this.priority = priority;
     }
 
-    public int getAward() {
-        return award;
+    public double getProfit(double timeCoefficients, double collisionCoefficients) {
+        return sellPrice * timeCoefficients * collisionCoefficients - price;
+    }
+
+    public double getPrice() {
+        return price;
     }
 
     public double getDistance() {
@@ -55,6 +73,6 @@ public class Task {
     }
 
     public Task copy() {
-        return new Task(from, to, productType, priority, award);
+        return new Task(from, to);
     }
 }

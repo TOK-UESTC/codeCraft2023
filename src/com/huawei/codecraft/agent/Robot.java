@@ -4,6 +4,7 @@ import java.util.ArrayList;
 
 import com.huawei.codecraft.task.Task;
 import com.huawei.codecraft.utils.Action;
+import com.huawei.codecraft.utils.ActionType;
 import com.huawei.codecraft.utils.Coordinate;
 import com.huawei.codecraft.utils.Velocity;
 
@@ -56,6 +57,7 @@ public class Robot {
         actions.clear();
 
         // TODO: 决策，添加到Actions中
+        actions.add(new Action(ActionType.FORWARD, 6));
     }
 
     public ArrayList<Action> getActions() {
@@ -64,6 +66,21 @@ public class Robot {
 
     public boolean isBusy() {
         return task == null;
+    }
+
+    /*
+     * @Description: 获取机器人当前收益
+     *
+     * @param: Max，当两个系数都为1的时候的最大收益
+     */
+    public double profit(boolean max) {
+        if (task == null) {
+            return -1;
+        } else if (max) {
+            return task.getProfit(1, 1);
+        } else {
+            return task.getProfit(timeCoefficients, collisionCoefficients);
+        }
     }
 
     public int getworkbenchIdx() {

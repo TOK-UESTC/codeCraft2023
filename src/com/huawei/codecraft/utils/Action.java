@@ -1,13 +1,5 @@
 package com.huawei.codecraft.utils;
 
-enum ActionType {
-    FORWARD,
-    ROTATE,
-    BUY,
-    SELL,
-    DESTROY
-}
-
 public class Action {
     private ActionType type;
     private double value;

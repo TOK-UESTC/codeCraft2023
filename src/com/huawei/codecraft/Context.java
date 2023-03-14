@@ -81,6 +81,15 @@ public class Context {
                         int workbenchType = line.charAt(col) - '0';
                         Workbench workbench = new Workbench(new Coordinate(x, y), workbenchType, workbenchCount++);
                         workbenchList.add(workbench);
+
+                        // 将同一型号的工作台放置到map中
+                        if (workbenchTypeMap.containsKey(workbenchType)) {
+                            workbenchTypeMap.get(workbenchType).add(workbench);
+                        } else {
+                            ArrayList<Workbench> storage = new ArrayList<>();
+                            storage.add(workbench);
+                            workbenchTypeMap.put(workbenchType, storage);
+                        }
                 }
 
             }
@@ -132,10 +141,6 @@ public class Context {
 
         // 调度器分配任务
         dispatcher.dispatch();
-
-        /*
-         * TODO: 机器人类封装doActiono(), 给出每个机器人该帧的动作
-         */
 
         int lineSpeed = 3;
         double angleSpeed = 1.5;

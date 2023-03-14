@@ -12,15 +12,11 @@ public class Workbench {
     private int rest; // 生产剩余时间 -1表示没有生产；0表示生产因输出格满而受阻塞；>=0 表示剩余生产帧数
     private int materialStatus; // 原材料格状态；二进制为表示，例如 48(110000),表示拥有物品4和5
     private int productStatus; // 产品格状态 0 表示无 1 表示有
-    private List<Integer> consumerIdList; // 能够消耗本工作台生产的产品的工作台ID列表
-    private List<Double> consumerDistanceList; // 上面consumer对应于本工作台的距离
 
     public Workbench(Coordinate pos, int type, int workbenchIdx) {
         this.type = type;
         this.pos = pos;
         this.workbenchIdx = workbenchIdx;
-        this.consumerIdList = new LinkedList<Integer>();
-        this.consumerDistanceList = new LinkedList<Double>();
         this.rest = -1;
         this.materialStatus = 0;
         this.productStatus = 0;
@@ -33,22 +29,6 @@ public class Workbench {
         this.rest = Integer.parseInt(info[3]);
         this.materialStatus = Integer.parseInt(info[4]);
         this.productStatus = Integer.parseInt(info[5]);
-    }
-
-    public List<Integer> getConsumerIdList() {
-        return consumerIdList;
-    }
-
-    public void setConsumerIdList(List<Integer> consumerIdList) {
-        this.consumerIdList = consumerIdList;
-    }
-
-    public List<Double> getConsumerDistanceList() {
-        return consumerDistanceList;
-    }
-
-    public void setConsumerDistanceList(List<Double> consumerDistanceList) {
-        this.consumerDistanceList = consumerDistanceList;
     }
 
     public int getType() {
