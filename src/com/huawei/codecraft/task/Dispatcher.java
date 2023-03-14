@@ -1,6 +1,5 @@
 package com.huawei.codecraft.task;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -15,6 +14,8 @@ public class Dispatcher {
     private List<Workbench> workbenchList;
     private Map<Integer, List<Workbench>> workbenchTypeMap;
     private List<TaskLink> taskLinks;
+
+    private Map<Integer, List<Task>> graph;
 
     // 初始化调度器，按照自己的想法储存Task
     public Dispatcher(List<Robot> robotList, List<Workbench> workbenchList,
