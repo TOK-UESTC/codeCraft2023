@@ -46,12 +46,12 @@ public class Dispatcher {
     /**
      * @description: 在获取到初始任务链后，更新任务链，增加任务链长度
      */
-    private void updateTaskChain(List<Robot> unLoadRobotList, Map<Robot, PriorityQueue<TaskChain>> taskChainQueueMap) {
+    private void updateTaskChain(List<Robot> freeRobots, Map<Robot, PriorityQueue<TaskChain>> taskChainQueueMap) {
         // 以机器人的初始任务链为单位, 添加后续任务
-        for (Robot rb : unLoadRobotList) {
+        for (Robot rb : freeRobots) {
             PriorityQueue<TaskChain> oldTaskChainList = taskChainQueueMap.get(rb);
             PriorityQueue<TaskChain> newTaskChainList = new PriorityQueue<TaskChain>(
-                    (a, b) -> Double.compare(b.getReward(), a.getReward())); // 降序
+                    (a, b) -> Double.compare(b.getProfit(), a.getProfit())); // 降序
             for (TaskChain taskChain : oldTaskChainList) {
                 boolean addNewTaskChain = false;
                 Task lastTask = taskChain.getTaskChain().get(taskChain.getTaskChain().size() - 1);
@@ -61,21 +61,21 @@ public class Dispatcher {
                 }
                 for (Task postTask : lastTask.getPostTaskList()) {
                     // 未生产，直接访问下个后续任务 或者 lastTask生产的产品已经出现在产品格中
-                    if (postTask.getFrom().getRest() == -1
-                            || (((1 << lastTask.getFrom().getType()) & lastTask.getTo().getMaterialStatus()) != 0)
+                    if (postTask.getFrom().isFree()
+                            || lastTask.getTo().hasMaterial(lastTask.getFrom().getType())
                             || postTask.getFrom().isInTaskChain()) {
                         // 后继任务未生产 或者 后续任务接受栏未满 或者 后续任务已经被执行
                         continue;
                     }
                     // 开始生产, 如果生产剩余时间比机器人最快到达时间更久，说明会出现等待
-                    if (postTask.getFrom().getRest() > taskChain.getFinishTime()) {
+                    if (postTask.getFrom().getRest() > taskChain.getTotalFrame()) {
                         continue;
                     }
                     // 更新任务最早完成时间，并把该任务加入到这条任务链中
                     TaskChain newTaskChain = new TaskChain(taskChain);
-                    newTaskChain.setFinishTime(taskChain.getFinishTime()
+                    newTaskChain.setTotalFrame(taskChain.getTotalFrame()
                             + postTask.getDistance() / Const.MAX_FORWARD_FRAME);
-                    newTaskChain.getTaskChain().add(postTask);
+                    newTaskChain.addTask(postTask);
                     newTaskChainList.add(newTaskChain);
                     addNewTaskChain = true;
                 }
@@ -180,7 +180,7 @@ public class Dispatcher {
                 double finishFrame = minFrame + task.getDistance() / Const.MAX_FORWARD_FRAME;
                 TaskChain taskChain = new TaskChain(taskReceiver);
                 taskChain.addTask(task);
-                taskChain.setFinishTime(finishFrame);
+                taskChain.setTotalFrame(finishFrame);
 
                 // 保存任务链
                 if (taskChainQueueMap.containsKey(taskReceiver)) {

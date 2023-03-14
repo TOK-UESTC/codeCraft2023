@@ -42,7 +42,7 @@ public class TaskChain {
         return totalFrame;
     }
 
-    public void setFinishTime(double totalFrame) {
+    public void setTotalFrame(double totalFrame) {
         this.totalFrame = totalFrame;
     }
 
