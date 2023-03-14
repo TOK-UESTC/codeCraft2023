@@ -2,6 +2,7 @@ package com.huawei.codecraft.agent;
 
 import java.util.ArrayList;
 
+import com.huawei.codecraft.constants.ActionType;
 import com.huawei.codecraft.task.Task;
 import com.huawei.codecraft.utils.Action;
 import com.huawei.codecraft.utils.Coordinate;
@@ -56,6 +57,7 @@ public class Robot {
         actions.clear();
 
         // TODO: 决策，添加到Actions中
+        actions.add(new Action(ActionType.FORWARD, 6));
     }
 
     public ArrayList<Action> getActions() {
@@ -66,76 +68,51 @@ public class Robot {
         return task == null;
     }
 
-    public int getworkbenchIdx() {
-        return workbenchIdx;
+    /*
+     * @Description: 获取机器人当前收益
+     *
+     * @param: Max，当两个系数都为1的时候的最大收益
+     */
+    public double profit(boolean max) {
+        if (task == null) {
+            return -1;
+        } else if (max) {
+            return task.getProfit(1, 1);
+        } else {
+            return task.getProfit(timeCoefficients, collisionCoefficients);
+        }
     }
 
-    public void setworkbenchIdx(int workbenchIdx) {
-        this.workbenchIdx = workbenchIdx;
+    public int getworkbenchIdx() {
+        return workbenchIdx;
     }
 
     public int getProductType() {
         return productType;
     }
 
-    public void setProductType(int productType) {
-        this.productType = productType;
-    }
-
     public double getTimeCoefficients() {
         return timeCoefficients;
-    }
-
-    public void setTimeCoefficients(double timeCoefficients) {
-        this.timeCoefficients = timeCoefficients;
     }
 
     public double getCollisionCoefficients() {
         return collisionCoefficients;
     }
 
-    public void setCollisionCoefficients(double collisionCoefficients) {
-        this.collisionCoefficients = collisionCoefficients;
-    }
-
     public double getAngularVelocity() {
         return angularVelocity;
-    }
-
-    public void setAngularVelocity(double angularVelocity) {
-        this.angularVelocity = angularVelocity;
     }
 
     public Velocity getVelocity() {
         return velocity;
     }
 
-    public void setVelocity(Velocity velocity) {
-        this.velocity = velocity;
-    }
-
     public double getForward() {
         return forward;
     }
 
-    public void setForward(double forward) {
-        this.forward = forward;
-    }
-
     public Coordinate getPos() {
         return pos;
-    }
-
-    public void setPos(Coordinate pos) {
-        this.pos = pos;
-    }
-
-    public int getRobotIdx() {
-        return robotIdx;
-    }
-
-    public void setRobotId(int robotId) {
-        this.robotIdx = robotId;
     }
 
     public void setTask(Task task) {
