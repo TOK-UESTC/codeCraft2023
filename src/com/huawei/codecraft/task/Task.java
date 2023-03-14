@@ -4,7 +4,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import com.huawei.codecraft.agent.Workbench;
-import com.huawei.codecraft.utils.Const;
+import com.huawei.codecraft.constants.Const;
 import com.huawei.codecraft.utils.Utils;
 
 /*

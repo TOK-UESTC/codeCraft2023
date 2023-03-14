@@ -2,9 +2,9 @@ package com.huawei.codecraft.agent;
 
 import java.util.ArrayList;
 
+import com.huawei.codecraft.constants.ActionType;
 import com.huawei.codecraft.task.Task;
 import com.huawei.codecraft.utils.Action;
-import com.huawei.codecraft.utils.ActionType;
 import com.huawei.codecraft.utils.Coordinate;
 import com.huawei.codecraft.utils.Velocity;
 
@@ -87,48 +87,24 @@ public class Robot {
         return workbenchIdx;
     }
 
-    public void setworkbenchIdx(int workbenchIdx) {
-        this.workbenchIdx = workbenchIdx;
-    }
-
     public int getProductType() {
         return productType;
-    }
-
-    public void setProductType(int productType) {
-        this.productType = productType;
     }
 
     public double getTimeCoefficients() {
         return timeCoefficients;
     }
 
-    public void setTimeCoefficients(double timeCoefficients) {
-        this.timeCoefficients = timeCoefficients;
-    }
-
     public double getCollisionCoefficients() {
         return collisionCoefficients;
-    }
-
-    public void setCollisionCoefficients(double collisionCoefficients) {
-        this.collisionCoefficients = collisionCoefficients;
     }
 
     public double getAngularVelocity() {
         return angularVelocity;
     }
 
-    public void setAngularVelocity(double angularVelocity) {
-        this.angularVelocity = angularVelocity;
-    }
-
     public Velocity getVelocity() {
         return velocity;
-    }
-
-    public void setVelocity(Velocity velocity) {
-        this.velocity = velocity;
     }
 
     public double getForward() {

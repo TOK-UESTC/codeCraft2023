@@ -1,4 +1,4 @@
-package com.huawei.codecraft.utils;
+package com.huawei.codecraft.constants;
 
 public enum ActionType {
     FORWARD,

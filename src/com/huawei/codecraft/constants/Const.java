@@ -1,4 +1,4 @@
-package com.huawei.codecraft.utils;
+package com.huawei.codecraft.constants;
 
 import java.util.HashMap;
 import java.util.Map;

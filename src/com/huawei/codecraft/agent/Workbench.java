@@ -86,8 +86,4 @@ public class Workbench {
         return workbenchIdx;
     }
 
-    public void setworkbenchIdx(int workbenchIdx) {
-        this.workbenchIdx = workbenchIdx;
-    }
-
 }

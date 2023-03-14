@@ -1,5 +1,7 @@
 package com.huawei.codecraft.utils;
 
+import com.huawei.codecraft.constants.ActionType;
+
 public class Action {
     private ActionType type;
     private double value;
