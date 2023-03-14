@@ -135,24 +135,8 @@ public class Robot {
         return forward;
     }
 
-    public void setForward(double forward) {
-        this.forward = forward;
-    }
-
     public Coordinate getPos() {
         return pos;
-    }
-
-    public void setPos(Coordinate pos) {
-        this.pos = pos;
-    }
-
-    public int getRobotIdx() {
-        return robotIdx;
-    }
-
-    public void setRobotId(int robotId) {
-        this.robotIdx = robotId;
     }
 
     public void setTask(Task task) {

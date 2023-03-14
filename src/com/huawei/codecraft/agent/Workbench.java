@@ -1,8 +1,9 @@
 package com.huawei.codecraft.agent;
 
-import java.util.LinkedList;
+import java.util.ArrayList;
 import java.util.List;
 
+import com.huawei.codecraft.task.Task;
 import com.huawei.codecraft.utils.Coordinate;
 
 public class Workbench {
@@ -12,6 +13,7 @@ public class Workbench {
     private int rest; // 生产剩余时间 -1表示没有生产；0表示生产因输出格满而受阻塞；>=0 表示剩余生产帧数
     private int materialStatus; // 原材料格状态；二进制为表示，例如 48(110000),表示拥有物品4和5
     private int productStatus; // 产品格状态 0 表示无 1 表示有
+    private List<Task> optionalTasks; // 工作台可发布的任务
 
     public Workbench(Coordinate pos, int type, int workbenchIdx) {
         this.type = type;
@@ -20,6 +22,7 @@ public class Workbench {
         this.rest = -1;
         this.materialStatus = 0;
         this.productStatus = 0;
+        this.optionalTasks = new ArrayList<Task>();
     }
 
     /**
@@ -29,6 +32,14 @@ public class Workbench {
         this.rest = Integer.parseInt(info[3]);
         this.materialStatus = Integer.parseInt(info[4]);
         this.productStatus = Integer.parseInt(info[5]);
+    }
+
+    public void addTask(Task task) {
+        optionalTasks.add(task);
+    }
+
+    public List<Task> getTasks() {
+        return optionalTasks;
     }
 
     public int getType() {

@@ -1,5 +1,6 @@
 package com.huawei.codecraft.task;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -13,8 +14,6 @@ public class Dispatcher {
     private List<Robot> robotList;
     private List<Workbench> workbenchList;
     private Map<Integer, List<Workbench>> workbenchTypeMap;
-
-    private List<Task> optionalTask;
 
     // 初始化调度器，按照自己的想法储存Task
     public Dispatcher(List<Robot> robotList, List<Workbench> workbenchList,
@@ -58,13 +57,20 @@ public class Dispatcher {
                     types = new int[] { 8, 9 };
                     break;
                 default:
+                    types = new int[] {};
                     break;
             }
 
             // 根据工作台类型以及可以接收产物的工作台创建task
             for (int type : types) {
+                // 如果当前地图上不含某些工作台，直接跳过
+                if (!workbenchTypeMap.containsKey(type)) {
+                    continue;
+                }
+
+                // 生成任务
                 for (Workbench target : workbenchTypeMap.get(type)) {
-                    optionalTask.add(new Task(wb, target));
+                    wb.addTask(new Task(wb, target));
                 }
             }
         }
