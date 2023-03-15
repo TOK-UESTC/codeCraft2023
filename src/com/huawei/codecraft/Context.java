@@ -142,9 +142,6 @@ public class Context {
         // 调度器分配任务
         dispatcher.dispatch();
 
-        int lineSpeed = 3;
-        double angleSpeed = 1.5;
-
         for (int i = 0; i < 4; i++) {
             Robot rb = robotList.get(i);
             // 决策

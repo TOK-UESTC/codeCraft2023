@@ -43,6 +43,11 @@ public class Task {
         this.postTaskList = new ArrayList<>();
     }
 
+    public Task(Task source) {
+        this.from = source.from;
+        this.to = source.to;
+    }
+
     public List<Task> getPostTaskList() {
         return postTaskList;
     }
@@ -86,7 +91,7 @@ public class Task {
      */
     public double makePredict() {
         double timeCoefficient;
-        double predictedFrame = distance / Const.MAX_FORWARD_VELOCITY * Const.FRAME_PER_SECOND;
+        double predictedFrame = distance / Const.MAX_FORWARD_FRAME;
         if (predictedFrame >= 9000) {
             timeCoefficient = 0.8;
         } else {
@@ -102,10 +107,6 @@ public class Task {
 
     public double getDistance() {
         return distance;
-    }
-
-    public Task copy() {
-        return new Task(from, to);
     }
 
     public boolean isVisited() {
