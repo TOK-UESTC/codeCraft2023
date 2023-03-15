@@ -10,6 +10,14 @@ public class Coordinate {
         this.y = y;
     }
 
+    public double distance(Coordinate other) {
+        return Math.sqrt(Math.pow(x - other.x, 2) + Math.pow(y - other.y, 2));
+    }
+
+    public double angle(Coordinate other) {
+        return Math.atan2(other.y - y, other.x - x);
+    }
+
     public double getX() {
         return x;
     }
