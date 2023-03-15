@@ -102,7 +102,7 @@ public class MagneticForceModel {
         // TODO: mod为0, 说明机器人指令是机器人停下
         double targetRadian = Math.acos(x / mod) + quadrant * Math.PI; // (-pi/2, pi/2)
         // TODO:机器人的forwar和指令中的forward意义不一致，需要注意
-        double radian = targetRadian - r.getForward();
+        double radian = targetRadian - r.getHeading();
 
         return new MoveInstruct(radian, mod);
     }
