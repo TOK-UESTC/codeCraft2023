@@ -23,6 +23,31 @@ public class Action {
         this.value = 0;
     }
 
+    // 可能可以优化，直接使用内部枚举类型
+    public Action(String string, double angularVelocity) {
+        switch (string) {
+            case "forward":
+                this.type = ActionType.FORWARD;
+                break;
+            case "rotate":
+                this.type = ActionType.ROTATE;
+                break;
+            case "buy":
+                this.type = ActionType.BUY;
+                break;
+            case "sell":
+                this.type = ActionType.SELL;
+                break;
+            case "destroy":
+                this.type = ActionType.DESTROY;
+                break;
+            default:
+                this.type = ActionType.FORWARD;
+                break;
+        }
+        this.value = angularVelocity;
+    }
+
     public String toString(int robotId) {
         switch (type) {
             case FORWARD:

@@ -8,6 +8,8 @@ import com.huawei.codecraft.agent.Workbench;
 import com.huawei.codecraft.task.Despatcher;
 import com.huawei.codecraft.utils.Action;
 import com.huawei.codecraft.utils.Coordinate;
+import com.huawei.codecraft.utils.MagneticForce;
+import com.huawei.codecraft.utils.MagneticForceModel;
 
 public class Context {
     private Scanner inStream;
@@ -139,17 +141,82 @@ public class Context {
 
         int lineSpeed = 3;
         double angleSpeed = 1.5;
-
+        // Coordinate destination = new Coordinate(10, 10);
+        // int intevel = 700;
+        // // 绘制正方形
+        // if (frameId < intevel) {
+        // destination = new Coordinate(10, 38.75);
+        // } else if (frameId < intevel * 2) {
+        // destination = new Coordinate(30, 38.75);
+        // } else if (frameId < intevel * 3) {
+        // destination = new Coordinate(10, 38.75);
+        // } else if (frameId < intevel * 4) {
+        // destination = new Coordinate(40, 10);
+        // } else if (frameId < intevel * 5) {
+        // destination = new Coordinate(10, 10);
+        // }
+        // // 继续绘制三角形
+        // else if (frameId < intevel * 6) {
+        // destination = new Coordinate(10, 40);
+        // } else if (frameId < intevel * 7) {
+        // destination = new Coordinate(40, 10);
+        // } else if (frameId < intevel * 8) {
+        // destination = new Coordinate(10, 10);
+        // }
+        // // 绘制五角星
+        // else if (frameId < intevel * 9) {
+        // destination = new Coordinate(10, 40);
+        // } else if (frameId < intevel * 10) {
+        // destination = new Coordinate(40, 40);
+        // } else if (frameId < intevel * 11) {
+        // destination = new Coordinate(40, 10);
+        // } else if (frameId < intevel * 12) {
+        // destination = new Coordinate(10, 10);
+        // } else if (frameId < intevel * 13) {
+        // destination = new Coordinate(10, 40);
+        // } else if (frameId < intevel * 14) {
+        // destination = new Coordinate(40, 10);
+        // } else if (frameId < intevel * 15) {
+        // destination = new Coordinate(10, 10);
+        // } else if (frameId < intevel * 16) {
+        // destination = new Coordinate(40, 40);
+        // } else if (frameId < intevel * 17) {
+        // destination = new Coordinate(10, 10);
+        // }
         for (int i = 0; i < 4; i++) {
             Robot rb = robotList.get(i);
-            // 决策
-            rb.step();
+            // 分别计算三个虚拟力
+            // 计算机器人间的力
+            MagneticForce magneticForce = new MagneticForce();
+            for (Robot robot : robotList) {
+                if (robot != rb) {
+                    magneticForce = magneticForce.add(MagneticForceModel.robotMagneticForceEquation(rb, robot));
+                }
+            }
+            // // 叠加墙体斥力
+            // magneticForce =
+            // magneticForce.add(MagneticForceModel.wallMagneticForceEquation(rb));
+            // 叠加工作台引力
+            magneticForce = magneticForce.add(MagneticForceModel.workbenchMagneticForceEquation(rb,
+                    workbenchList.get(20)));
+            // // 决策
+
+            rb.step(magneticForce);
 
             // 打印决策
             for (Action a : rb.getActions()) {
                 printLine(a.toString(i));
             }
         }
+
+        // Robot rb = robotList.get(0);
+        // // 决策
+        // rb.step(destination);
+
+        // // 打印决策
+        // for (Action a : rb.getActions()) {
+        // printLine(a.toString(0));
+        // }
 
         endStep();
     }
