@@ -55,9 +55,11 @@ public class Dispatcher {
         updateFreeBot();
 
         // 有空闲，构建任务链并分配给机器人
-        if (freeRobots.isEmpty()) {
+        if (!freeRobots.isEmpty()) {
             // 构建任务链
             Map<Robot, PriorityQueue<TaskChain>> chainsMap = generateTaskChains();
+
+            // TODO: 找出所有机器人中任务链中效益最高的，优先分配
 
             // 分配任务链
             for (Robot rb : chainsMap.keySet()) {

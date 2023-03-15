@@ -1,7 +1,8 @@
-package com.huawei.codecraft.utils;
+package com.huawei.codecraft.action;
 
 import com.huawei.codecraft.agent.Robot;
 import com.huawei.codecraft.agent.Workbench;
+import com.huawei.codecraft.utils.Utils;
 
 /**
  * @description: 磁力模型主要用来防止碰撞，满足以下要求

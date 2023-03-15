@@ -1,6 +1,5 @@
 package com.huawei.codecraft;
 
-import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
@@ -11,13 +10,13 @@ import java.util.Map;
 import java.util.Scanner;
 
 import com.huawei.codecraft.action.Action;
+import com.huawei.codecraft.action.MagneticForce;
+import com.huawei.codecraft.action.MagneticForceModel;
 import com.huawei.codecraft.agent.Robot;
 import com.huawei.codecraft.agent.Workbench;
 import com.huawei.codecraft.task.Dispatcher;
 import com.huawei.codecraft.utils.Coordinate;
 import com.huawei.codecraft.utils.Utils;
-import com.huawei.codecraft.utils.MagneticForce;
-import com.huawei.codecraft.utils.MagneticForceModel;
 
 public class Context {
     private Scanner inStream;

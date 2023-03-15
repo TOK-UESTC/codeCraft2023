@@ -1,21 +1,13 @@
 package com.huawei.codecraft.agent;
 
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileWriter;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Date;
-
-import javax.rmi.CORBA.Util;
 
 import com.huawei.codecraft.action.Action;
+import com.huawei.codecraft.action.MagneticForce;
 import com.huawei.codecraft.constants.ActionType;
 import com.huawei.codecraft.task.Task;
 import com.huawei.codecraft.task.TaskChain;
 import com.huawei.codecraft.utils.Coordinate;
-import com.huawei.codecraft.utils.MagneticForce;
-import com.huawei.codecraft.utils.Utils;
 import com.huawei.codecraft.utils.Velocity;
 
 public class Robot {

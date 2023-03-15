@@ -1,4 +1,4 @@
-package com.huawei.codecraft.utils;
+package com.huawei.codecraft.action;
 
 public class MagneticForce {
     private double Fx;
