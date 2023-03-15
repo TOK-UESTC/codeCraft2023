@@ -82,6 +82,7 @@ public class Robot {
         actions.clear();
         // // 测试代码，直接前进至(0, 0)
         actions.addAll(moveTo(magneticForce));
+
     }
 
     // 输入目标虚拟力，产生需要的Action(前进与转向)
@@ -220,9 +221,20 @@ public class Robot {
         return actions;
     }
 
+    public void addAction(Action actions) {
+        this.actions.add(actions);
+    }
+
     /** 绑定任务链 */
     public void bindChain(TaskChain taskChain) {
         this.taskChain = taskChain;
+        // 机器人绑定任务链的时候就会分配任务
+        this.task = taskChain.getTasks().get(0);
+    }
+
+    /** 获取当前任务链 */
+    public TaskChain getTaskChain() {
+        return taskChain;
     }
 
     /**

@@ -14,6 +14,7 @@ import com.huawei.codecraft.action.MagneticForce;
 import com.huawei.codecraft.action.MagneticForceModel;
 import com.huawei.codecraft.agent.Robot;
 import com.huawei.codecraft.agent.Workbench;
+import com.huawei.codecraft.constants.ActionType;
 import com.huawei.codecraft.task.Dispatcher;
 import com.huawei.codecraft.utils.Coordinate;
 import com.huawei.codecraft.utils.Utils;
@@ -169,12 +170,44 @@ public class Context {
             // magneticForce =
             // magneticForce.add(MagneticForceModel.wallMagneticForceEquation(rb));
             // 叠加工作台引力
+
+            Workbench wb;
+            if (rb.getTask() == null) {
+                continue;
+            }
+            if (rb.getProductType() == 0) {
+                wb = rb.getTask().getFrom();
+                // 判断是否在目标工作台附近
+                if (rb.getWorkbenchIdx() == wb.getWorkbenchIdx()) {
+                    // 购买行为
+                    // rb.getActions().add(new Action(ActionType.BUY));
+                    rb.addAction(new Action(ActionType.BUY));
+                }
+            } else {
+                wb = rb.getTask().getTo();
+                if (rb.getWorkbenchIdx() == wb.getWorkbenchIdx()) {
+                    // 售出行为
+                    // rb.getActions().add(new Action(ActionType.SELL));
+                    rb.addAction(new Action(ActionType.SELL));
+                    // 如果有后续任务链，进行购买
+                    wb.setInTaskChain(false);
+                    rb.getTaskChain().getTasks().remove(0);
+                    // 判断是否存在后续任务
+                    if (rb.getTaskChain().getTasks().size() > 0) {
+                        // 设置任务，进行购买
+                        rb.setTask(rb.getTaskChain().getTasks().get(0));
+                        // rb.getActions().add(new Action(ActionType.BUY));
+                        rb.addAction(new Action(ActionType.BUY));
+                    } else {
+                        // 任务链完成，清空任务链
+                        rb.setTask(null);
+                    }
+                }
+            }
             magneticForce = magneticForce.add(MagneticForceModel.workbenchMagneticForceEquation(rb,
-                    workbenchList.get(20)));
-            // // 决策
-
+                    wb));
+            // 机器人根据虚拟力进行动作控制
             rb.step(magneticForce);
-
             // 打印决策
             for (Action a : rb.getActions()) {
                 printLine(a.toString(i));

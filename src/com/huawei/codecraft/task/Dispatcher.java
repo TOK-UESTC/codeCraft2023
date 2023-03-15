@@ -59,6 +59,10 @@ public class Dispatcher {
             // 构建任务链
             Map<Robot, PriorityQueue<TaskChain>> chainsMap = generateTaskChains();
 
+            if (chainsMap == null) {
+                return;
+            }
+
             // TODO: 找出所有机器人中任务链中效益最高的，优先分配
 
             // 分配任务链
@@ -96,6 +100,10 @@ public class Dispatcher {
         for (Robot rb : freeRobots) {
             PriorityQueue<TaskChain> oldTaskChainList = taskChainQueueMap.get(rb);
             PriorityQueue<TaskChain> newTaskChainList = new PriorityQueue<TaskChain>();
+
+            if (oldTaskChainList == null) {
+                continue;
+            }
 
             for (TaskChain taskChain : oldTaskChainList) {
                 boolean addNewTaskChain = false;
@@ -213,6 +221,10 @@ public class Dispatcher {
                     }
                 }
 
+                if (taskReceiver == null) {
+                    continue;
+                }
+
                 // 更新任务最快完成时间
                 double finishFrame = minFrame + task.getDistance() / Const.MAX_FORWARD_FRAME;
                 TaskChain taskChain = new TaskChain(taskReceiver, finishFrame);
@@ -227,6 +239,11 @@ public class Dispatcher {
                     taskChainQueueMap.put(taskReceiver, taskChainQueue);
                 }
             }
+        }
+
+        // 如果没有任务链，直接返回
+        if (taskChainQueueMap.isEmpty()) {
+            return null;
         }
 
         // 这里更新两次是因为最长链长为3，减去初始链长1, 所以两次
