@@ -17,7 +17,7 @@ import com.huawei.codecraft.utils.Utils;
  */
 
 public class ForceModel {
-    private static final double K = 0.03; // 电场力常数，可调
+    private static final double K = 0.001; // 电场力常数，可调
     private static final double E = 0.05; // 墙体斥力常数
     private static final double MIN_DISTANCE = 0.5; // 除去半径之后的剩余距离
 
@@ -35,8 +35,17 @@ public class ForceModel {
         // force.add(forceModel.getWallForce(rb));
 
         // 计算工作台引力
+        if (rb.getTask() == null) {
+            return force;
+        }
+        Workbench wb;
+        if (rb.getProductType() == 0) {
+            wb = rb.getTask().getFrom();
+        } else {
+            wb = rb.getTask().getTo();
+        }
         force = force.add(ForceModel.getWorkbenchForce(rb,
-                workbenchList.get(20)));
+                wb));
         return force;
     }
 

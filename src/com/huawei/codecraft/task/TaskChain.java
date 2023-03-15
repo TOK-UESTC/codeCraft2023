@@ -88,6 +88,7 @@ public class TaskChain implements Comparable<TaskChain> {
         for (Task task : taskChain) {
             profit += task.makePredict();
         }
+        profit /= totalFrame;
         return profit;
     }
 

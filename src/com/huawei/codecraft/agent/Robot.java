@@ -75,7 +75,41 @@ public class Robot {
      *
      */
     public void generateShopActions() {
-
+        Workbench wb;
+        if (getTask() == null) {
+            return;
+        }
+        // 去购买
+        if (getProductType() == 0) {
+            wb = getTask().getFrom();
+            // 判断是否在目标工作台附近
+            if (getWorkbenchIdx() == wb.getWorkbenchIdx()) {
+                // 购买行为
+                // getActions().add(new Action(ActionType.BUY));
+                addAction(new Action(ActionType.BUY));
+            }
+            // 去售出
+        } else {
+            wb = getTask().getTo();
+            if (getWorkbenchIdx() == wb.getWorkbenchIdx()) {
+                // 售出行为
+                // getActions().add(new Action(ActionType.SELL));
+                addAction(new Action(ActionType.SELL));
+                // 如果有后续任务链，进行购买
+                wb.setInTaskChain(false);
+                getTaskChain().getTasks().remove(0);
+                // 判断是否存在后续任务
+                if (getTaskChain().getTasks().size() > 0) {
+                    // 设置任务，进行购买
+                    setTask(getTaskChain().getTasks().get(0));
+                    // getActions().add(new Action(ActionType.BUY));
+                    addAction(new Action(ActionType.BUY));
+                } else {
+                    // 任务链完成，清空任务链
+                    setTask(null);
+                }
+            }
+        }
     }
 
     /**
@@ -126,9 +160,20 @@ public class Robot {
         return actions;
     }
 
+    public void addAction(Action actions) {
+        this.actions.add(actions);
+    }
+
     /** 绑定任务链 */
     public void bindChain(TaskChain taskChain) {
         this.taskChain = taskChain;
+        // 机器人绑定任务链的时候就会分配任务
+        this.task = taskChain.getTasks().get(0);
+    }
+
+    /** 获取当前任务链 */
+    public TaskChain getTaskChain() {
+        return taskChain;
     }
 
     /**

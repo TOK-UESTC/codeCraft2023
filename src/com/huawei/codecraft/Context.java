@@ -14,6 +14,7 @@ import com.huawei.codecraft.action.Force;
 import com.huawei.codecraft.action.ForceModel;
 import com.huawei.codecraft.agent.Robot;
 import com.huawei.codecraft.agent.Workbench;
+import com.huawei.codecraft.constants.ActionType;
 import com.huawei.codecraft.task.Dispatcher;
 import com.huawei.codecraft.utils.Coordinate;
 import com.huawei.codecraft.utils.Utils;
