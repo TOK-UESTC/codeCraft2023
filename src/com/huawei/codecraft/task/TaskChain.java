@@ -27,6 +27,15 @@ public class TaskChain implements Comparable<TaskChain> {
         this.totalFrame = chain.getTotalFrame();
     }
 
+    /** 将该任务链上的工作台都置为使用中，避免后续机器人重复领取 */
+    public void occupy() {
+        // TODO： 可优化重复设置，但讲道理好像性能影响应该也不大
+        for (Task task : taskChain) {
+            task.getFrom().setInTaskChain(true);
+            task.getTo().setInTaskChain(true);
+        }
+    }
+
     /**
      * 为任务链添加任务，同时更新任务链完成所需要的总帧数
      * 
@@ -91,6 +100,11 @@ public class TaskChain implements Comparable<TaskChain> {
     @Override
     public int compareTo(TaskChain o) {
         return Double.compare(o.getProfit(), this.getProfit());
+    }
+
+    /** toString，方便写入Log */
+    public String toString() {
+        return "0";
     }
 
 }

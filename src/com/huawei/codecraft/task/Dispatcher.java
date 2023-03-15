@@ -1,5 +1,7 @@
 package com.huawei.codecraft.task;
 
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -16,6 +18,10 @@ import com.huawei.codecraft.utils.Utils;
  * @description: 调度器类
  */
 public class Dispatcher {
+    private boolean saveChain;
+    private String chainPath = "./log/chain.txt";
+    private FileOutputStream chainStream;
+
     private List<Robot> robotList;
     private List<Robot> freeRobots;
     private List<Workbench> workbenchList;
@@ -25,13 +31,19 @@ public class Dispatcher {
     private Map<Integer, List<Task>> taskTypeMap;
 
     public Dispatcher(List<Robot> robotList, List<Workbench> workbenchList,
-            Map<Integer, List<Workbench>> workbenchTypeMap) {
+            Map<Integer, List<Workbench>> workbenchTypeMap, boolean saveChain) {
+        this.saveChain = saveChain;
+
         this.robotList = robotList;
         this.freeRobots = new ArrayList<>();
         this.workbenchList = workbenchList;
 
         this.workbenchTypeMap = workbenchTypeMap;
         this.taskTypeMap = new HashMap<>();
+
+        if (saveChain) {
+            chainStream = Utils.getFileStream(chainPath);
+        }
 
         // 初始化所有任务
         init();
@@ -45,7 +57,27 @@ public class Dispatcher {
         // 有空闲，构建任务链并分配给机器人
         if (freeRobots.isEmpty()) {
             // 构建任务链
-            generateTaskChains();
+            Map<Robot, PriorityQueue<TaskChain>> chainsMap = generateTaskChains();
+
+            // 分配任务链
+            for (Robot rb : chainsMap.keySet()) {
+                // 取出优先队列中的第一个任务链
+                TaskChain chain = chainsMap.get(rb).poll();
+                rb.bindChain(chain);
+
+                // 占用工作台
+                chain.occupy();
+
+                // 将分配的chain写入到log中
+                if (saveChain) {
+                    try {
+                        chainStream.write((chain.toString() + '\n').getBytes());
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+
+            }
         }
     }
 

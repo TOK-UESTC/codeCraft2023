@@ -1,5 +1,8 @@
 package com.huawei.codecraft.utils;
 
+import java.io.File;
+import java.io.FileOutputStream;
+
 public class Utils {
     /** 计算距离 */
     public static double computeDistance(Coordinate p1, Coordinate p2) {
@@ -33,5 +36,27 @@ public class Utils {
         }
 
         return types;
+    }
+
+    /** 返回Log所用文件的stream，方便写入 */
+    public static FileOutputStream getFileStream(String path) {
+        try {
+            File file = new File(path);
+            // 不存在文件，创建目录
+            if (!file.exists()) {
+                File dir = new File(file.getParent());
+                dir.mkdirs();
+            } else {
+                // 文件存在，删除文件
+                file.delete();
+            }
+            // 创建新的日志文件
+            file.createNewFile();
+
+            return new FileOutputStream(file);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
     }
 }
