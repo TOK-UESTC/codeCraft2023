@@ -90,7 +90,7 @@ public class TaskChain implements Comparable<TaskChain> {
      */
     @Override
     public int compareTo(TaskChain o) {
-        return Double.compare(this.getProfit(), o.getProfit());
+        return Double.compare(o.getProfit(), this.getProfit());
     }
 
 }
