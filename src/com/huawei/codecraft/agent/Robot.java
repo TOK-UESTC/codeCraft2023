@@ -2,9 +2,10 @@ package com.huawei.codecraft.agent;
 
 import java.util.ArrayList;
 
+import com.huawei.codecraft.action.Action;
 import com.huawei.codecraft.constants.ActionType;
 import com.huawei.codecraft.task.Task;
-import com.huawei.codecraft.utils.Action;
+import com.huawei.codecraft.task.TaskChain;
 import com.huawei.codecraft.utils.Coordinate;
 import com.huawei.codecraft.utils.Velocity;
 
@@ -19,6 +20,7 @@ public class Robot {
     private double heading; // 朝向 [-pi, pi] 0 表示右方向, pi/2表示上方向
     private Coordinate pos; // 机器人坐标位置
     private Task task; // 机器人当前任务
+    private TaskChain taskChain; // 任务链
     private ArrayList<Action> actions; // 机器人当前动作序列
 
     public Robot(Coordinate pos) {
@@ -31,6 +33,7 @@ public class Robot {
         this.velocity = null;
         this.heading = 0;
         this.task = null;
+        this.taskChain = null;
         this.actions = new ArrayList<Action>();
     }
 
@@ -58,6 +61,11 @@ public class Robot {
     /** 获取动作列表 */
     public ArrayList<Action> getActions() {
         return actions;
+    }
+
+    /** 绑定任务链 */
+    public void bindChain(TaskChain taskChain) {
+        this.taskChain = taskChain;
     }
 
     /**

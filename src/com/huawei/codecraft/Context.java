@@ -1,18 +1,28 @@
 package com.huawei.codecraft;
 
-import java.io.*;
-import java.util.*;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.PrintStream;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Scanner;
 
+import com.huawei.codecraft.action.Action;
 import com.huawei.codecraft.agent.Robot;
 import com.huawei.codecraft.agent.Workbench;
 import com.huawei.codecraft.task.Dispatcher;
-import com.huawei.codecraft.utils.Action;
 import com.huawei.codecraft.utils.Coordinate;
+import com.huawei.codecraft.utils.Utils;
 
 public class Context {
     private Scanner inStream;
     private PrintStream outStream;
     private boolean saveLog;
+    private boolean saveChain;
+
     private int frameId;
     private int money;
 
@@ -31,7 +41,7 @@ public class Context {
 
     private Dispatcher dispatcher;
 
-    Context(Scanner inStream, PrintStream outStream, boolean saveLog) {
+    Context(Scanner inStream, PrintStream outStream, boolean saveLog, boolean saveChain) {
         frameId = 0;
         money = 0;
 
@@ -41,7 +51,8 @@ public class Context {
 
         // 创建输入输出日志文件
         if (saveLog) {
-            initLogger();
+            loginStream = Utils.getFileStream(inFilePath);
+            logoutStream = Utils.getFileStream(outFilePath);
         }
     }
 
@@ -96,7 +107,7 @@ public class Context {
             row++;
         }
 
-        dispatcher = new Dispatcher(robotList, workbenchList, workbenchTypeMap);
+        dispatcher = new Dispatcher(robotList, workbenchList, workbenchTypeMap, saveChain);
 
         endStep();
     }
@@ -171,31 +182,6 @@ public class Context {
     public void endStep() {
         printLine("OK");
         outStream.flush();
-    }
-
-    /** 初始化log */
-    public void initLogger() {
-        try {
-            File inFile = new File(inFilePath);
-            File outFile = new File(outFilePath);
-            // 不存在文件，创建目录
-            if (!inFile.exists()) {
-                File dir = new File(inFile.getParent());
-                dir.mkdirs();
-            } else {
-                // 文件存在，删除文件
-                inFile.delete();
-                outFile.delete();
-            }
-            // 创建新的日志文件
-            inFile.createNewFile();
-            outFile.createNewFile();
-
-            loginStream = new FileOutputStream(inFile);
-            logoutStream = new FileOutputStream(outFile);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
     }
 
     /** readline包装，方便log */
