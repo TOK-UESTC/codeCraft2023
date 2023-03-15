@@ -1,16 +1,12 @@
 package com.huawei.codecraft.utils;
 
 public class Utils {
-    /**
-     * @description: 计算距离
-     */
+    /** 计算距离 */
     public static double computeDistance(Coordinate p1, Coordinate p2) {
         return Math.sqrt(Math.pow(p1.getX() - p2.getX(), 2) + Math.pow(p1.getY() - p2.getY(), 2));
     }
 
-    /**
-     * @description: 返回可收购给定类型工作台产物的工作台类型
-     */
+    /** 返回可收购给定类型工作台产物的工作台类型 */
     public static int[] getDeliverableType(int wbType) {
         int[] types = null;
         switch (wbType) {

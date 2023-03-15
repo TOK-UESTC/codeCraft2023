@@ -1,9 +1,10 @@
 package com.huawei.codecraft;
 
-import java.io.*;
-import java.util.*;
+import java.io.BufferedOutputStream;
+import java.io.PrintStream;
+import java.util.Scanner;
 
-import com.huawei.codecraft.utils.MyTimer;
+import com.huawei.codecraft.utils.Statistics;
 
 public class Main {
 
@@ -18,7 +19,7 @@ public class Main {
 
     private static final int totalFrame = 50 * 60 * 3;
     private static final Context ctx = new Context(inStream, outStream, saveLog);
-    private static final MyTimer timer = new MyTimer(totalFrame);
+    private static final Statistics statistics = new Statistics(totalFrame);
 
     public static void main(String[] args) {
         ctx.init(); // 初始化地图
@@ -32,10 +33,11 @@ public class Main {
             ctx.step();
 
             if (showTime) {
-                timer.showTime();
+                statistics.showTime();
             }
         }
 
-        timer.showStatic();
+        // 显示统计信息
+        statistics.showStatic();
     }
 }

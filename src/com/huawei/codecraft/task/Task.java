@@ -8,7 +8,7 @@ import com.huawei.codecraft.constants.Const;
 import com.huawei.codecraft.utils.Utils;
 
 /**
- * @description: 模型结构，主要对地图信息数据结构建模
+ * @description: 任务对象
  */
 public class Task {
     private Workbench from; // 任务来源
@@ -48,10 +48,12 @@ public class Task {
         this.to = source.to;
     }
 
+    /** 获取后续任务列表 */
     public List<Task> getPostTaskList() {
         return postTaskList;
     }
 
+    /** 设定后续任务 */
     public void setPostTaskList(List<Task> postTaskList) {
         if (postTaskList == null) {
             return;
@@ -59,27 +61,42 @@ public class Task {
         this.postTaskList = postTaskList;
     }
 
+    /** 获取任务来源工作台 */
     public Workbench getFrom() {
         return from;
     }
 
+    /** 获取任务目标工作台 */
     public Workbench getTo() {
         return to;
     }
 
-    // 返回生产物品，实则就是工作台类型
+    /** 获取来源工作台索引 */
+    public int getFromIdx() {
+        return from.getWorkbenchIdx();
+    }
+
+    /** 获取目标工作台索引 */
+    public int getToIdx() {
+        return to.getWorkbenchIdx();
+    }
+
+    /** 返回生产物品，实则就是来源工作台类型 */
     public int getProductType() {
         return from.getType();
     }
 
+    /** TODO: 获取任务优先级？ */
     public double getPriority() {
         return priority;
     }
 
+    /** 设置任务优先级 */
     public void setPriority(double priority) {
         this.priority = priority;
     }
 
+    /** 根据给定因子获取收益 */
     public double getProfit(double timeCoefficients, double collisionCoefficients) {
         return sellPrice * timeCoefficients * collisionCoefficients - price;
     }
@@ -101,14 +118,12 @@ public class Task {
         return (sellPrice * timeCoefficient) - price;
     }
 
-    public double getPrice() {
-        return price;
-    }
-
+    /** 获取任务距离 */
     public double getDistance() {
         return distance;
     }
 
+    /**  */
     public boolean isVisited() {
         return visited;
     }

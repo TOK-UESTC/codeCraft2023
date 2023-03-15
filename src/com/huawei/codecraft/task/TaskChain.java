@@ -37,35 +37,42 @@ public class TaskChain implements Comparable<TaskChain> {
         this.totalFrame += task.getDistance() / Const.MAX_FORWARD_FRAME;
     }
 
+    /** 任务链长度 */
     public int length() {
         return this.taskChain.size();
     }
 
+    /** 获取任务链 */
     public List<Task> getTasks() {
         return taskChain;
     }
 
+    /** 设定任务链 */
     public void setTaskChain(List<Task> taskChain) {
         this.taskChain = taskChain;
     }
 
+    /** 完成任务预估需要的帧数 */
     public double getTotalFrame() {
         return totalFrame;
     }
 
+    /** 设定预估帧数 */
     public void setTotalFrame(double totalFrame) {
         this.totalFrame = totalFrame;
     }
 
+    /** 获取当前chain派发的机器人 */
     public Robot getRobot() {
         return Robot;
     }
 
+    /** 设定负责机器人 */
     public void setRobot(Robot robot) {
         Robot = robot;
     }
 
-    // 在初始化的时候调用
+    /** 当前task的预估收益 */
     public double getProfit() {
         double profit = 0.0;
 
@@ -76,7 +83,7 @@ public class TaskChain implements Comparable<TaskChain> {
     }
 
     /**
-     * 实现任务链排序，当前只是使用了任务链的总收益
+     * 实现任务链排序，当前只是使用了任务链的预估收益
      *
      * @param o 比较对象
      * @return

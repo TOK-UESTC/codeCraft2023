@@ -1,17 +1,18 @@
 package com.huawei.codecraft.utils;
 
-public class MyTimer {
+public class Statistics {
     private long startTime;
     private long lastTime;
     private int totalFrame;
 
-    public MyTimer(int totalFrame) {
+    public Statistics(int totalFrame) {
         this.totalFrame = totalFrame;
 
         startTime = System.nanoTime();
         lastTime = System.nanoTime();
     }
 
+    /** 显示每轮的计算时间 */
     public void showTime() {
         long endTime = System.nanoTime();
         System.err.printf("time: [%.3f]ms\n", (endTime - lastTime) / 1000000.0);
@@ -19,6 +20,7 @@ public class MyTimer {
         lastTime = endTime;
     }
 
+    /** 显示时间统计信息 */
     public void showStatic() {
         double totalTime = (System.nanoTime() - startTime) / 1000000.0;
         double avgTime = totalTime / totalFrame;

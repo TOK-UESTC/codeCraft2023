@@ -29,18 +29,14 @@ public class Workbench {
         this.inTaskChain = false;
     }
 
-    /**
-     * @apiNote 只更新剩余生产时间，原材料状态以及产品格状态
-     */
+    /** 只更新剩余生产时间，原材料状态以及产品格状态 */
     public void update(String[] info) {
         this.rest = Integer.parseInt(info[3]);
         this.materialStatus = translateMaterialStatus(info[4]);
         this.productStatus = Integer.parseInt(info[5]);
     }
 
-    /**
-     * @description: 将二进制表示的原材料转换为对应的type，并存储到list中
-     */
+    /** 将二进制表示的原材料转换为对应的type，并存储到list中 */
     public List<Integer> translateMaterialStatus(String stringStatus) {
         int intStatus = Integer.parseInt(stringStatus);
         ArrayList<Integer> result = new ArrayList<>();
@@ -55,46 +51,57 @@ public class Workbench {
         return result;
     }
 
+    /** 查看是否含有某个原材料 */
     public boolean hasMaterial(int type) {
         return materialStatus.contains(type);
     }
 
+    /** 是否空闲，rest==-1 */
     public boolean isFree() {
         return rest == -1;
     }
 
+    /** 是否已经有产物, productStatus==1 */
     public boolean isReady() {
         return productStatus == 1;
     }
 
+    /** 添加该工作台的可选任务 */
     public void addTask(Task task) {
         optionalTasks.add(task);
     }
 
+    /** 获取该工作台的所有可选任务 */
     public List<Task> getTasks() {
         return optionalTasks;
     }
 
+    /** 获取工作台类型 */
     public int getType() {
         return type;
     }
 
+    /** 获取工作台位置 */
     public Coordinate getPos() {
         return pos;
     }
 
+    /** 获取工作台剩余工作时间 */
     public int getRest() {
         return rest;
     }
 
+    /** 获取工作台index */
     public int getWorkbenchIdx() {
         return workbenchIdx;
     }
 
+    /** 当前工作台是否在工作链中 */
     public boolean isInTaskChain() {
         return inTaskChain;
     }
 
+    /** 设定当前工作台是否在工作链中 */
     public void setInTaskChain(boolean inTaskChain) {
         this.inTaskChain = inTaskChain;
     }

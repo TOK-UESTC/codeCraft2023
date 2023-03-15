@@ -45,10 +45,10 @@ public class Context {
         }
     }
 
+    /** 进行初始化，读取地图 */
     public void init() {
         int row = 0; // 地图行数
         double x, y; // 地图坐标
-        int robotCount = 0; // 机器人数量
         int workbenchCount = 0; // 工作台数量
 
         String line;
@@ -73,7 +73,7 @@ public class Context {
                         break;
                     // 机器人
                     case 'A':
-                        Robot robot = new Robot(new Coordinate(x, y), robotCount++);
+                        Robot robot = new Robot(new Coordinate(x, y));
                         robotList.add(robot);
                         break;
                     // 工作台
@@ -101,7 +101,7 @@ public class Context {
         endStep();
     }
 
-    // 与判题器交互，更新信息
+    /** 与判题器交互，更新信息 */
     public void update() {
         String line;
         line = readLine();
@@ -136,6 +136,7 @@ public class Context {
         }
     }
 
+    /** 发起决策过程 */
     public void step() {
         printLine(String.format("%d", frameId));
 
@@ -156,19 +157,23 @@ public class Context {
         endStep();
     }
 
+    /** 获取当前frame */
     public int getFrame() {
         return frameId;
     }
 
+    /** 获取当前资金 */
     public int getMoney() {
         return money;
     }
 
+    /** 指令结束，发送OK */
     public void endStep() {
         printLine("OK");
         outStream.flush();
     }
 
+    /** 初始化log */
     public void initLogger() {
         try {
             File inFile = new File(inFilePath);
@@ -193,6 +198,7 @@ public class Context {
         }
     }
 
+    /** readline包装，方便log */
     public String readLine() {
         String line = inStream.nextLine();
         if (saveLog) {
@@ -205,6 +211,7 @@ public class Context {
         return line;
     }
 
+    /** printline包装，方便log */
     public void printLine(String out) {
         outStream.println(out);
         if (saveLog) {

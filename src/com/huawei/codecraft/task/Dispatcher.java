@@ -12,7 +12,7 @@ import com.huawei.codecraft.agent.Workbench;
 import com.huawei.codecraft.constants.Const;
 import com.huawei.codecraft.utils.Utils;
 
-/*
+/**
  * @description: 调度器类
  */
 public class Dispatcher {
@@ -37,7 +37,7 @@ public class Dispatcher {
         init();
     }
 
-    // 任务分配
+    /** 开始任务分配 */
     public void dispatch() {
         // 筛选空闲机器人，供后续使用
         updateFreeBot();
@@ -49,16 +49,14 @@ public class Dispatcher {
         }
     }
 
+    /** 筛选空闲机器人 */
     public void updateFreeBot() {
-        // 筛选空闲机器人
         this.freeRobots = robotList.stream()
-                .filter((Robot rb) -> rb.isBusy())
+                .filter((Robot rb) -> rb.isFree())
                 .collect(Collectors.toList());
     }
 
-    /**
-     * @description: 在获取到初始任务链后，更新任务链，增加任务链长度
-     */
+    /** 在获取到初始任务链后，更新任务链，增加任务链长度 */
     private void updateTaskChain(Map<Robot, PriorityQueue<TaskChain>> taskChainQueueMap) {
         // 以机器人的初始任务链为单位, 添加后续任务
         for (Robot rb : freeRobots) {
@@ -105,10 +103,7 @@ public class Dispatcher {
         }
     }
 
-    /**
-     * @description: 初始化每个工作台的内容，主要完成每个工作台的产品去向以及他们之间的距离初始化，方便后面复用。
-     *
-     */
+    /** 初始化每个工作台的内容，主要完成每个工作台的产品去向以及他们之间的距离初始化，方便后面复用。 */
     public void init() {
         for (Workbench wb : workbenchList) {
             int wbType = wb.getType();
@@ -148,6 +143,7 @@ public class Dispatcher {
         }
     }
 
+    /** 生成初始任务链 */
     public Map<Robot, PriorityQueue<TaskChain>> generateTaskChains() {
         // key: 执行任务的机器人, value: 任务链列表
         Map<Robot, PriorityQueue<TaskChain>> taskChainQueueMap = new HashMap<>();

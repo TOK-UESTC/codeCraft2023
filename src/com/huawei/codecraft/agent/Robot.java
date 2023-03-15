@@ -10,33 +10,31 @@ import com.huawei.codecraft.utils.Velocity;
 
 public class Robot {
 
-    private int robotIdx; // 机器人下标
     private int workbenchIdx; // 所处工作台下标, -1表示没有处于任何工作台, [0, K-1]表是某工作台下标
     private int productType; // 携带物品类型[0, 7], 0表示未携带物品
     private double timeCoefficients; // 时间价值系数 [0.8, 1]
     private double collisionCoefficients; // 碰撞价值系数 [0.8, 1]
     private double angularVelocity; // 角速度 单位：弧度每秒， 正数表示顺时针， 负数表示逆时针
     private Velocity velocity; // 线速度， 二维向量描述, m/s
-    private double forward; // 朝向 [-pi, pi] 0 表示右方向, pi/2表示上方向
+    private double heading; // 朝向 [-pi, pi] 0 表示右方向, pi/2表示上方向
     private Coordinate pos; // 机器人坐标位置
     private Task task; // 机器人当前任务
     private ArrayList<Action> actions; // 机器人当前动作序列
 
-    public Robot(Coordinate pos, int robotIdx) {
+    public Robot(Coordinate pos) {
         this.pos = pos;
-        this.robotIdx = robotIdx;
         this.workbenchIdx = -1;
         this.productType = 0;
         this.timeCoefficients = 1;
         this.collisionCoefficients = 1;
         this.angularVelocity = 0;
         this.velocity = null;
-        this.forward = 0;
+        this.heading = 0;
         this.task = null;
         this.actions = new ArrayList<Action>();
     }
 
-    // 更新所有数据
+    /** 更新所有数据 */
     public void update(String[] info) {
         this.workbenchIdx = Integer.parseInt(info[0]);
         this.productType = Integer.parseInt(info[1]);
@@ -44,14 +42,11 @@ public class Robot {
         this.collisionCoefficients = Double.parseDouble(info[3]);
         this.angularVelocity = Double.parseDouble(info[4]);
         this.velocity = new Velocity(Double.parseDouble(info[5]), Double.parseDouble(info[6]));
-        this.forward = Double.parseDouble(info[7]);
+        this.heading = Double.parseDouble(info[7]);
         this.pos = new Coordinate(Double.parseDouble(info[8]), Double.parseDouble(info[9]));
     }
 
-    /**
-     * @description: 机器人根据当前任务和状态进行动作决策
-     *               将决策Action输入到列表中，等待执行
-     */
+    /** 机器人根据当前任务和状态进行动作决策。将决策Action输入到列表中，等待执行 */
     public void step() {
         // 清空动作列表
         actions.clear();
@@ -60,16 +55,22 @@ public class Robot {
         actions.add(new Action(ActionType.FORWARD, 6));
     }
 
+    /** 获取动作列表 */
     public ArrayList<Action> getActions() {
         return actions;
     }
 
-    public boolean isBusy() {
+    /**
+     * 当前机器人是否分配有任务
+     * 
+     * @return: true = free
+     */
+    public boolean isFree() {
         return task == null;
     }
 
     /**
-     * @description: 获取机器人当前收益
+     * 获取机器人当前收益
      *
      * @param: Max，当两个系数都为1的时候的最大收益
      */
@@ -83,42 +84,52 @@ public class Robot {
         }
     }
 
+    /** 返回当前所处的工作台id */
     public int getWorkbenchIdx() {
         return workbenchIdx;
     }
 
+    /** 获取当前携带的物品种类 */
     public int getProductType() {
         return productType;
     }
 
+    /** 获取时间因子 */
     public double getTimeCoefficients() {
         return timeCoefficients;
     }
 
+    /** 获取碰撞因子 */
     public double getCollisionCoefficients() {
         return collisionCoefficients;
     }
 
+    /** 获取角速度 */
     public double getAngularVelocity() {
         return angularVelocity;
     }
 
+    /** 获取线速度 */
     public Velocity getVelocity() {
         return velocity;
     }
 
-    public double getForward() {
-        return forward;
+    /** 获取当前朝向 */
+    public double getHeading() {
+        return heading;
     }
 
+    /** 获取位置 */
     public Coordinate getPos() {
         return pos;
     }
 
+    /** 设定机器人当前任务 */
     public void setTask(Task task) {
         this.task = task;
     }
 
+    /** 获取机器人当前任务 */
     public Task getTask() {
         return task;
     }

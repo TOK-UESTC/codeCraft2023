@@ -11,12 +11,13 @@ public class Action {
         this.value = value;
     }
 
-    // 给不需要参数的动作使用, e.g. buy, sell, destroy
+    /** 给不需要参数的动作使用, e.g. buy, sell, destroy */
     public Action(ActionType type) {
         this.type = type;
         this.value = 0;
     }
 
+    /** 输出为字符串，方便直接调用 */
     public String toString(int robotId) {
         switch (type) {
             case FORWARD:
