@@ -1,15 +1,15 @@
 package com.huawei.codecraft.action;
 
-public class MagneticForce {
+public class Force {
     private double Fx;
     private double Fy;
 
-    public MagneticForce() {
+    public Force() {
         this.Fx = 0;
         this.Fy = 0;
     }
 
-    public MagneticForce(double fx, double fy) {
+    public Force(double fx, double fy) {
         this.Fx = fx;
         this.Fy = fy;
     }
@@ -30,12 +30,12 @@ public class MagneticForce {
         Fy = fy;
     }
 
-    public MagneticForce add(MagneticForce m) {
-        return new MagneticForce(Fx + m.Fx, Fy + m.Fy);
+    public Force add(Force m) {
+        return new Force(Fx + m.Fx, Fy + m.Fy);
     }
 
-    public MagneticForce sub(MagneticForce m) {
-        return new MagneticForce(Fx - m.Fx, Fy - m.Fy);
+    public Force sub(Force m) {
+        return new Force(Fx - m.Fx, Fy - m.Fy);
     }
 
     // 返回力的模

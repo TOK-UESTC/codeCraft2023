@@ -3,8 +3,9 @@ package com.huawei.codecraft.agent;
 import java.util.ArrayList;
 
 import com.huawei.codecraft.action.Action;
-import com.huawei.codecraft.action.MagneticForce;
+import com.huawei.codecraft.action.Force;
 import com.huawei.codecraft.constants.ActionType;
+import com.huawei.codecraft.constants.Const;
 import com.huawei.codecraft.task.Task;
 import com.huawei.codecraft.task.TaskChain;
 import com.huawei.codecraft.utils.Coordinate;
@@ -60,160 +61,65 @@ public class Robot {
     }
 
     /** 机器人根据当前任务和状态进行动作决策。将决策Action输入到列表中，等待执行 */
-    public void step() {
+    public void step(Force force) {
         // 清空动作列表
         actions.clear();
 
-        // TODO: 决策，添加到Actions中
-        actions.add(new Action(ActionType.FORWARD, 6));
+        // 更新action列表
+        generateShopActions();
+        generateMoveActions(force);
     }
 
-    // 动作规划测试使用
-    public void step(Coordinate destination) {
-        // 清空动作列表
-        actions.clear();
-        // // 测试代码，直接前进至(0, 0)
-        // actions.addAll(moveTo(destination));
+    /**
+     * 根据当前任务链执行情况，生成货物Action
+     *
+     */
+    public void generateShopActions() {
+
     }
 
-    // 动作规划测试使用
-    public void step(MagneticForce magneticForce) {
-        // 清空动作列表
-        actions.clear();
-        // // 测试代码，直接前进至(0, 0)
-        actions.addAll(moveTo(magneticForce));
-    }
+    /**
+     * 根据虚拟力，计算前进与转向Action
+     *
+     * @param 虚拟力
+     *
+     */
+    private void generateMoveActions(Force force) {
+        // 计算角度误差
+        double angle = force.getAngle();
+        double error = heading - angle;
 
-    // 输入目标虚拟力，产生需要的Action(前进与转向)
-    private ArrayList<Action> moveTo(MagneticForce magneticForce) {
-        ArrayList<Action> actions = new ArrayList<Action>();
-        // 比较当前位置与目标位置的距离
-        double distance = magneticForce.getMod();
-        // 如果距离小于0.4,就停止,死区,这一帧实际上应该执行任务,获取新任务,运动可以不静止
-        if (distance < 0.4) {
-            // 速度归零,角速度归零
-            actions.add(new Action(ActionType.FORWARD, 0));
-            actions.add(new Action(ActionType.ROTATE, 0));
-        } else {
-            // 比较当前朝向与目标朝向的角度,用坐标计算得到的也是依照原有坐标轴的角度
-            double angle = magneticForce.getAngle();
-            double error = heading - angle;
-            if (error > Math.PI) {
-                error = error - 2 * Math.PI;
-            } else if (error < -Math.PI) {
-                error = error + 2 * Math.PI;
-            }
-            // 角度环控制
-            double angularVelocity = -(Kp * error + Ki * integral + Kd * (error - lastError));
-            lastError = error;
-            integral += error;
-            // 积分值上限
-            integral = Math.min(integral, integralMax);
-            integral = Math.max(integral, -integralMax);
-            // // 产生转向动作
-            // actions.add(new Action("rotate", angularVelocity));
-            // // 角度大的时候速度小防止转圈
-            // double linespeed = 6 * Math.abs(1 / angularVelocity);
-            // // 产生前进动作
-            // actions.add(new Action("forward", linespeed));
-            // 区分钝角锐角情况
-            if (Math.abs(error) > Math.PI / 32) {
-                // 如果角速度变化过大，就不进行角度修正,判断标准是角速度发生了正负的大变化
-                // 产生转向动作
-                actions.add(new Action(ActionType.ROTATE, angularVelocity));
-                actions.add(new Action(ActionType.FORWARD, 0));
-                // 速度满足角度差越大速度就越小
-                // double linespeed = -6 * Math.abs(1 / angularVelocity);
-                // // // 产生前进动作
-                // actions.add(new Action("forward", linespeed));
-            } else {
-                // 产生转向动作
-                actions.add(new Action(ActionType.ROTATE, angularVelocity));
-                // 角度大的时候速度小防止转圈
-                double linespeed = 6 * Math.abs(1 / angularVelocity);
-                // 产生前进动作
-                actions.add(new Action(ActionType.FORWARD, linespeed));
-            }
-            // PID观察文件
-            // File file = new
-            // File("C:\\Users\\cyz\\Desktop\\软挑\\WindowsRelease\\PID\\pid.txt");
-            // try {
-            // BufferedWriter bw = new BufferedWriter(new FileWriter(file, true));
-            // bw.write(angle + " " + forward + " " + error + " " + angularVelocity + " " +
-            // distance + "\r");
-            // bw.flush();
-            // bw.close();
-            // } catch (Exception e) {
-            // e.printStackTrace();
-            // }
+        if (error > Math.PI) {
+            error = error - 2 * Math.PI;
+        } else if (error < -Math.PI) {
+            error = error + 2 * Math.PI;
         }
-        return actions;
-    }
 
-    // 输入目标地址，产生需要的Action(前进与转向)
-    private ArrayList<Action> moveTo(Coordinate target) {
-        ArrayList<Action> actions = new ArrayList<Action>();
-        // 比较当前位置与目标位置的距离
-        double distance = pos.distance(target);
-        // 如果距离小于0.4,就停止,死区,这一帧实际上应该执行任务,获取新任务,运动可以不静止
-        if (distance < 0.4) {
-            // 速度归零,角速度归零
+        // 角度环控制
+        double angularVelocity = -(Kp * error + Ki * integral + Kd * (error - lastError));
+        lastError = error;
+        integral += error;
+        // 积分值上限
+        integral = Math.min(integral, integralMax);
+        integral = Math.max(integral, -integralMax);
+
+        // 如果角速度变化过大，就不进行角度修正,判断标准是角速度发生了正负的大变化
+        if (Math.abs(error) > Math.PI / 32) {
+            // 产生转向动作
+            actions.add(new Action(ActionType.ROTATE, angularVelocity));
             actions.add(new Action(ActionType.FORWARD, 0));
-            actions.add(new Action(ActionType.ROTATE, 0));
+            // 速度满足角度差越大速度就越小
+            // double lineSpeed = -6 * Math.abs(1 / angularVelocity);
+            // // // 产生前进动作
+            // actions.add(new Action("forward", lineSpeed));
         } else {
-            // 比较当前朝向与目标朝向的角度,用坐标计算得到的也是依照原有坐标轴的角度
-            double angle = pos.angle(target);
-            double error = heading - angle;
-            if (error > Math.PI) {
-                error = error - 2 * Math.PI;
-            } else if (error < -Math.PI) {
-                error = error + 2 * Math.PI;
-            }
-            // 角度环控制
-            double angularVelocity = -(Kp * error + Ki * integral + Kd * (error - lastError));
-            lastError = error;
-            integral += error;
-            // 积分值上限
-            integral = Math.min(integral, integralMax);
-            integral = Math.max(integral, -integralMax);
-            // // 产生转向动作
-            // actions.add(new Action("rotate", angularVelocity));
-            // // 角度大的时候速度小防止转圈
-            // double linespeed = 6 * Math.abs(1 / angularVelocity);
-            // // 产生前进动作
-            // actions.add(new Action("forward", linespeed));
-            // 区分钝角锐角情况
-            if (Math.abs(error) > Math.PI / 32) {
-                // 如果角速度变化过大，就不进行角度修正,判断标准是角速度发生了正负的大变化
-                // 产生转向动作
-                actions.add(new Action(ActionType.ROTATE, angularVelocity));
-                actions.add(new Action(ActionType.FORWARD, 0));
-                // 速度满足角度差越大速度就越小
-                // double linespeed = -6 * Math.abs(1 / angularVelocity);
-                // // // 产生前进动作
-                // actions.add(new Action("forward", linespeed));
-            } else {
-                // 产生转向动作
-                actions.add(new Action(ActionType.ROTATE, angularVelocity));
-                // 角度大的时候速度小防止转圈
-                double linespeed = 6 * Math.abs(1 / angularVelocity);
-                // 产生前进动作
-                actions.add(new Action(ActionType.FORWARD, linespeed));
-            }
-            // PID观察文件
-            // File file = new
-            // File("C:\\Users\\cyz\\Desktop\\软挑\\WindowsRelease\\PID\\pid.txt");
-            // try {
-            // BufferedWriter bw = new BufferedWriter(new FileWriter(file, true));
-            // bw.write(angle + " " + forward + " " + error + " " + angularVelocity + " " +
-            // distance + "\r");
-            // bw.flush();
-            // bw.close();
-            // } catch (Exception e) {
-            // e.printStackTrace();
-            // }
+            // 产生转向动作
+            actions.add(new Action(ActionType.ROTATE, angularVelocity));
+            // 角度大的时候速度小防止转圈
+            double lineSpeed = 6 * Math.abs(1 / angularVelocity);
+            // 产生前进动作
+            actions.add(new Action(ActionType.FORWARD, lineSpeed));
         }
-        return actions;
     }
 
     public ArrayList<Action> getActions() {
@@ -252,6 +158,11 @@ public class Robot {
     /** 返回当前所处的工作台id */
     public int getWorkbenchIdx() {
         return workbenchIdx;
+    }
+
+    /** 通过负载情况返回机器人半径 */
+    public double getRadius() {
+        return productType == 0 ? Const.ROBOT_RADIUS_UNLOAD : Const.ROBOT_RADIUS_LOADED;
     }
 
     /** 获取当前携带的物品种类 */
@@ -298,5 +209,4 @@ public class Robot {
     public Task getTask() {
         return task;
     }
-
 }

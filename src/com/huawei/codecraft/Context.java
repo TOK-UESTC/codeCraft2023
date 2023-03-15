@@ -10,8 +10,8 @@ import java.util.Map;
 import java.util.Scanner;
 
 import com.huawei.codecraft.action.Action;
-import com.huawei.codecraft.action.MagneticForce;
-import com.huawei.codecraft.action.MagneticForceModel;
+import com.huawei.codecraft.action.Force;
+import com.huawei.codecraft.action.ForceModel;
 import com.huawei.codecraft.agent.Robot;
 import com.huawei.codecraft.agent.Workbench;
 import com.huawei.codecraft.task.Dispatcher;
@@ -157,39 +157,18 @@ public class Context {
 
         for (int i = 0; i < 4; i++) {
             Robot rb = robotList.get(i);
-            // 分别计算三个虚拟力
-            // 计算机器人间的力
-            MagneticForce magneticForce = new MagneticForce();
-            for (Robot robot : robotList) {
-                if (robot != rb) {
-                    magneticForce = magneticForce.add(MagneticForceModel.robotMagneticForceEquation(rb, robot));
-                }
-            }
-            // // 叠加墙体斥力
-            // magneticForce =
-            // magneticForce.add(MagneticForceModel.wallMagneticForceEquation(rb));
-            // 叠加工作台引力
-            magneticForce = magneticForce.add(MagneticForceModel.workbenchMagneticForceEquation(rb,
-                    workbenchList.get(20)));
-            // // 决策
 
-            rb.step(magneticForce);
+            // 获取合力
+            Force force = ForceModel.getForce(rb, robotList, workbenchList);
+
+            // 决策
+            rb.step(force);
 
             // 打印决策
             for (Action a : rb.getActions()) {
                 printLine(a.toString(i));
             }
         }
-
-        // Robot rb = robotList.get(0);
-        // // 决策
-        // rb.step(destination);
-
-        // // 打印决策
-        // for (Action a : rb.getActions()) {
-        // printLine(a.toString(0));
-        // }
-
         endStep();
     }
 
