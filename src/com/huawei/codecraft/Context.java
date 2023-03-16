@@ -103,7 +103,6 @@ public class Context {
                             workbenchTypeMap.put(workbenchType, storage);
                         }
                 }
-
             }
             row++;
         }
@@ -139,6 +138,9 @@ public class Context {
             // 按照顺序读取
             Robot rb = robotList.get(i);
             rb.update(line.split(" "));
+
+            // 根据买卖情况修改task
+            rb.checkDeal();
         }
 
         // 更新结尾异常
@@ -149,15 +151,6 @@ public class Context {
 
     /** 发起决策过程 */
     public void step() {
-        if (frameId == 7600) {
-            int i = 0;
-        }
-
-        // 根据买卖情况修改机器人task
-        for (Robot rb : robotList) {
-            rb.checkDeal();
-        }
-
         printLine(String.format("%d", frameId));
 
         // 调度器分配任务
@@ -190,11 +183,6 @@ public class Context {
     /** 获取当前frame */
     public int getFrame() {
         return frameId;
-    }
-
-    /** 获取当前资金 */
-    public int getMoney() {
-        return money;
     }
 
     /** 指令结束，发送OK */

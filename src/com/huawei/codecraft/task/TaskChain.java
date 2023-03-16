@@ -30,7 +30,6 @@ public class TaskChain implements Comparable<TaskChain> {
 
     /** 将该任务链上的工作台都置为使用中，避免后续机器人重复领取 */
     public void occupy() {
-        // TODO： 可优化重复设置，但讲道理好像性能影响应该也不大
         for (Task task : taskChain) {
             task.getFrom().setInTaskChain(true);
             task.getTo().setInTaskChain(true);
@@ -46,6 +45,7 @@ public class TaskChain implements Comparable<TaskChain> {
         }
         return false;
     }
+
     /**
      * 为任务链添加任务，同时更新任务链完成所需要的总帧数
      * 
@@ -54,6 +54,24 @@ public class TaskChain implements Comparable<TaskChain> {
     public void addTask(Task task) {
         this.taskChain.add(task);
         this.totalFrame += task.getDistance() / Const.MAX_FORWARD_FRAME;
+    }
+
+    public Task getFirstTask() {
+        if (taskChain.size() != 0) {
+            return taskChain.get(0);
+        }
+        return null;
+    }
+
+    public void removeTask(int index) {
+        taskChain.remove(index);
+    }
+
+    public Task getNextTask() {
+        if (taskChain.size() != 0) {
+            return taskChain.get(0);
+        }
+        return null;
     }
 
     /** 任务链长度 */

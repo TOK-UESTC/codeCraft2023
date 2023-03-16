@@ -64,14 +64,6 @@ public class Robot {
         robotID += 1;
     }
 
-    public int getLastProductType() {
-        return lastProductType;
-    }
-
-    public void setLastProductType(int lastProductType) {
-        this.lastProductType = lastProductType;
-    }
-
     /** 更新所有数据 */
     public void update(String[] info) {
         this.workbenchIdx = Integer.parseInt(info[0]);
@@ -98,25 +90,25 @@ public class Robot {
 
     /**
      * 根据当前任务链执行情况，生成货物Action
-     *
+     * 考虑先转向调整姿态，再进行购买操作
      */
     public void generateShopActions() {
-        Workbench wb;
         if (task == null) {
             return;
         }
 
-        // 去购买
-        if (getProductType() == 0) {
+        Workbench wb;
+
+        // 购买
+        if (productType == 0) {
             wb = task.getFrom();
             // 判断是否在目标工作台附近
             if (workbenchIdx == wb.getWorkbenchIdx()) {
                 // 购买行为
                 addAction(new Action(ActionType.BUY));
-
             }
-            // 去售出
         } else {
+            // 去售出
             wb = task.getTo();
             if (workbenchIdx == wb.getWorkbenchIdx()) {
                 // 售出行为
@@ -126,6 +118,7 @@ public class Robot {
         }
     }
 
+    /** 检查售卖情况，根据判题器返回更改状态 */
     public void checkDeal() {
         // 没有任务
         if (task == null) {
@@ -135,31 +128,32 @@ public class Robot {
         Workbench from = task.getFrom();
         Workbench to = task.getTo();
 
-        // 检查买卖成功
-        // 买成功
-        // 不持有->持有 持有lastProductType == 0 && rb.getProductType() !=0
+        // 买成功，不持有->持有
         if (lastProductType == 0 && productType != 0) {
+            // 放开原料购买控制台
             from.setInTaskChain(false);
         }
 
-        // 持有A->持有B lastProductType !=0 && productType != 0 &&
-        // lastProductType != productType
+        // 同一帧先卖后买，持有A->持有B
         if (lastProductType != 0 && productType != 0 && lastProductType != productType) {
+            taskChain.removeTask(0);
             to.setInTaskChain(false);
-            taskChain.getTasks().remove(0);
-            task = taskChain.getTasks().get(0);
+            task = taskChain.getNextTask();
         }
 
-        // 持有->不持有 getlastProductType() != 0 && productType == 0
+        // 卖成功，持有->不持有
         if (lastProductType != 0 && productType == 0) {
-            taskChain.getTasks().remove(0);
-            if (taskChain.getTasks().size() == 0) {
+            taskChain.removeTask(0);
+            task = taskChain.getNextTask();
+            // 检查是否是最后一个任务，是的话，释放目标工作台
+            if (task == null) {
                 to.setInTaskChain(false);
-                task = null;
-            } else {
-                task = taskChain.getTasks().get(0);
             }
         }
+    }
+
+    public void finishTask() {
+
     }
 
     /**
