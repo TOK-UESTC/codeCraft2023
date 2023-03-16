@@ -3,6 +3,8 @@ package com.huawei.codecraft.utils;
 import java.io.File;
 import java.io.FileOutputStream;
 
+import com.huawei.codecraft.vector.Coordinate;
+
 public class Utils {
     /** 计算距离 */
     public static double computeDistance(Coordinate p1, Coordinate p2) {

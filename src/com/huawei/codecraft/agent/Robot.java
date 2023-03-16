@@ -3,13 +3,13 @@ package com.huawei.codecraft.agent;
 import java.util.ArrayList;
 
 import com.huawei.codecraft.action.Action;
-import com.huawei.codecraft.action.Force;
 import com.huawei.codecraft.constants.ActionType;
 import com.huawei.codecraft.constants.Const;
 import com.huawei.codecraft.task.Task;
 import com.huawei.codecraft.task.TaskChain;
-import com.huawei.codecraft.utils.Coordinate;
-import com.huawei.codecraft.utils.Velocity;
+import com.huawei.codecraft.vector.Coordinate;
+import com.huawei.codecraft.vector.Force;
+import com.huawei.codecraft.vector.Velocity;
 
 public class Robot {
 

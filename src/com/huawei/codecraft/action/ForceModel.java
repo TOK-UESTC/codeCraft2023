@@ -6,6 +6,7 @@ import com.huawei.codecraft.agent.Robot;
 import com.huawei.codecraft.agent.Workbench;
 import com.huawei.codecraft.constants.Const;
 import com.huawei.codecraft.utils.Utils;
+import com.huawei.codecraft.vector.Force;
 
 /**
  * @description: 磁力模型主要用来防止碰撞，满足以下要求

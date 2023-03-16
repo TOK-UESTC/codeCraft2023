@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.huawei.codecraft.task.Task;
-import com.huawei.codecraft.utils.Coordinate;
+import com.huawei.codecraft.vector.Coordinate;
 
 public class Workbench {
     private int workbenchIdx; // 工作台ID

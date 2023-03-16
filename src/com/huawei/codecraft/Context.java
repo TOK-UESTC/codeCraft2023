@@ -10,13 +10,13 @@ import java.util.Map;
 import java.util.Scanner;
 
 import com.huawei.codecraft.action.Action;
-import com.huawei.codecraft.action.Force;
 import com.huawei.codecraft.action.ForceModel;
 import com.huawei.codecraft.agent.Robot;
 import com.huawei.codecraft.agent.Workbench;
 import com.huawei.codecraft.task.Dispatcher;
-import com.huawei.codecraft.utils.Coordinate;
 import com.huawei.codecraft.utils.Utils;
+import com.huawei.codecraft.vector.Coordinate;
+import com.huawei.codecraft.vector.Force;
 
 public class Context {
     private Scanner inStream;
