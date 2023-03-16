@@ -17,9 +17,9 @@ import com.huawei.codecraft.utils.Utils;
  */
 
 public class ForceModel {
-    private static double K = 0.01; // 电场力常数，可调
-    private static final double E = 0.001; // 墙体斥力常数
-    private static final double MIN_DISTANCE = 0.5; // 除去半径之后的剩余距离
+    private static double K = 0.02; // 电场力常数，可调
+    private static final double E = 0.1; // 墙体斥力常数
+    private static final double MIN_DISTANCE = 0.1; // 除去半径之后的剩余距离
 
     static public Force getForce(Robot rb, List<Robot> robotList, List<Workbench> workbenchList) {
         Force force = new Force();
@@ -59,21 +59,22 @@ public class ForceModel {
 
         // 计算除去半径之后的剩余距离
         double x = distance - r1Radius - r2Radius;
-        K = 0.015;
+        K=0.02;
+        K *= 94;
         if (r1Radius > 0.5 && r2Radius > 0.5) {
-            K = 0.01;
+            K *= 110;
         }
 
         if (r1Radius < 0.5 && r2Radius < 0.5) {
-            K = 0.02;
+            K *= 80;
         }
         // x不能过小
         x = x < MIN_DISTANCE ? MIN_DISTANCE : x;
 
         // F为斥力大小, K*q1*q2/r^2
-        double q1 = Const.ROBOT_DENSITY * Math.PI * Math.pow(r1Radius, 2);
-        double q2 = Const.ROBOT_DENSITY * Math.PI * Math.pow(r2Radius, 2);
-        double F = K * q1 * q2 / Math.pow(x, 2);
+        // double q1 = Const.ROBOT_DENSITY * Math.PI * Math.pow(r1Radius, 2);
+        // double q2 = Const.ROBOT_DENSITY * Math.PI * Math.pow(r2Radius, 2);
+        double F = K / Math.pow(x, 2);
         // 分解斥力
         double Fx = F * (r1.getPos().getX() - r2.getPos().getX()) / distance;
         double Fy = F * (r1.getPos().getY() - r2.getPos().getY()) / distance;

@@ -49,6 +49,10 @@ public class Force {
         if (Fx > 0 && Fy < 0 || Fx < 0 && Fy < 0) {
             quadrant = -1.;
         }
-        return quadrant * Math.acos(Fx / getMod()); // (-pi/2, pi/2)
+        if(getMod() < 0.000000001){
+            return 0.;
+        }else{
+            return quadrant * Math.acos(Fx / getMod()); // (-pi/2, pi/2)
+        }
     }
 }

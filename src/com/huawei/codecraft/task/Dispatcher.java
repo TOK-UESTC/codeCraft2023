@@ -72,13 +72,14 @@ public class Dispatcher {
                 TaskChain bindchain=null;
                 for(Robot rb: chainsMap.keySet()){
                     while(true){
-                        TaskChain chain = chainsMap.get(rb).poll();
+                        TaskChain chain = chainsMap.get(rb).peek();
                         if(chain == null){
                             bindchain = chain;
                             receiver = rb;
                             break;
                         }
                         if(chain.isOccupied()){
+                            chainsMap.get(rb).poll();
                             continue;
                         }
                         receiver = chain.getProfit() > max ? rb:receiver;
@@ -96,25 +97,6 @@ public class Dispatcher {
                 chainsMap.remove(receiver);
                 
             }
-            // for (Robot rb : chainsMap.keySet()) {
-            //     // 取出优先队列中的第一个任务链
-            //     TaskChain chain = chainsMap.get(rb).poll();
-            //     rb.bindChain(chain);
-            //     // 占用工作台
-            //     chain.occupy();
-
-            //     // 将分配的chain写入到log中
-            //     if (saveChain) {
-            //         try {
-            //             chainStream.write((chain.toString() + '\n').getBytes());
-            //         } catch (IOException e) {
-            //             e.printStackTrace();
-            //         }
-            //     }
-
-            // }
-
-
         }
     }
 
@@ -142,6 +124,7 @@ public class Dispatcher {
         
                 // 遍历任务链中最后一个任务的后续任务,如果没有后续任务进行下一次遍历
                 if (lastTask.getPostTaskList().isEmpty()) {
+                    newTaskChainList.add(taskChain);
                     continue;
                 }
 
@@ -247,9 +230,6 @@ public class Dispatcher {
                     }
                     double finishFrame = receiveTaskFrame + task.getDistance() / Const.MAX_FORWARD_FRAME;
                     // 更新任务最快完成时间
-                    if(from.isBlocked()){
-                        finishFrame = finishFrame * 0.0001;
-                    }
                     TaskChain taskChain = new TaskChain(rb, finishFrame);
                     taskChain.addTask(task);
                     // 保存任务链
