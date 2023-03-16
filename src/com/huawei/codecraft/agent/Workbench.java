@@ -93,29 +93,29 @@ public class Workbench {
     }
 
     /** 当前工作台是否拥塞 */
-    public boolean isBlocked(){
-        if(rest > 10){
+    public boolean isBlocked() {
+        if (rest > 10) {
             return false;
         }
         boolean ret = false;
-        switch(type){
+        switch (type) {
             case 4:
-                if(materialStatus == 0b110){
+                if (materialStatus == 0b110) {
                     ret = true;
                 }
                 break;
             case 5:
-                if(materialStatus == 0b1010){
+                if (materialStatus == 0b1010) {
                     ret = true;
                 }
                 break;
             case 6:
-                if(materialStatus == 0b1100){
+                if (materialStatus == 0b1100) {
                     ret = true;
                 }
                 break;
             case 7:
-                if(materialStatus == 0b1110000){
+                if (materialStatus == 0b1110000) {
                     ret = true;
                 }
                 break;
@@ -123,7 +123,6 @@ public class Workbench {
                 ret = false;
                 break;
         }
-        
         return ret;
     }
 }
