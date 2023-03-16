@@ -28,7 +28,7 @@ public class ForceModel {
         // 计算机器人施加的合力
         for (Robot robot : robotList) {
             if (robot != rb) {
-                force = force.add(ForceModel.getRobotForce(rb, robot));
+                force = (Force) force.add(ForceModel.getRobotForce(rb, robot));
             }
         }
 
@@ -47,7 +47,7 @@ public class ForceModel {
             wb = rb.getTask().getTo();
         }
 
-        force = force.add(ForceModel.getWorkbenchForce(rb, wb));
+        force = (Force) force.add(ForceModel.getWorkbenchForce(rb, wb));
         return force;
     }
 
