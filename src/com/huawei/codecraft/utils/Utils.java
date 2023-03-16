@@ -9,6 +9,21 @@ public class Utils {
         return Math.sqrt(Math.pow(p1.getX() - p2.getX(), 2) + Math.pow(p1.getY() - p2.getY(), 2));
     }
 
+    /** 计算角度，返回（-pi/2 - pi/2）范围内的角 */
+    public static double computeAngle(double x, double y) {
+        double mod = Math.sqrt(Math.pow(x, 2) + Math.pow(y, 2));
+        double quadrant = 0.; // 象限
+        if (x < 0 && y > 0) {
+            quadrant = 1.;
+        }
+        if (x < 0 && y < 0) {
+            quadrant = -1.;
+        }
+
+        // (-pi/2, pi/2)
+        return Math.acos(x / mod) + quadrant * Math.PI;
+    }
+
     /** 返回可收购给定类型工作台产物的工作台类型 */
     public static int[] getDeliverableType(int wbType) {
         int[] types = null;

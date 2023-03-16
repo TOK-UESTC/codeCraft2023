@@ -1,7 +1,6 @@
 package com.huawei.codecraft.task;
 
 import java.io.FileOutputStream;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -66,36 +65,36 @@ public class Dispatcher {
             // TODO: 找出所有机器人中任务链中效益最高的，优先分配
 
             // 分配任务链
-            while(chainsMap.size() != 0){
+            while (chainsMap.size() != 0) {
                 double max = 0.;
                 Robot receiver = null;
-                TaskChain bindchain=null;
-                for(Robot rb: chainsMap.keySet()){
-                    while(true){
+                TaskChain bindchain = null;
+                for (Robot rb : chainsMap.keySet()) {
+                    while (true) {
                         TaskChain chain = chainsMap.get(rb).peek();
-                        if(chain == null){
+                        if (chain == null) {
                             bindchain = chain;
                             receiver = rb;
                             break;
                         }
-                        if(chain.isOccupied()){
+                        if (chain.isOccupied()) {
                             chainsMap.get(rb).poll();
                             continue;
                         }
-                        receiver = chain.getProfit() > max ? rb:receiver;
-                        bindchain = chain.getProfit() > max ? chain:bindchain;
-                        max = chain.getProfit() > max ? chain.getProfit():max;
+                        receiver = chain.getProfit() > max ? rb : receiver;
+                        bindchain = chain.getProfit() > max ? chain : bindchain;
+                        max = chain.getProfit() > max ? chain.getProfit() : max;
                         break;
                     }
                 }
-                if(bindchain == null) {
+                if (bindchain == null) {
                     chainsMap.remove(receiver);
                     continue;
                 }
                 receiver.bindChain(bindchain);
                 bindchain.occupy();
                 chainsMap.remove(receiver);
-                
+
             }
         }
     }
@@ -121,7 +120,7 @@ public class Dispatcher {
             for (TaskChain taskChain : oldTaskChainList) {
                 boolean addNewTaskChain = false;
                 Task lastTask = taskChain.getTasks().get(taskChain.length() - 1);
-        
+
                 // 遍历任务链中最后一个任务的后续任务,如果没有后续任务进行下一次遍历
                 if (lastTask.getPostTaskList().isEmpty()) {
                     newTaskChainList.add(taskChain);
@@ -132,7 +131,9 @@ public class Dispatcher {
                     Workbench postFrom = postTask.getFrom(), postTo = postTask.getTo(), lastFrom = lastTask.getFrom();
 
                     // 未生产，直接访问下个后续任务 或者 lastTask生产的产品已经出现在产品格中
-                    if (postFrom.isFree() || postFrom.hasMaterial(lastFrom.getType()) || postTo.hasMaterial(postFrom.getType()) || postFrom.isInTaskChain() || postTo.isInTaskChain()|| lastFrom.isInTaskChain()) {
+                    if (postFrom.isFree() || postFrom.hasMaterial(lastFrom.getType())
+                            || postTo.hasMaterial(postFrom.getType()) || postFrom.isInTaskChain()
+                            || postTo.isInTaskChain() || lastFrom.isInTaskChain()) {
                         // 后继任务未生产 或者 后续任务接受栏未满 或者 后续任务已经被执行
                         continue;
                     }
@@ -144,7 +145,7 @@ public class Dispatcher {
 
                     // 更新任务最早完成时间，并把该任务加入到这条任务链中
                     TaskChain newTaskChain = new TaskChain(taskChain);
-                    
+
                     newTaskChain.addTask(postTask);
 
                     // 保存
@@ -202,7 +203,7 @@ public class Dispatcher {
 
     /** 生成初始任务链 */
     public Map<Robot, PriorityQueue<TaskChain>> generateTaskChains() {
-        
+
         // key: 执行任务的机器人, value: 任务链列表
         Map<Robot, PriorityQueue<TaskChain>> taskChainQueueMap = new HashMap<>();
 
@@ -241,7 +242,6 @@ public class Dispatcher {
                         taskChainQueueMap.put(rb, taskChainQueue);
                     }
                 }
-
 
             }
         }

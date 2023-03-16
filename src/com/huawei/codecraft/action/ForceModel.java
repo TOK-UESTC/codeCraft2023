@@ -38,14 +38,15 @@ public class ForceModel {
         if (rb.getTask() == null) {
             return force;
         }
+
         Workbench wb;
         if (rb.getProductType() == 0) {
             wb = rb.getTask().getFrom();
         } else {
             wb = rb.getTask().getTo();
         }
-        force = force.add(ForceModel.getWorkbenchForce(rb,
-                wb));
+
+        force = force.add(ForceModel.getWorkbenchForce(rb, wb));
         return force;
     }
 
@@ -59,7 +60,7 @@ public class ForceModel {
 
         // 计算除去半径之后的剩余距离
         double x = distance - r1Radius - r2Radius;
-        K=0.02;
+        K = 0.02;
         K *= 94;
         if (r1Radius > 0.5 && r2Radius > 0.5) {
             K *= 110;
@@ -124,60 +125,4 @@ public class ForceModel {
 
         return new Force(Fx, Fy);
     }
-
-    /**
-     * @description:
-     * @param rb:     机器人
-     * @param target: 目标运动状态
-     */
-    static public MoveInstruct computeMoveInstruct(Robot rb, Force target) {
-        // 工作台到机器人x轴方向
-        double fx = target.getFx();
-        // 工作台到机器人y轴方向
-        double fy = target.getFy();
-
-        double forceMod = target.getMod();
-
-        double quadrant = 0.; // 象限
-        if (fx < 0 && fy > 0) {
-            quadrant = 1.;
-        }
-        if (fx < 0 && fy < 0) {
-            quadrant = -1.;
-        }
-
-        // TODO: mod为0, 说明机器人指令是机器人停下
-        // (-pi/2, pi/2)
-        double targetHeading = Math.acos(fx / forceMod) + quadrant * Math.PI;
-        double radian = targetHeading - rb.getHeading();
-
-        return new MoveInstruct(radian, forceMod);
-    }
-}
-
-class MoveInstruct {
-    private double radian; // 旋转弧度
-    private double forward; // 前进速度
-
-    public MoveInstruct(double radian, double forward) {
-        this.radian = radian;
-        this.forward = forward;
-    }
-
-    public double getRadian() {
-        return radian;
-    }
-
-    public void setRadian(double radian) {
-        this.radian = radian;
-    }
-
-    public double getForward() {
-        return forward;
-    }
-
-    public void setForward(double forward) {
-        this.forward = forward;
-    }
-
 }
