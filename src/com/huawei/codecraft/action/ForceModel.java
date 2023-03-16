@@ -17,8 +17,8 @@ import com.huawei.codecraft.utils.Utils;
  */
 
 public class ForceModel {
-    private static final double K = 0.03; // 电场力常数，可调
-    private static final double E = 0.05; // 墙体斥力常数
+    private static double K = 0.01; // 电场力常数，可调
+    private static final double E = 0.001; // 墙体斥力常数
     private static final double MIN_DISTANCE = 0.5; // 除去半径之后的剩余距离
 
     static public Force getForce(Robot rb, List<Robot> robotList, List<Workbench> workbenchList) {
@@ -32,11 +32,20 @@ public class ForceModel {
         }
 
         // 计算墙体施加的合力
-        // force.add(forceModel.getWallForce(rb));
+        force.add(ForceModel.getWallForce(rb));
 
         // 计算工作台引力
+        if (rb.getTask() == null) {
+            return force;
+        }
+        Workbench wb;
+        if (rb.getProductType() == 0) {
+            wb = rb.getTask().getFrom();
+        } else {
+            wb = rb.getTask().getTo();
+        }
         force = force.add(ForceModel.getWorkbenchForce(rb,
-                workbenchList.get(20)));
+                wb));
         return force;
     }
 
@@ -50,6 +59,14 @@ public class ForceModel {
 
         // 计算除去半径之后的剩余距离
         double x = distance - r1Radius - r2Radius;
+        K = 0.015;
+        if (r1Radius > 0.5 && r2Radius > 0.5) {
+            K = 0.01;
+        }
+
+        if (r1Radius < 0.5 && r2Radius < 0.5) {
+            K = 0.02;
+        }
         // x不能过小
         x = x < MIN_DISTANCE ? MIN_DISTANCE : x;
 
@@ -57,7 +74,6 @@ public class ForceModel {
         double q1 = Const.ROBOT_DENSITY * Math.PI * Math.pow(r1Radius, 2);
         double q2 = Const.ROBOT_DENSITY * Math.PI * Math.pow(r2Radius, 2);
         double F = K * q1 * q2 / Math.pow(x, 2);
-
         // 分解斥力
         double Fx = F * (r1.getPos().getX() - r2.getPos().getX()) / distance;
         double Fy = F * (r1.getPos().getY() - r2.getPos().getY()) / distance;
@@ -99,7 +115,7 @@ public class ForceModel {
      */
     static public Force getWorkbenchForce(Robot rb, Workbench wb) {
         // 任何目标工作台对机器人都是满吸引力
-        double F = 6.0;
+        double F = 15.0;
         // 方向
         double dis = Utils.computeDistance(rb.getPos(), wb.getPos()) + 0.000001;
         double Fx = F * (wb.getPos().getX() - rb.getPos().getX()) / dis;

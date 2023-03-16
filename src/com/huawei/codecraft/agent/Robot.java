@@ -24,10 +24,13 @@ public class Robot {
     private Task task; // 机器人当前任务
     private TaskChain taskChain; // 任务链
     private ArrayList<Action> actions; // 机器人当前动作序列
+    private int id;
+
+    public static int robotID = 0;
 
     // PID参数
-    private double Kp = 0.7;
-    private double Ki = 0.0;
+    private double Kp = 10;
+    private double Ki = 0.1;
     private double Kd = 0.0;
     private double lastError = 0;
     private double integral = 0;
@@ -46,6 +49,8 @@ public class Robot {
         this.task = null;
         this.taskChain = null;
         this.actions = new ArrayList<Action>();
+        id = robotID;
+        robotID += 1;
     }
 
     /** 更新所有数据 */
@@ -75,7 +80,41 @@ public class Robot {
      *
      */
     public void generateShopActions() {
-
+        Workbench wb;
+        if (getTask() == null) {
+            return;
+        }
+        // 去购买
+        if (getProductType() == 0) {
+            wb = getTask().getFrom();
+            // 判断是否在目标工作台附近
+            if (getWorkbenchIdx() == wb.getWorkbenchIdx()) {
+                // 购买行为
+                // getActions().add(new Action(ActionType.BUY));
+                addAction(new Action(ActionType.BUY));
+                
+            }
+            // 去售出
+        } else {
+            wb = getTask().getTo();
+            if (getWorkbenchIdx() == wb.getWorkbenchIdx()) {
+                // 售出行为
+                // getActions().add(new Action(ActionType.SELL));
+                addAction(new Action(ActionType.SELL));
+                // 如果有后续任务链，进行购买,TODO:买卖不一定成功
+                // getTaskChain().getTasks().remove(0);
+                // 判断是否存在后续任务
+                // if (getTaskChain().getTasks().size() > 0) {
+                //     // 设置任务，进行购买
+                //     setTask(getTaskChain().getTasks().get(0));
+                //     // getActions().add(new Action(ActionType.BUY));
+                //     addAction(new Action(ActionType.BUY));
+                // } else {
+                //     // 任务链完成，清空任务链
+                //     setTask(null);
+                // }
+            }
+        }
     }
 
     /**
@@ -102,9 +141,8 @@ public class Robot {
         // 积分值上限
         integral = Math.min(integral, integralMax);
         integral = Math.max(integral, -integralMax);
-
         // 如果角速度变化过大，就不进行角度修正,判断标准是角速度发生了正负的大变化
-        if (Math.abs(error) > Math.PI / 32) {
+        if (Math.abs(error) > Math.PI / 16) {
             // 产生转向动作
             actions.add(new Action(ActionType.ROTATE, angularVelocity));
             actions.add(new Action(ActionType.FORWARD, 0));
@@ -116,7 +154,7 @@ public class Robot {
             // 产生转向动作
             actions.add(new Action(ActionType.ROTATE, angularVelocity));
             // 角度大的时候速度小防止转圈
-            double lineSpeed = 6 * Math.abs(1 / angularVelocity);
+            double lineSpeed = 6 *Math.sqrt(Math.abs(1 / angularVelocity));
             // 产生前进动作
             actions.add(new Action(ActionType.FORWARD, lineSpeed));
         }
@@ -126,9 +164,20 @@ public class Robot {
         return actions;
     }
 
+    public void addAction(Action actions) {
+        this.actions.add(actions);
+    }
+
     /** 绑定任务链 */
     public void bindChain(TaskChain taskChain) {
         this.taskChain = taskChain;
+        // 机器人绑定任务链的时候就会分配任务
+        this.task = taskChain.getTasks().get(0);
+    }
+
+    /** 获取当前任务链 */
+    public TaskChain getTaskChain() {
+        return taskChain;
     }
 
     /**
@@ -203,10 +252,25 @@ public class Robot {
     /** 设定机器人当前任务 */
     public void setTask(Task task) {
         this.task = task;
+        if(this.task == null){
+            this.taskChain = null;
+        }
     }
 
     /** 获取机器人当前任务 */
     public Task getTask() {
         return task;
+    }
+    
+    /** hashcode */
+    @Override
+    public int hashCode(){
+        return id;
+    }
+
+    @Override
+    public boolean equals(Object o){
+        Robot r = (Robot)o;
+        return this.id == r.id;
     }
 }

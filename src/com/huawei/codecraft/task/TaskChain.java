@@ -23,7 +23,8 @@ public class TaskChain implements Comparable<TaskChain> {
 
     public TaskChain(TaskChain chain) {
         this.Robot = chain.getRobot();
-        this.taskChain = chain.getTasks();
+        this.taskChain = new ArrayList<>();
+        this.taskChain.addAll(chain.getTasks());
         this.totalFrame = chain.getTotalFrame();
     }
 
@@ -36,6 +37,15 @@ public class TaskChain implements Comparable<TaskChain> {
         }
     }
 
+    /** 判断该链条上是否有工作台被占用 */
+    public boolean isOccupied() {
+        for (Task task : taskChain) {
+            if (task.getFrom().isInTaskChain() || task.getTo().isInTaskChain()) {
+                return true;
+            }
+        }
+        return false;
+    }
     /**
      * 为任务链添加任务，同时更新任务链完成所需要的总帧数
      * 
@@ -88,6 +98,7 @@ public class TaskChain implements Comparable<TaskChain> {
         for (Task task : taskChain) {
             profit += task.makePredict();
         }
+        profit /= totalFrame;
         return profit;
     }
 

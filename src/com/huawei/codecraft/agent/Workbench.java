@@ -38,6 +38,7 @@ public class Workbench {
 
     /** 查看是否含有某个原材料 */
     public boolean hasMaterial(int type) {
+        boolean f = ((1 << type) & materialStatus) != 0;
         return ((1 << type) & materialStatus) != 0;
     }
 
@@ -89,5 +90,40 @@ public class Workbench {
     /** 设定当前工作台是否在工作链中 */
     public void setInTaskChain(boolean inTaskChain) {
         this.inTaskChain = inTaskChain;
+    }
+
+    /** 当前工作台是否拥塞 */
+    public boolean isBlocked(){
+        if(rest > 10){
+            return false;
+        }
+        boolean ret = false;
+        switch(type){
+            case 4:
+                if(materialStatus == 0b110){
+                    ret = true;
+                }
+                break;
+            case 5:
+                if(materialStatus == 0b1010){
+                    ret = true;
+                }
+                break;
+            case 6:
+                if(materialStatus == 0b1100){
+                    ret = true;
+                }
+                break;
+            case 7:
+                if(materialStatus == 0b1110000){
+                    ret = true;
+                }
+                break;
+            default:
+                ret = false;
+                break;
+        }
+        
+        return ret;
     }
 }
