@@ -25,15 +25,21 @@ public class Main {
 
     public static void main(String[] args) {
         ctx.init(); // 初始化地图
-
         // 经验证，答题器并不会输出第0帧的信息，故可以忽略控制台输出的
         // player skipped frames: 0
         while (ctx.getFrame() < totalFrame) {
+            if(ctx.getFrame() > 1000){
+                int i=0;
+            }
             // 更新信息
             ctx.update();
             // 输出策略
             ctx.step();
-
+            // try {
+            //     Thread.sleep(5);
+            // } catch (Exception e) {
+            //     // TODO: handle exception
+            // }
             if (showTime) {
                 statistics.showTime();
             }

@@ -14,8 +14,9 @@ import com.huawei.codecraft.action.Force;
 import com.huawei.codecraft.action.ForceModel;
 import com.huawei.codecraft.agent.Robot;
 import com.huawei.codecraft.agent.Workbench;
-import com.huawei.codecraft.constants.ActionType;
 import com.huawei.codecraft.task.Dispatcher;
+import com.huawei.codecraft.task.Task;
+import com.huawei.codecraft.task.TaskChain;
 import com.huawei.codecraft.utils.Coordinate;
 import com.huawei.codecraft.utils.Utils;
 
@@ -110,7 +111,6 @@ public class Context {
         }
 
         dispatcher = new Dispatcher(robotList, workbenchList, workbenchTypeMap, saveChain);
-
         endStep();
     }
 
@@ -151,6 +151,73 @@ public class Context {
 
     /** 发起决策过程 */
     public void step() {
+        // 下一帧开始前判断上一帧买卖是否成功
+        for(Robot rb:robotList){
+            // 没有任务就没有买卖
+            if(rb.getTask() == null ){
+                continue;
+            }
+            // 检查买卖成功
+            // 买成功
+            if(rb.getTask().getFrom().getType() == rb.getProductType()){
+                rb.getTask().getFrom().setInTaskChain(false);
+            }
+            // 卖成功
+            if(!rb.getTask().getFrom().isInTaskChain() && rb.getProductType() != rb.getTask().getFrom().getType()){
+                rb.getTask().getTo().setInTaskChain(false);
+                rb.getTaskChain().getTasks().remove(0);
+                if(rb.getTaskChain().getTasks().size() > 0){
+                    rb.setTask(rb.getTaskChain().getTasks().get(0));
+                }else{
+                    rb.setTask(null);
+                    continue;
+                }
+
+            }
+            // 如果任务链检查不通过，那么放弃任务链，假设在没有
+            boolean isBlock = false;
+            for(Task t:rb.getTaskChain().getTasks()){
+                if(t.getTo().hasMaterial(t.getFrom().getType())){
+                    isBlock = true;
+                    break;
+                }
+            }
+            if(isBlock){
+                // 当前任务链阻塞
+                // 如果没携带东西,丢弃任务
+                for(Task t:rb.getTaskChain().getTasks()){
+                    if(t!=rb.getTaskChain().getTasks().get(0)){
+                        t.getFrom().setInTaskChain(false);
+                    }
+                    t.getTo().setInTaskChain(false);
+                }
+                if(rb.getProductType() == 0){
+                    rb.setTask(null);
+                }else{
+                    // 找一个最近的空闲的送出去
+
+                    double minDistance = 1000;
+                    Workbench to = null;
+                    for(Workbench wb:workbenchTypeMap.get(rb.getTask().getTo().getType())){
+                        if(wb == rb.getTask().getTo() || wb.isInTaskChain()){
+                            continue;
+                        }
+                        double dis = Utils.computeDistance(rb.getPos(), wb.getPos());
+                        to = minDistance > dis?wb:to;
+                        minDistance = minDistance > dis?dis:minDistance;
+                    }
+                    if(to == null){
+                        to = rb.getTask().getTo();
+                    }
+                    to.setInTaskChain(true);                        
+                    Task temp= new Task(rb.getTask().getFrom(), to);
+                    TaskChain tc = new TaskChain(rb, 0.1);
+                    tc.addTask(temp);
+                    rb.bindChain(tc);
+
+                }
+            }
+        }
         printLine(String.format("%d", frameId));
 
         // 调度器分配任务
@@ -158,6 +225,9 @@ public class Context {
 
         for (int i = 0; i < 4; i++) {
             Robot rb = robotList.get(i);
+            if(rb.getTask() == null){
+                continue;
+            }
 
             // 获取合力
             Force force = ForceModel.getForce(rb, robotList, workbenchList);

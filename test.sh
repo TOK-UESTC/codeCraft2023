@@ -10,7 +10,7 @@ fi
 # 编译项目, 将用到的项目文件重新编译
 # compile project
 cd ./src/
-javac -encoding UTF-8 com/huawei/codecraft/Main.java
+javac -encoding UTF-8 com/huawei/codecraft/Main.java -g:lines,vars,source
 
 # 整理项目, 将二进制文件移动到bin目录下
 # move .class file to bin/

@@ -66,24 +66,55 @@ public class Dispatcher {
             // TODO: 找出所有机器人中任务链中效益最高的，优先分配
 
             // 分配任务链
-            for (Robot rb : chainsMap.keySet()) {
-                // 取出优先队列中的第一个任务链
-                TaskChain chain = chainsMap.get(rb).poll();
-                rb.bindChain(chain);
-
-                // 占用工作台
-                chain.occupy();
-
-                // 将分配的chain写入到log中
-                if (saveChain) {
-                    try {
-                        chainStream.write((chain.toString() + '\n').getBytes());
-                    } catch (IOException e) {
-                        e.printStackTrace();
+            while(chainsMap.size() != 0){
+                double max = 0.;
+                Robot receiver = null;
+                TaskChain bindchain=null;
+                for(Robot rb: chainsMap.keySet()){
+                    while(true){
+                        TaskChain chain = chainsMap.get(rb).poll();
+                        if(chain == null){
+                            bindchain = chain;
+                            receiver = rb;
+                            break;
+                        }
+                        if(chain.isOccupied()){
+                            continue;
+                        }
+                        receiver = chain.getProfit() > max ? rb:receiver;
+                        bindchain = chain.getProfit() > max ? chain:bindchain;
+                        max = chain.getProfit() > max ? chain.getProfit():max;
+                        break;
                     }
                 }
-
+                if(bindchain == null) {
+                    chainsMap.remove(receiver);
+                    continue;
+                }
+                receiver.bindChain(bindchain);
+                bindchain.occupy();
+                chainsMap.remove(receiver);
+                
             }
+            // for (Robot rb : chainsMap.keySet()) {
+            //     // 取出优先队列中的第一个任务链
+            //     TaskChain chain = chainsMap.get(rb).poll();
+            //     rb.bindChain(chain);
+            //     // 占用工作台
+            //     chain.occupy();
+
+            //     // 将分配的chain写入到log中
+            //     if (saveChain) {
+            //         try {
+            //             chainStream.write((chain.toString() + '\n').getBytes());
+            //         } catch (IOException e) {
+            //             e.printStackTrace();
+            //         }
+            //     }
+
+            // }
+
+
         }
     }
 
@@ -108,17 +139,17 @@ public class Dispatcher {
             for (TaskChain taskChain : oldTaskChainList) {
                 boolean addNewTaskChain = false;
                 Task lastTask = taskChain.getTasks().get(taskChain.length() - 1);
-
+        
                 // 遍历任务链中最后一个任务的后续任务,如果没有后续任务进行下一次遍历
                 if (lastTask.getPostTaskList().isEmpty()) {
                     continue;
                 }
 
                 for (Task postTask : lastTask.getPostTaskList()) {
-                    Workbench postFrom = postTask.getFrom(), lastTo = lastTask.getTo(), lastFrom = lastTask.getFrom();
+                    Workbench postFrom = postTask.getFrom(), postTo = postTask.getTo(), lastFrom = lastTask.getFrom();
 
                     // 未生产，直接访问下个后续任务 或者 lastTask生产的产品已经出现在产品格中
-                    if (postFrom.isFree() || lastTo.hasMaterial(lastFrom.getType()) || postFrom.isInTaskChain()) {
+                    if (postFrom.isFree() || postFrom.hasMaterial(lastFrom.getType()) || postTo.hasMaterial(postFrom.getType()) || postFrom.isInTaskChain() || postTo.isInTaskChain()|| lastFrom.isInTaskChain()) {
                         // 后继任务未生产 或者 后续任务接受栏未满 或者 后续任务已经被执行
                         continue;
                     }
@@ -130,6 +161,7 @@ public class Dispatcher {
 
                     // 更新任务最早完成时间，并把该任务加入到这条任务链中
                     TaskChain newTaskChain = new TaskChain(taskChain);
+                    
                     newTaskChain.addTask(postTask);
 
                     // 保存
@@ -187,6 +219,7 @@ public class Dispatcher {
 
     /** 生成初始任务链 */
     public Map<Robot, PriorityQueue<TaskChain>> generateTaskChains() {
+        
         // key: 执行任务的机器人, value: 任务链列表
         Map<Robot, PriorityQueue<TaskChain>> taskChainQueueMap = new HashMap<>();
 
@@ -197,13 +230,11 @@ public class Dispatcher {
                 Workbench to = task.getTo();
 
                 // 工作台未生产 或者 该任务的接受处已满 或者 这个工作已经被选中正在执行
-                if (from.isFree() || to.hasMaterial(from.getType()) || from.isInTaskChain()) {
+                if (from.isFree() || to.hasMaterial(from.getType()) || from.isInTaskChain() || to.isInTaskChain()) {
                     continue;
                 }
 
                 // 如果工作台可以投入生产，继续进行判断
-                double minFrame = 180 * Const.FRAME_PER_SECOND;
-                Robot taskReceiver = null;
 
                 // 遍历机器人列表，选择最近的任务链
                 for (Robot rb : freeRobots) {
@@ -214,30 +245,24 @@ public class Dispatcher {
                     if (receiveTaskFrame < from.getRest()) {
                         continue;
                     }
-                    // 接受时间大于生产剩余时间，到达之后可以直接接受任务
-                    if (receiveTaskFrame < minFrame) {
-                        taskReceiver = rb;
-                        minFrame = receiveTaskFrame;
+                    double finishFrame = receiveTaskFrame + task.getDistance() / Const.MAX_FORWARD_FRAME;
+                    // 更新任务最快完成时间
+                    if(from.isBlocked()){
+                        finishFrame = finishFrame * 0.0001;
+                    }
+                    TaskChain taskChain = new TaskChain(rb, finishFrame);
+                    taskChain.addTask(task);
+                    // 保存任务链
+                    if (taskChainQueueMap.containsKey(rb)) {
+                        taskChainQueueMap.get(rb).add(taskChain);
+                    } else {
+                        PriorityQueue<TaskChain> taskChainQueue = new PriorityQueue<TaskChain>();
+                        taskChainQueue.add(taskChain);
+                        taskChainQueueMap.put(rb, taskChainQueue);
                     }
                 }
 
-                if (taskReceiver == null) {
-                    continue;
-                }
 
-                // 更新任务最快完成时间
-                double finishFrame = minFrame + task.getDistance() / Const.MAX_FORWARD_FRAME;
-                TaskChain taskChain = new TaskChain(taskReceiver, finishFrame);
-                taskChain.addTask(task);
-
-                // 保存任务链
-                if (taskChainQueueMap.containsKey(taskReceiver)) {
-                    taskChainQueueMap.get(taskReceiver).add(taskChain);
-                } else {
-                    PriorityQueue<TaskChain> taskChainQueue = new PriorityQueue<TaskChain>();
-                    taskChainQueue.add(taskChain);
-                    taskChainQueueMap.put(taskReceiver, taskChainQueue);
-                }
             }
         }
 
