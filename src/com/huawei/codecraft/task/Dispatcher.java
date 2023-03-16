@@ -131,9 +131,15 @@ public class Dispatcher {
                     Workbench postFrom = postTask.getFrom(), postTo = postTask.getTo(), lastFrom = lastTask.getFrom();
 
                     // 未生产，直接访问下个后续任务 或者 lastTask生产的产品已经出现在产品格中
-                    if (postFrom.isFree() || postFrom.hasMaterial(lastFrom.getType())
-                            || postTo.hasMaterial(postFrom.getType()) || postFrom.isInTaskChain()
-                            || postTo.isInTaskChain() || lastFrom.isInTaskChain()) {
+                    // 假设我们能够维护好预测的原料格状态和生产格状态，那么在生成任务链中
+                    // 1. postFrom工作台必须已经投入生产: postFrom.isFree() true： 表示未生产
+                    // 2. postFrom工作台产品格未被占据:postFrom.getPlanProductStatus() == 1 true表示被占据
+                    // 3. postFrom工作台的规划原料格没被占用：postFrom.hasPlanMaterial(lastFrom.getType())
+                    // true表示被占据
+                    // 4. postTo工作台的规划原料格没被占用：postTo.hasPlanMaterial(postFrom.getType()) true表示被占据
+                    if (postFrom.isFree() || postFrom.getPlanProductStatus() == 1
+                            || postFrom.hasPlanMaterial(lastFrom.getType())
+                            || postTo.hasPlanMaterial(postFrom.getType())) {
                         // 后继任务未生产 或者 后续任务接受栏未满 或者 后续任务已经被执行
                         continue;
                     }
@@ -214,7 +220,12 @@ public class Dispatcher {
                 Workbench to = task.getTo();
 
                 // 工作台未生产 或者 该任务的接受处已满 或者 这个工作已经被选中正在执行
-                if (from.isFree() || to.hasMaterial(from.getType()) || from.isInTaskChain() || to.isInTaskChain()) {
+                // 假设我们能够维护好预测的原料格状态和生产格状态，那么在最初生成任务链中
+                // 1. from工作台必须已经投入生产: from.isFree() true 表示未生产
+                // 2. from工作台规划产品格没被占领:from.getPlanProductStatus() == 1 true表示被占据
+                // 2. to工作台的规划原料格(planMaterialStatus)没被占用:to.hasPlanMaterial(from.getType())
+                // true表示被占据
+                if (from.isFree() || from.getPlanProductStatus() == 1 || to.hasPlanMaterial(from.getType())) {
                     continue;
                 }
 
