@@ -15,6 +15,7 @@ public class Robot {
 
     private int workbenchIdx; // 所处工作台下标, -1表示没有处于任何工作台, [0, K-1]表是某工作台下标
     private int productType; // 携带物品类型[0, 7], 0表示未携带物品
+    private int lastProductType; // 上一帧携带的品
     private double timeCoefficients; // 时间价值系数 [0.8, 1]
     private double collisionCoefficients; // 碰撞价值系数 [0.8, 1]
     private double angularVelocity; // 角速度 单位：弧度每秒， 正数表示顺时针， 负数表示逆时针
@@ -41,6 +42,7 @@ public class Robot {
         this.pos = pos;
         this.workbenchIdx = -1;
         this.productType = 0;
+        this.lastProductType = 0;
         this.timeCoefficients = 1;
         this.collisionCoefficients = 1;
         this.angularVelocity = 0;
@@ -53,9 +55,18 @@ public class Robot {
         robotID += 1;
     }
 
+    public int getLastProductType() {
+        return lastProductType;
+    }
+
+    public void setLastProductType(int lastProductType) {
+        this.lastProductType = lastProductType;
+    }
+
     /** 更新所有数据 */
     public void update(String[] info) {
         this.workbenchIdx = Integer.parseInt(info[0]);
+        this.lastProductType = this.productType;
         this.productType = Integer.parseInt(info[1]);
         this.timeCoefficients = Double.parseDouble(info[2]);
         this.collisionCoefficients = Double.parseDouble(info[3]);
@@ -81,38 +92,62 @@ public class Robot {
      */
     public void generateShopActions() {
         Workbench wb;
-        if (getTask() == null) {
+        if (task == null) {
             return;
         }
+
         // 去购买
         if (getProductType() == 0) {
-            wb = getTask().getFrom();
+            wb = task.getFrom();
             // 判断是否在目标工作台附近
-            if (getWorkbenchIdx() == wb.getWorkbenchIdx()) {
+            if (workbenchIdx == wb.getWorkbenchIdx()) {
                 // 购买行为
-                // getActions().add(new Action(ActionType.BUY));
                 addAction(new Action(ActionType.BUY));
-                
+
             }
             // 去售出
         } else {
-            wb = getTask().getTo();
-            if (getWorkbenchIdx() == wb.getWorkbenchIdx()) {
+            wb = task.getTo();
+            if (workbenchIdx == wb.getWorkbenchIdx()) {
                 // 售出行为
-                // getActions().add(new Action(ActionType.SELL));
                 addAction(new Action(ActionType.SELL));
-                // 如果有后续任务链，进行购买,TODO:买卖不一定成功
-                // getTaskChain().getTasks().remove(0);
-                // 判断是否存在后续任务
-                // if (getTaskChain().getTasks().size() > 0) {
-                //     // 设置任务，进行购买
-                //     setTask(getTaskChain().getTasks().get(0));
-                //     // getActions().add(new Action(ActionType.BUY));
-                //     addAction(new Action(ActionType.BUY));
-                // } else {
-                //     // 任务链完成，清空任务链
-                //     setTask(null);
-                // }
+                // 判断是否有后续任务 TODO:买卖出问题
+            }
+        }
+    }
+
+    public void checkDeal() {
+        // 没有任务
+        if (task == null) {
+            return;
+        }
+
+        Workbench from = task.getFrom();
+        Workbench to = task.getTo();
+
+        // 检查买卖成功
+        // 买成功
+        // 不持有->持有 持有lastProductType == 0 && rb.getProductType() !=0
+        if (lastProductType == 0 && productType != 0) {
+            from.setInTaskChain(false);
+        }
+
+        // 持有A->持有B lastProductType !=0 && productType != 0 &&
+        // lastProductType != productType
+        if (lastProductType != 0 && productType != 0 && lastProductType != productType) {
+            to.setInTaskChain(false);
+            taskChain.getTasks().remove(0);
+            task = taskChain.getTasks().get(0);
+        }
+
+        // 持有->不持有 getlastProductType() != 0 && productType == 0
+        if (lastProductType != 0 && productType == 0) {
+            taskChain.getTasks().remove(0);
+            if (taskChain.getTasks().size() == 0) {
+                to.setInTaskChain(false);
+                task = null;
+            } else {
+                task = taskChain.getTasks().get(0);
             }
         }
     }
@@ -153,8 +188,18 @@ public class Robot {
         } else {
             // 产生转向动作
             actions.add(new Action(ActionType.ROTATE, angularVelocity));
-            // 角度大的时候速度小防止转圈
-            double lineSpeed = 6 *Math.sqrt(Math.abs(1 / angularVelocity));
+            // 防止撞墙，进行修正
+            double lineSpeed = 6;
+            // 判断是否与墙近
+            // double minDsitance2WallThreshold = 0.25;
+            // double minDistance2WallX = getPos().getX() < 25 ? getPos().getX() : 50 -
+            // getPos().getX();
+            // double minDistance2WallY = getPos().getY() < 25 ? getPos().getY() : 50 -
+            // getPos().getY();
+            // if (minDistance2WallX < minDsitance2WallThreshold) {
+            // lineSpeed -= 1 / minDistance2WallX;
+            // }
+
             // 产生前进动作
             actions.add(new Action(ActionType.FORWARD, lineSpeed));
         }
@@ -249,28 +294,20 @@ public class Robot {
         return pos;
     }
 
-    /** 设定机器人当前任务 */
-    public void setTask(Task task) {
-        this.task = task;
-        if(this.task == null){
-            this.taskChain = null;
-        }
-    }
-
     /** 获取机器人当前任务 */
     public Task getTask() {
         return task;
     }
-    
+
     /** hashcode */
     @Override
-    public int hashCode(){
+    public int hashCode() {
         return id;
     }
 
     @Override
-    public boolean equals(Object o){
-        Robot r = (Robot)o;
+    public boolean equals(Object o) {
+        Robot r = (Robot) o;
         return this.id == r.id;
     }
 }
