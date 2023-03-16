@@ -1,5 +1,5 @@
 bin
 replay
-.class
-.zip
+*.class
+*.zip
 log
