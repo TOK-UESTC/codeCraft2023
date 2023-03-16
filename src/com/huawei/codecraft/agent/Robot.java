@@ -29,14 +29,23 @@ public class Robot {
 
     public static int robotID = 0;
 
-    // PID参数
-    private double Kp = 10;
-    private double Ki = 0.1;
-    private double Kd = 0.0;
-    private double lastError = 0;
-    private double integral = 0;
+    // 角度PID参数
+    private double Kp2Angle = 10;
+    private double Ki2Angle = 0.1;
+    private double Kd2Angle = 0.0;
+    private double lastError2Angle = 0;
+    private double integral2Angle = 0;
     // 积分值上限
-    private double integralMax = 0.5;
+    private double integralMax2Angle = 0.5;
+
+    // 距离PID参数
+    private double Kp2Distance = 5;
+    private double Ki2Distance = 0.001;
+    private double Kd2Distance = 0.0;
+    private double lastError2Distance = 0;
+    private double integral2Distance = 0;
+    // 积分值上限
+    private double integralMax2Distance = 0.5;
 
     public Robot(Coordinate pos) {
         this.pos = pos;
@@ -83,7 +92,8 @@ public class Robot {
 
         // 更新action列表
         generateShopActions();
-        generateMoveActions(force);
+        // generateMoveActions(force);
+        generateMoveActions();
     }
 
     /**
@@ -170,12 +180,12 @@ public class Robot {
         }
 
         // 角度环控制
-        double angularVelocity = -(Kp * error + Ki * integral + Kd * (error - lastError));
-        lastError = error;
-        integral += error;
+        double angularVelocity = -(Kp2Angle * error + Ki2Angle * integral2Angle + Kd2Angle * (error - lastError2Angle));
+        lastError2Angle = error;
+        integral2Angle += error;
         // 积分值上限
-        integral = Math.min(integral, integralMax);
-        integral = Math.max(integral, -integralMax);
+        integral2Angle = Math.min(integral2Angle, integralMax2Angle);
+        integral2Angle = Math.max(integral2Angle, -integralMax2Angle);
         // 如果角速度变化过大，就不进行角度修正,判断标准是角速度发生了正负的大变化
         if (Math.abs(error) > Math.PI / 16) {
             // 产生转向动作
@@ -203,6 +213,73 @@ public class Robot {
             // 产生前进动作
             actions.add(new Action(ActionType.FORWARD, lineSpeed));
         }
+    }
+
+    // 距离加角度PID
+    private void generateMoveActions() {
+        // 首先判断是否有任务
+        if (task == null) {
+            return;
+        }
+        // 获取当前目标工作台,根据是否持有物品判断
+        Workbench wb = getProductType() == 0 ? task.getFrom() : task.getTo();
+
+        // 获取距离误差
+        double distanceError = Math.sqrt(Math.pow(wb.getPos().getX() - pos.getX(), 2)
+                + Math.pow(wb.getPos().getY() - pos.getY(), 2));
+        // 距离环控制
+        double lineVelocity = (Kp2Distance * distanceError + Ki2Distance * integral2Distance
+                + Kd2Distance * (distanceError - lastError2Distance));
+        lastError2Distance = distanceError;
+        integral2Distance += distanceError;
+        // 积分值上限
+        integral2Distance = Math.min(integral2Distance, integralMax2Distance);
+        integral2Distance = Math.max(integral2Distance, -integralMax2Distance);
+        // 判断离墙是否太近
+        double minDsitance2WallThreshold = 1;
+        double minDistance2WallX = getPos().getX() < 25 ? getPos().getX() : 50 - getPos().getX();
+        double minDistance2WallY = getPos().getY() < 25 ? getPos().getY() : 50 - getPos().getY();
+        // 直接固定速度的方案
+        // if (minDistance2WallX < minDsitance2WallThreshold) {
+        // lineVelocity = 2;
+        // }
+        // if (minDistance2WallY < minDsitance2WallThreshold) {
+        // lineVelocity = 2;
+        // }
+
+        // 计算角度误差，根据两者的坐标
+        double diffX = wb.getPos().getX() - pos.getX();
+        double diffY = wb.getPos().getY() - pos.getY();
+        double quadrant = 1.; // 象限
+        if (diffX > 0 && diffY < 0 || diffX < 0 && diffY < 0) {
+            quadrant = -1.;
+        }
+        double angle = 0;
+        if (distanceError > 0.04) {
+            angle = quadrant * Math.acos(diffX / distanceError);
+        }
+
+        double error = heading - angle;
+
+        if (error > Math.PI) {
+            error = error - 2 * Math.PI;
+        } else if (error < -Math.PI) {
+            error = error + 2 * Math.PI;
+        }
+
+        // 角度环控制
+        double angularVelocity = -(Kp2Angle * error + Ki2Angle * integral2Angle
+                + Kd2Angle * (error - lastError2Angle));
+        lastError2Angle = error;
+        integral2Angle += error;
+        // 积分值上限
+        integral2Angle = Math.min(integral2Angle, integralMax2Angle);
+        integral2Angle = Math.max(integral2Angle, -integralMax2Angle);
+
+        // 产生转向动作
+        actions.add(new Action(ActionType.ROTATE, angularVelocity));
+        // 产生前进动作
+        actions.add(new Action(ActionType.FORWARD, lineVelocity));
     }
 
     public ArrayList<Action> getActions() {
