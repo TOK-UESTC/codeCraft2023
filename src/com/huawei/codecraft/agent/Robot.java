@@ -102,10 +102,14 @@ public class Robot {
         // 购买
         if (productType == 0) {
             wb = task.getFrom();
-            // 判断是否在目标工作台附近
+            // 判断是否在目标工作台附近，并且当前已经调转，开始朝向下一个工作台
             if (workbenchIdx == wb.getWorkbenchIdx()) {
-                // 购买行为
-                addAction(new Action(ActionType.BUY));
+                double posAngle = task.getTo().getPos().sub(task.getFrom().getPos()).getAngle();
+
+                if (Math.abs(posAngle - heading) < Math.PI / 32) {
+                    // 购买行为
+                    addAction(new Action(ActionType.BUY));
+                }
             }
         } else {
             // 去售出
@@ -113,7 +117,18 @@ public class Robot {
             if (workbenchIdx == wb.getWorkbenchIdx()) {
                 // 售出行为
                 addAction(new Action(ActionType.SELL));
-                // 判断是否有后续任务 TODO:买卖出问题
+
+                // 判断是否有后续任务，如果角度满足，同帧进行买卖
+                task = taskChain.getNextTask();
+
+                if (task != null) {
+                    double posAngle = task.getTo().getPos().sub(task.getFrom().getPos()).getAngle();
+                    if (Math.abs(posAngle - heading) < Math.PI / 32
+                            && workbenchIdx == task.getFrom().getWorkbenchIdx()) {
+                        // 购买行为
+                        addAction(new Action(ActionType.BUY));
+                    }
+                }
             }
         }
     }
@@ -138,25 +153,26 @@ public class Robot {
 
         // 同一帧先卖后买，持有A->持有B
         /*
-            卖出时：
-                1. 工作台此时在生产
-                    那么系统返回的原料格信息不为0, 不改变占据状态
-                2. 工作台此时未生产
-                    2.1 系统返回的原料格信息为0：
-                        说明卖出后立即清空原料格投入生产，那么此时的规划原料格也应清空
-                        (注：是否会出现卖出前原料格差一个，但此时有两个机器人向这里运输原料，而导致卖出后清空原料格损失另外一个机器人的占据信息？
-                            不会出现，当共工作台只有一个规划原料格空位时，任务只会派遣给一个机器人
-                        )
-                    2.2 系统返回的原料格信息不为0
-                        那么原料格未占满，生产未启动，不改变规划原料格占据状态
-            买入时：
-                释放规划产品格状态
-        */
-        // if (lastProductType != 0 && productType != 0 && lastProductType != productType) {
-        //     if(to.getMaterialStatus() == 0){
-        //         to.updatePlanMaterialStatus(0, true);
-        //     }
-        //     to.setPlanProductStatus(0);
+         * 卖出时：
+         * 1. 工作台此时在生产
+         * 那么系统返回的原料格信息不为0, 不改变占据状态
+         * 2. 工作台此时未生产
+         * 2.1 系统返回的原料格信息为0：
+         * 说明卖出后立即清空原料格投入生产，那么此时的规划原料格也应清空
+         * (注：是否会出现卖出前原料格差一个，但此时有两个机器人向这里运输原料，而导致卖出后清空原料格损失另外一个机器人的占据信息？
+         * 不会出现，当共工作台只有一个规划原料格空位时，任务只会派遣给一个机器人
+         * )
+         * 2.2 系统返回的原料格信息不为0
+         * 那么原料格未占满，生产未启动，不改变规划原料格占据状态
+         * 买入时：
+         * 释放规划产品格状态
+         */
+        // if (lastProductType != 0 && productType != 0 && lastProductType !=
+        // productType) {
+        // if(to.getMaterialStatus() == 0){
+        // to.updatePlanMaterialStatus(0, true);
+        // }
+        // to.setPlanProductStatus(0);
         // }
 
         // 卖成功，持有->不持有
@@ -166,10 +182,6 @@ public class Robot {
             taskChain.removeTask(0);
             task = taskChain.getNextTask();
         }
-    }
-
-    public void finishTask() {
-
     }
 
     /**
