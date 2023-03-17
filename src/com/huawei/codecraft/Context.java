@@ -13,6 +13,7 @@ import com.huawei.codecraft.action.Action;
 import com.huawei.codecraft.action.ForceModel;
 import com.huawei.codecraft.agent.Robot;
 import com.huawei.codecraft.agent.Workbench;
+import com.huawei.codecraft.constants.Const;
 import com.huawei.codecraft.task.Dispatcher;
 import com.huawei.codecraft.utils.Utils;
 import com.huawei.codecraft.vector.Coordinate;
@@ -140,7 +141,7 @@ public class Context {
             rb.update(line.split(" "));
 
             // 根据买卖情况修改task
-            rb.checkDeal();
+            rb.checkDeal(Const.DURATION_OF_GAME * Const.FRAME_PER_SECOND - frameId);
         }
 
         // 更新结尾异常
@@ -151,8 +152,8 @@ public class Context {
 
     /** 发起决策过程 */
     public void step() {
-        if(frameId == 6789){
-            int i=0;
+        if (frameId == 6789) {
+            int i = 0;
         }
         printLine(String.format("%d", frameId));
 

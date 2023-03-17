@@ -4,7 +4,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class Const {
-    public static final int DURATION_OF_GAME = 180000; // 比赛时长，单位: ms
+    public static final int DURATION_OF_GAME = 180; // 比赛时长，单位: s
     public static final int ROBOT_NUMBER = 4; // 机器人数量
     public static final int FRAME_PER_SECOND = 50; // 每秒帧数
     public static final int INIT_FUND = 200000; // 初始资金

@@ -136,7 +136,7 @@ public class Robot {
     }
 
     /** 检查售卖情况，根据判题器返回更改状态 */
-    public void checkDeal() {
+    public void checkDeal(int leftFrame) {
         // 没有任务
         if (task == null) {
             return;
@@ -171,7 +171,7 @@ public class Robot {
          */
         // if (lastProductType != 0 && productType != 0 && lastProductType !=
         // productType) {
-        // if(to.getMaterialStatus() == 0){
+        // if (to.getMaterialStatus() == 0) {
         // to.updatePlanMaterialStatus(0, true);
         // }
         // to.setPlanProductStatus(0);
@@ -183,6 +183,11 @@ public class Robot {
             to.updatePlanMaterialStatus(from.getType(), true);
             taskChain.removeTask(0);
             task = taskChain.getNextTask();
+
+            // 时间不足时，不继续执行任务链
+            if (task != null && task.getDistance() / Const.MAX_FORWARD_FRAME > leftFrame) {
+                task = null;
+            }
         }
     }
 
