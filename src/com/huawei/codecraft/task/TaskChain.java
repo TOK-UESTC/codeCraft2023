@@ -32,8 +32,9 @@ public class TaskChain implements Comparable<TaskChain> {
     public void occupy() {
         // 任务链包括规划产品格状态和规划原料格状态
         // 1. 生产工作台规划产品格被占用：task.getFrom().setPlanProductStatus(1);
-        // 2. 消费工作台对应原料格被占用: task.getTo().updatePlanMaterialStatus(task.getFrom().getType(), false);
-        for(Task task : taskChain){
+        // 2. 消费工作台对应原料格被占用:
+        // task.getTo().updatePlanMaterialStatus(task.getFrom().getType(), false);
+        for (Task task : taskChain) {
             task.getFrom().setPlanProductStatus(1);
             task.getTo().updatePlanMaterialStatus(task.getFrom().getType(), false);
         }
@@ -62,13 +63,7 @@ public class TaskChain implements Comparable<TaskChain> {
         this.totalFrame += task.getDistance() / Const.MAX_FORWARD_FRAME;
     }
 
-    public Task getFirstTask() {
-        if (taskChain.size() != 0) {
-            return taskChain.get(0);
-        }
-        return null;
-    }
-
+    /** 删除taskChain[index] */
     public void removeTask(int index) {
         taskChain.remove(index);
     }

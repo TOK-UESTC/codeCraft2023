@@ -62,8 +62,6 @@ public class Dispatcher {
                 return;
             }
 
-            // TODO: 找出所有机器人中任务链中效益最高的，优先分配
-
             // 分配任务链
             while (chainsMap.size() != 0) {
                 double max = 0.;
@@ -81,20 +79,24 @@ public class Dispatcher {
                             chainsMap.get(rb).poll();
                             continue;
                         }
-                        receiver = chain.getProfit() > max ? rb : receiver;
-                        bindchain = chain.getProfit() > max ? chain : bindchain;
-                        max = chain.getProfit() > max ? chain.getProfit() : max;
-                        break;
+
+                        if (chain.getProfit() > max) {
+                            receiver = rb;
+                            bindchain = chain;
+                            max = chain.getProfit();
+                            break;
+                        }
                     }
                 }
+
                 if (bindchain == null) {
                     chainsMap.remove(receiver);
                     continue;
                 }
+
                 receiver.bindChain(bindchain);
                 bindchain.occupy();
                 chainsMap.remove(receiver);
-
             }
         }
     }
@@ -141,7 +143,7 @@ public class Dispatcher {
                      * 
                      * 1. postFrom工作台产品格未被占据:postFrom.getPlanProductStatus() == 1 true表示被占据
                      * 2. postFrom工作台的规划原料格没被占用：postFrom.hasPlanMaterial(lastFrom.getType())
-                     *    true表示被占据
+                     * true表示被占据
                      * 3. postTo工作台的规划原料格没被占用：postTo.hasPlanMaterial(postFrom.getType()) true表示被占据
                      */
                     if (postFrom.isFree() || postTo.hasMaterial(postFrom.getType())
@@ -190,7 +192,6 @@ public class Dispatcher {
                 }
 
                 // 生成任务
-                // TODO: 给每一个工作台添加完可选task之后按照距离进行排序
                 for (Workbench target : workbenchTypeMap.get(type)) {
                     wb.addTask(new Task(wb, target));
                 }
@@ -217,7 +218,6 @@ public class Dispatcher {
 
     /** 生成初始任务链 */
     public Map<Robot, PriorityQueue<TaskChain>> generateTaskChains() {
-
         // key: 执行任务的机器人, value: 任务链列表
         Map<Robot, PriorityQueue<TaskChain>> taskChainQueueMap = new HashMap<>();
 
@@ -230,13 +230,13 @@ public class Dispatcher {
                 // 工作台未生产 或者 该任务的接受处已满 或者 这个工作已经被选中正在执行
                 // 假设我们能够维护好预测的原料格状态和生产格状态，那么在最初生成任务链中
                 /*
-                    环境应满足：
-                        1. from工作台必须已经投入生产: from.isFree() true 表示未生产      
-                        2. to工作台原材料格没有被占用: to.hasMaterial(from.getType())
-
-                    规划应满足:
-                        1. from工作台规划产品格没被占领:from.getPlanProductStatus() == 1 true表示被占据 
-                        2. to工作台的规划原料格(planMaterialStatus)没被占用:to.hasPlanMaterial(from.getType())
+                 * 环境应满足：
+                 * 1. from工作台必须已经投入生产: from.isFree() true 表示未生产
+                 * 2. to工作台原材料格没有被占用: to.hasMaterial(from.getType())
+                 * 
+                 * 规划应满足:
+                 * 1. from工作台规划产品格没被占领:from.getPlanProductStatus() == 1 true表示被占据
+                 * 2. to工作台的规划原料格(planMaterialStatus)没被占用:to.hasPlanMaterial(from.getType())
                  */
                 if (from.isFree() || from.getPlanProductStatus() == 1 || to.hasPlanMaterial(from.getType())
                         || to.hasMaterial(from.getType())) {
@@ -254,10 +254,11 @@ public class Dispatcher {
                     if (receiveTaskFrame < from.getRest()) {
                         continue;
                     }
-                    double finishFrame = receiveTaskFrame + task.getDistance() / Const.MAX_FORWARD_FRAME;
+
                     // 更新任务最快完成时间
-                    TaskChain taskChain = new TaskChain(rb, finishFrame);
+                    TaskChain taskChain = new TaskChain(rb, receiveTaskFrame);
                     taskChain.addTask(task);
+
                     // 保存任务链
                     if (taskChainQueueMap.containsKey(rb)) {
                         taskChainQueueMap.get(rb).add(taskChain);
