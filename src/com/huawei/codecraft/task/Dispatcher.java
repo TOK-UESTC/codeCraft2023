@@ -66,12 +66,12 @@ public class Dispatcher {
             while (chainsMap.size() != 0) {
                 double max = 0.;
                 Robot receiver = null;
-                TaskChain bindchain = null;
+                TaskChain bindChain = null;
                 for (Robot rb : chainsMap.keySet()) {
                     while (true) {
                         TaskChain chain = chainsMap.get(rb).peek();
                         if (chain == null) {
-                            bindchain = chain;
+                            bindChain = chain;
                             receiver = rb;
                             break;
                         }
@@ -82,20 +82,20 @@ public class Dispatcher {
 
                         if (chain.getProfit() > max) {
                             receiver = rb;
-                            bindchain = chain;
+                            bindChain = chain;
                             max = chain.getProfit();
-                            break;
                         }
+                        break;
                     }
                 }
 
-                if (bindchain == null) {
+                if (bindChain == null) {
                     chainsMap.remove(receiver);
                     continue;
                 }
 
-                receiver.bindChain(bindchain);
-                bindchain.occupy();
+                receiver.bindChain(bindChain);
+                bindChain.occupy();
                 chainsMap.remove(receiver);
             }
         }
@@ -161,7 +161,6 @@ public class Dispatcher {
 
                     // 更新任务最早完成时间，并把该任务加入到这条任务链中
                     TaskChain newTaskChain = new TaskChain(taskChain);
-
                     newTaskChain.addTask(postTask);
 
                     // 保存

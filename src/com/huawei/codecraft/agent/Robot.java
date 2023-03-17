@@ -104,12 +104,13 @@ public class Robot {
             wb = task.getFrom();
             // 判断是否在目标工作台附近，并且当前已经调转，开始朝向下一个工作台
             if (workbenchIdx == wb.getWorkbenchIdx()) {
-                double posAngle = task.getTo().getPos().sub(task.getFrom().getPos()).getAngle();
+                // double posAngle =
+                // task.getTo().getPos().sub(task.getFrom().getPos()).getAngle();
 
-                if (Math.abs(posAngle - heading) < Math.PI / 32) {
-                    // 购买行为
-                    addAction(new Action(ActionType.BUY));
-                }
+                // if (Math.abs(posAngle - heading) < Math.PI / 32) {
+                // 购买行为
+                addAction(new Action(ActionType.BUY));
+                // }
             }
         } else {
             // 去售出
@@ -121,14 +122,15 @@ public class Robot {
                 // 判断是否有后续任务，如果角度满足，同帧进行买卖
                 task = taskChain.getNextTask();
 
-                if (task != null) {
-                    double posAngle = task.getTo().getPos().sub(task.getFrom().getPos()).getAngle();
-                    if (Math.abs(posAngle - heading) < Math.PI / 32
-                            && workbenchIdx == task.getFrom().getWorkbenchIdx()) {
-                        // 购买行为
-                        addAction(new Action(ActionType.BUY));
-                    }
-                }
+                // if (task != null && workbenchIdx == task.getFrom().getWorkbenchIdx()) {
+                // double posAngle =
+                // task.getTo().getPos().sub(task.getFrom().getPos()).getAngle();
+                // if (Math.abs(posAngle - heading) < Math.PI / 32
+                // && workbenchIdx == task.getFrom().getWorkbenchIdx()) {
+                // 购买行为
+                // addAction(new Action(ActionType.BUY));
+                // }
+                // }
             }
         }
     }
