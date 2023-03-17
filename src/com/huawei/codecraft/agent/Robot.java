@@ -124,7 +124,7 @@ public class Robot {
         if (lastProductType == 0 && productType != 0) {
             // 放开原料购买控制台
             from.setPlanProductStatus(0);
-            if(from.isBlocked() && from.getMaterialStatus() == 0){
+            if(from.isBlocked() && from.getMaterialStatus() == 0 && from.getMaterialStatus() != from.getLastMaterialStatus()){
                 // TODO:这里出现无效参数位，考虑是否拆分功能
                 from.updatePlanMaterialStatus(0, true);
             }

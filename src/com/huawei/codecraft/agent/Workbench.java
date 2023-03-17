@@ -14,6 +14,7 @@ public class Workbench {
     private int productStatus; // 产品格状态 0 表示无 1 表示有
     private int planProductStatus; // 规划产品格状态，由选手程序维护；不仅包含环境目前的状态，还包括预测状态。
     private int materialStatus; // 原材料格状态；二进制为表示，例如 48(110000),表示拥有物品4和5
+    private int lastMaterialStatus; //
     private int planMaterialStatus; // 规划原材料格状态；不仅包含环境目前的状态，还包括预测状态。
     private List<Task> optionalTasks; // 工作台可发布的任务
 
@@ -23,11 +24,20 @@ public class Workbench {
         this.workbenchIdx = workbenchIdx;
         this.rest = -1;
         this.productStatus = 0;
+        this.lastMaterialStatus = 0;
         this.planProductStatus = 0;
         this.materialStatus = 0;
         this.planMaterialStatus = 0;
         this.optionalTasks = new ArrayList<>();
 
+    }
+
+    public int getLastMaterialStatus() {
+        return lastMaterialStatus;
+    }
+
+    public void setLastMaterialStatus(int lastMaterialStatus) {
+        this.lastMaterialStatus = lastMaterialStatus;
     }
 
     public int getMaterialStatus() {
@@ -53,6 +63,7 @@ public class Workbench {
     /** 只更新剩余生产时间，原材料状态以及产品格状态 */
     public void update(String[] info) {
         this.rest = Integer.parseInt(info[3]);
+        this.lastMaterialStatus = this.materialStatus;
         this.materialStatus = Integer.parseInt(info[4]);
         this.productStatus = Integer.parseInt(info[5]);
     }

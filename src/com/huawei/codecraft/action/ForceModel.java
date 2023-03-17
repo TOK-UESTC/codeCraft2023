@@ -26,6 +26,13 @@ public class ForceModel {
         Force force = new Force();
 
         // 计算机器人施加的合力
+        /*
+         * 1. 如果两个机器人都不携带任务，那么机器人之间没有斥力
+         * 2. 如果其中一个机器人携带任务，那么存在单向的斥力，携带者给未携带者斥力
+         * 3. 如果都携带任务，在目的地不同时，同时排斥对方
+         * 
+         * 综上：携带者产生斥力
+         */
         for (Robot robot : robotList) {
             if (robot != rb) {
                 force = (Force) force.add(ForceModel.getRobotForce(rb, robot));
@@ -63,7 +70,6 @@ public class ForceModel {
                 return new Force(0, 0);
             }
         }
-
         // 计算除去半径之后的剩余距离
         double x = distance - r1Radius - r2Radius;
         K = 0.01;
