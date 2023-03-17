@@ -26,8 +26,23 @@ public class ForceModel {
         Force force = new Force();
 
         // 计算机器人施加的合力
+        /*
+         * 1. 如果两个机器人都不携带任务，那么机器人之间没有斥力
+         * 2. 如果其中一个机器人携带任务，那么存在单向的斥力，携带者给未携带者斥力
+         * 3. 如果都携带任务，在目的地不同时，同时排斥对方
+         * 
+         * 综上：携带者产生斥力
+         */
         for (Robot robot : robotList) {
             if (robot != rb) {
+                if(robot.getProductType() == 0) {
+                    continue;
+                }
+                if(rb.getTask() != null && robot.getTask() != null){
+                    if(rb.getTask().getTo().getWorkbenchIdx() == robot.getTask().getTo().getWorkbenchIdx()){
+                        continue;
+                    }
+                }
                 force = (Force) force.add(ForceModel.getRobotForce(rb, robot));
             }
         }
@@ -58,15 +73,9 @@ public class ForceModel {
         double distance = Utils.computeDistance(r1.getPos(), r2.getPos());
 
         double r1Radius = r1.getRadius(), r2Radius = r2.getRadius();
-        if(r1.getTask() != null && r2.getTask() != null){
-            if(r1.getTask().getTo().getWorkbenchIdx() == r2.getTask().getTo().getWorkbenchIdx()){
-                return new Force(0, 0);
-            }
-        }
-
         // 计算除去半径之后的剩余距离
         double x = distance - r1Radius - r2Radius;
-        K = 0.01;
+        K = 0.03;
         K *= 94;
         if (r1Radius > 0.5 && r2Radius > 0.5) {
             K *= 110;

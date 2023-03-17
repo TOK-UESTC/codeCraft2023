@@ -151,7 +151,7 @@ public class Context {
 
     /** 发起决策过程 */
     public void step() {
-        if(frameId == 5362){
+        if(frameId == 6789){
             int i=0;
         }
         printLine(String.format("%d", frameId));
