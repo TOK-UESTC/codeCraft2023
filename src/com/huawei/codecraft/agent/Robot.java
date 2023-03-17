@@ -39,9 +39,9 @@ public class Robot {
     private double integralMax2Angle = 0.5;
 
     // 距离PID参数
-    private double Kp2Distance = 5;
-    private double Ki2Distance = 0.001;
-    private double Kd2Distance = 0.0;
+    private double Kp2Distance = 4.2;
+    private double Ki2Distance = 0.000;
+    private double Kd2Distance = 1;
     private double lastError2Distance = 0;
     private double integral2Distance = 0;
     // 积分值上限
@@ -221,25 +221,6 @@ public class Robot {
         // 获取距离误差
         double distanceError = Math.sqrt(Math.pow(wb.getPos().getX() - pos.getX(), 2)
                 + Math.pow(wb.getPos().getY() - pos.getY(), 2));
-        // 距离环控制
-        double lineVelocity = (Kp2Distance * distanceError + Ki2Distance * integral2Distance
-                + Kd2Distance * (distanceError - lastError2Distance));
-        lastError2Distance = distanceError;
-        integral2Distance += distanceError;
-        // 积分值上限
-        integral2Distance = Math.min(integral2Distance, integralMax2Distance);
-        integral2Distance = Math.max(integral2Distance, -integralMax2Distance);
-        // 判断离墙是否太近
-        double minDsitance2WallThreshold = 1;
-        double minDistance2WallX = getPos().getX() < 25 ? getPos().getX() : 50 - getPos().getX();
-        double minDistance2WallY = getPos().getY() < 25 ? getPos().getY() : 50 - getPos().getY();
-        // 直接固定速度的方案
-        // if (minDistance2WallX < minDsitance2WallThreshold) {
-        // lineVelocity = 2;
-        // }
-        // if (minDistance2WallY < minDsitance2WallThreshold) {
-        // lineVelocity = 2;
-        // }
 
         // 计算角度误差，根据两者的坐标
         double diffX = wb.getPos().getX() - pos.getX();
@@ -260,6 +241,50 @@ public class Robot {
         } else if (error < -Math.PI) {
             error = error + 2 * Math.PI;
         }
+
+        // 判断离墙是否太近
+        double minDsitance2WallThreshold = 2;
+        // 减速系数
+        double deceleration = 0.4;
+        double minDistance2WallX = getPos().getX() < 25 ? getPos().getX() : 50 - getPos().getX();
+        double minDistance2WallY = getPos().getY() < 25 ? getPos().getY() : 50 - getPos().getY();
+        // 直接固定速度的方案
+        // if (minDistance2WallX < minDsitance2WallThreshold) {
+        // lineVelocity = 2;
+        // }
+        // if (minDistance2WallY < minDsitance2WallThreshold) {
+        // lineVelocity = 2;
+        // }
+
+        // 根据当前角度与离墙距离的关系，进行距离误差的修正
+        if (getPos().getX() < minDsitance2WallThreshold && heading > Math.PI * 3 / 4
+                && heading < -Math.PI * 3 / 4) {
+            distanceError = Math.min(distanceError, deceleration * minDistance2WallX);
+        } else if (getPos().getX() > 50 - minDsitance2WallThreshold && heading < Math.PI / 4
+                && heading > -Math.PI / 4) {
+            distanceError = Math.min(distanceError, deceleration * minDistance2WallX);
+        }
+        if (getPos().getY() < minDsitance2WallThreshold && heading < -Math.PI / 4
+                && heading > -Math.PI * 3 / 4) {
+            distanceError = Math.min(distanceError, deceleration * minDistance2WallY);
+        } else if (getPos().getY() > 50 - minDsitance2WallThreshold && heading > Math.PI / 4
+                && heading < Math.PI * 3 / 4) {
+            distanceError = Math.min(distanceError, deceleration * minDistance2WallY);
+        }
+
+        // // 根据角度偏差，进行距离误差的修正
+        // if (Math.abs(error) > Math.PI / 4) {
+        // distanceError = distanceError * deceleration;
+        // }
+
+        // 距离环控制
+        double lineVelocity = (Kp2Distance * distanceError + Ki2Distance * integral2Distance
+                + Kd2Distance * (distanceError - lastError2Distance));
+        lastError2Distance = distanceError;
+        integral2Distance += distanceError;
+        // 积分值上限
+        integral2Distance = Math.min(integral2Distance, integralMax2Distance);
+        integral2Distance = Math.max(integral2Distance, -integralMax2Distance);
 
         // 角度环控制
         double angularVelocity = -(Kp2Angle * error + Ki2Angle * integral2Angle
