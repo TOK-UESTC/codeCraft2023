@@ -30,16 +30,22 @@ public class TaskChain implements Comparable<TaskChain> {
 
     /** 将该任务链上的工作台都置为使用中，避免后续机器人重复领取 */
     public void occupy() {
-        for (Task task : taskChain) {
-            task.getFrom().setInTaskChain(true);
-            task.getTo().setInTaskChain(true);
+        // 任务链包括规划产品格状态和规划原料格状态
+        // 1. 生产工作台规划产品格被占用：task.getFrom().setPlanProductStatus(1);
+        // 2. 消费工作台对应原料格被占用: task.getTo().updatePlanMaterialStatus(task.getFrom().getType(), false);
+        for(Task task : taskChain){
+            task.getFrom().setPlanProductStatus(1);
+            task.getTo().updatePlanMaterialStatus(task.getFrom().getType(), false);
         }
     }
 
     /** 判断该链条上是否有工作台被占用 */
     public boolean isOccupied() {
+        // 判断该任务链是否被占据
+        // 1. 生产工作台产品格未被占据: task.getFrom().getPlanProductStatus() == 0
+        // 2. 消费工作台原料格未被占据: task.getTo().hasPlanMaterial(task.getFrom().getType())
         for (Task task : taskChain) {
-            if (task.getFrom().isInTaskChain() || task.getTo().isInTaskChain()) {
+            if (task.getFrom().getPlanProductStatus() != 0 || task.getTo().hasPlanMaterial(task.getFrom().getType())) {
                 return true;
             }
         }
