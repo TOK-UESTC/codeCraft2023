@@ -6,6 +6,7 @@ import com.huawei.codecraft.agent.Robot;
 import com.huawei.codecraft.agent.Workbench;
 import com.huawei.codecraft.constants.Const;
 import com.huawei.codecraft.utils.Utils;
+import com.huawei.codecraft.vector.Force;
 
 /**
  * @description: 磁力模型主要用来防止碰撞，满足以下要求
@@ -25,9 +26,24 @@ public class ForceModel {
         Force force = new Force();
 
         // 计算机器人施加的合力
+        /*
+         * 1. 如果两个机器人都不携带任务，那么机器人之间没有斥力
+         * 2. 如果其中一个机器人携带任务，那么存在单向的斥力，携带者给未携带者斥力
+         * 3. 如果都携带任务，在目的地不同时，同时排斥对方
+         * 
+         * 综上：携带者产生斥力
+         */
         for (Robot robot : robotList) {
             if (robot != rb) {
-                force = force.add(ForceModel.getRobotForce(rb, robot));
+                if(robot.getProductType() == 0) {
+                    continue;
+                }
+                if(rb.getTask() != null && robot.getTask() != null){
+                    if(rb.getTask().getTo().getWorkbenchIdx() == robot.getTask().getTo().getWorkbenchIdx()){
+                        continue;
+                    }
+                }
+                force = (Force) force.add(ForceModel.getRobotForce(rb, robot));
             }
         }
 
@@ -46,7 +62,7 @@ public class ForceModel {
             wb = rb.getTask().getTo();
         }
 
-        force = force.add(ForceModel.getWorkbenchForce(rb, wb));
+        force = (Force) force.add(ForceModel.getWorkbenchForce(rb, wb));
         return force;
     }
 
@@ -57,10 +73,9 @@ public class ForceModel {
         double distance = Utils.computeDistance(r1.getPos(), r2.getPos());
 
         double r1Radius = r1.getRadius(), r2Radius = r2.getRadius();
-
         // 计算除去半径之后的剩余距离
         double x = distance - r1Radius - r2Radius;
-        K = 0.02;
+        K = 0.03;
         K *= 94;
         if (r1Radius > 0.5 && r2Radius > 0.5) {
             K *= 110;

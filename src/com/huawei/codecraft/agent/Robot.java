@@ -3,13 +3,13 @@ package com.huawei.codecraft.agent;
 import java.util.ArrayList;
 
 import com.huawei.codecraft.action.Action;
-import com.huawei.codecraft.action.Force;
 import com.huawei.codecraft.constants.ActionType;
 import com.huawei.codecraft.constants.Const;
 import com.huawei.codecraft.task.Task;
 import com.huawei.codecraft.task.TaskChain;
-import com.huawei.codecraft.utils.Coordinate;
-import com.huawei.codecraft.utils.Velocity;
+import com.huawei.codecraft.vector.Coordinate;
+import com.huawei.codecraft.vector.Force;
+import com.huawei.codecraft.vector.Velocity;
 
 public class Robot {
 
@@ -129,26 +129,42 @@ public class Robot {
         Workbench to = task.getTo();
 
         // 买成功，不持有->持有
+        // 生产工作台规划产品格被释放:from.setPlanProductStatus(0);
+        // 如果这时规划原料格已满，那么清除原料格状态
         if (lastProductType == 0 && productType != 0) {
             // 放开原料购买控制台
-            from.setInTaskChain(false);
+            from.setPlanProductStatus(0);
         }
 
         // 同一帧先卖后买，持有A->持有B
-        if (lastProductType != 0 && productType != 0 && lastProductType != productType) {
-            taskChain.removeTask(0);
-            to.setInTaskChain(false);
-            task = taskChain.getNextTask();
-        }
+        /*
+            卖出时：
+                1. 工作台此时在生产
+                    那么系统返回的原料格信息不为0, 不改变占据状态
+                2. 工作台此时未生产
+                    2.1 系统返回的原料格信息为0：
+                        说明卖出后立即清空原料格投入生产，那么此时的规划原料格也应清空
+                        (注：是否会出现卖出前原料格差一个，但此时有两个机器人向这里运输原料，而导致卖出后清空原料格损失另外一个机器人的占据信息？
+                            不会出现，当共工作台只有一个规划原料格空位时，任务只会派遣给一个机器人
+                        )
+                    2.2 系统返回的原料格信息不为0
+                        那么原料格未占满，生产未启动，不改变规划原料格占据状态
+            买入时：
+                释放规划产品格状态
+        */
+        // if (lastProductType != 0 && productType != 0 && lastProductType != productType) {
+        //     if(to.getMaterialStatus() == 0){
+        //         to.updatePlanMaterialStatus(0, true);
+        //     }
+        //     to.setPlanProductStatus(0);
+        // }
 
         // 卖成功，持有->不持有
+        // 如果系统返回的原料格信息为0，那么清空规划原料格信息
         if (lastProductType != 0 && productType == 0) {
+            to.updatePlanMaterialStatus(from.getType(), true);
             taskChain.removeTask(0);
             task = taskChain.getNextTask();
-            // 检查是否是最后一个任务，是的话，释放目标工作台
-            if (task == null) {
-                to.setInTaskChain(false);
-            }
         }
     }
 
