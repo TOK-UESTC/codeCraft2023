@@ -124,10 +124,6 @@ public class Robot {
         if (lastProductType == 0 && productType != 0) {
             // 放开原料购买控制台
             from.setPlanProductStatus(0);
-            if(from.isBlocked() && from.getMaterialStatus() == 0 && from.getMaterialStatus() != from.getLastMaterialStatus()){
-                // TODO:这里出现无效参数位，考虑是否拆分功能
-                from.updatePlanMaterialStatus(0, true);
-            }
         }
 
         // 同一帧先卖后买，持有A->持有B
@@ -146,19 +142,17 @@ public class Robot {
             买入时：
                 释放规划产品格状态
         */
-        if (lastProductType != 0 && productType != 0 && lastProductType != productType) {
-            if(to.getMaterialStatus() == 0){
-                to.updatePlanMaterialStatus(0, true);
-            }
-            to.setPlanProductStatus(0);
-        }
+        // if (lastProductType != 0 && productType != 0 && lastProductType != productType) {
+        //     if(to.getMaterialStatus() == 0){
+        //         to.updatePlanMaterialStatus(0, true);
+        //     }
+        //     to.setPlanProductStatus(0);
+        // }
 
         // 卖成功，持有->不持有
         // 如果系统返回的原料格信息为0，那么清空规划原料格信息
         if (lastProductType != 0 && productType == 0) {
-            if(to.getMaterialStatus() == 0){
-                to.updatePlanMaterialStatus(0, true);
-            }
+            to.updatePlanMaterialStatus(from.getType(), true);
             taskChain.removeTask(0);
             task = taskChain.getNextTask();
         }

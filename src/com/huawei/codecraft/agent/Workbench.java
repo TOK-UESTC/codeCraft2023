@@ -81,12 +81,12 @@ public class Workbench {
     /**
      * 更新原料格状态
      * 
-     * @param type:    原材料类型
-     * @param isClear: 是否清空规划原材料格, true: 表示所有原料格清空投入生产， false: 占据原料格
+     * @param type: 原材料类型
+     * @param sell: type类规划原材料格置0
      */
-    public void updatePlanMaterialStatus(int type, boolean isClear) {
-        if (isClear) {
-            planMaterialStatus = 0;
+    public void updatePlanMaterialStatus(int type, boolean Sell) {
+        if (Sell) {
+            planMaterialStatus = planMaterialStatus&(~(1 << type));
         } else {
             planMaterialStatus |= (1 << type);
         }

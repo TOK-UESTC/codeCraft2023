@@ -151,6 +151,9 @@ public class Context {
 
     /** 发起决策过程 */
     public void step() {
+        if(frameId == 6789){
+            int i=0;
+        }
         printLine(String.format("%d", frameId));
 
         // 调度器分配任务
