@@ -7,6 +7,7 @@ import com.huawei.codecraft.constants.ActionType;
 import com.huawei.codecraft.constants.Const;
 import com.huawei.codecraft.task.Task;
 import com.huawei.codecraft.task.TaskChain;
+import com.huawei.codecraft.utils.Utils;
 import com.huawei.codecraft.vector.Coordinate;
 import com.huawei.codecraft.vector.Force;
 import com.huawei.codecraft.vector.Velocity;
@@ -135,7 +136,11 @@ public class Robot {
         }
     }
 
-    /** 检查售卖情况，根据判题器返回更改状态 */
+    /**
+     * 检查售卖情况，根据判题器返回更改状态
+     * 
+     * @param leftFrame: 游戏剩余时间
+     */
     public void checkDeal(int leftFrame) {
         // 没有任务
         if (task == null) {
@@ -185,8 +190,14 @@ public class Robot {
             task = taskChain.getNextTask();
 
             // 时间不足时，不继续执行任务链
-            if (task != null && task.getDistance() / Const.MAX_FORWARD_FRAME > leftFrame) {
-                task = null;
+            if (task != null) {
+                // 运动需要的frame
+                double moveFrame = task.getDistance() / Const.MAX_FORWARD_FRAME;
+                double turnFrame = Utils.angleDiff(task.getAngle(), heading) / (Math.PI / Const.FRAME_PER_SECOND);
+
+                if (moveFrame + turnFrame > leftFrame) {
+                    task = null;
+                }
             }
         }
     }

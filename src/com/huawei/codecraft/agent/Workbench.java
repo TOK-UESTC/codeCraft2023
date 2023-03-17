@@ -29,7 +29,6 @@ public class Workbench {
         this.materialStatus = 0;
         this.planMaterialStatus = 0;
         this.optionalTasks = new ArrayList<>();
-
     }
 
     public int getLastMaterialStatus() {
@@ -86,7 +85,7 @@ public class Workbench {
      */
     public void updatePlanMaterialStatus(int type, boolean Sell) {
         if (Sell) {
-            planMaterialStatus = planMaterialStatus&(~(1 << type));
+            planMaterialStatus = planMaterialStatus & (~(1 << type));
         } else {
             planMaterialStatus |= (1 << type);
         }

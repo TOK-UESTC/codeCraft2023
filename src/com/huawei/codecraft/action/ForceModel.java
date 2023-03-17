@@ -35,11 +35,11 @@ public class ForceModel {
          */
         for (Robot robot : robotList) {
             if (robot != rb) {
-                if(robot.getProductType() == 0) {
+                if (robot.getProductType() == 0) {
                     continue;
                 }
-                if(rb.getTask() != null && robot.getTask() != null){
-                    if(rb.getTask().getTo().getWorkbenchIdx() == robot.getTask().getTo().getWorkbenchIdx()){
+                if (rb.getTask() != null && robot.getTask() != null) {
+                    if (rb.getTask().getTo().getWorkbenchIdx() == robot.getTask().getTo().getWorkbenchIdx()) {
                         continue;
                     }
                 }
