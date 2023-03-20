@@ -9,8 +9,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
 
-import com.huawei.codecraft.action.Action;
-import com.huawei.codecraft.action.ForceModel;
+import com.huawei.codecraft.motion.Action;
+import com.huawei.codecraft.motion.ForceModel;
 import com.huawei.codecraft.agent.Robot;
 import com.huawei.codecraft.agent.Workbench;
 import com.huawei.codecraft.constants.Const;
@@ -152,7 +152,7 @@ public class Context {
 
     /** 发起决策过程 */
     public void step() {
-        if (frameId == 6789) {
+        if (frameId == 5) {
             int i = 0;
         }
         printLine(String.format("%d", frameId));
@@ -187,6 +187,10 @@ public class Context {
     /** 获取当前frame */
     public int getFrame() {
         return frameId;
+    }
+
+    public int getMoney() {
+        return money;
     }
 
     /** 指令结束，发送OK */

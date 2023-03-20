@@ -1,4 +1,4 @@
-package com.huawei.codecraft.action;
+package com.huawei.codecraft.motion;
 
 import com.huawei.codecraft.constants.ActionType;
 

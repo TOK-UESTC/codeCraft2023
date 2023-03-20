@@ -1,15 +1,20 @@
 package com.huawei.codecraft.agent;
 
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.ArrayList;
 
-import com.huawei.codecraft.action.Action;
 import com.huawei.codecraft.constants.ActionType;
 import com.huawei.codecraft.constants.Const;
+import com.huawei.codecraft.motion.Action;
+import com.huawei.codecraft.motion.MotionModel;
+import com.huawei.codecraft.motion.MotionState;
 import com.huawei.codecraft.task.Task;
 import com.huawei.codecraft.task.TaskChain;
 import com.huawei.codecraft.vector.Coordinate;
 import com.huawei.codecraft.vector.Force;
 import com.huawei.codecraft.vector.Velocity;
+import com.huawei.codecraft.utils.Utils;
 
 public class Robot {
 
@@ -46,6 +51,12 @@ public class Robot {
     private double integral2Distance = 0;
     // 积分值上限
     private double integralMax2Distance = 0.5;
+
+    // 上一轮预测的位置与朝向
+    private Coordinate lastPredictPos = null;
+    private double lastPredictHeading = 0;
+    // 积分时间间隔
+    private double integralTime = 0.1;
 
     public Robot(Coordinate pos) {
         this.pos = pos;
@@ -250,18 +261,39 @@ public class Robot {
         if (task == null) {
             return;
         }
+        // 如果上一轮存在预测，那么就保存预测误差
+        if (lastPredictPos != null) {
+            // 横轴误差
+            double prediffX = lastPredictPos.getX() - pos.getX();
+            // 纵轴误差
+            double prediffY = lastPredictPos.getY() - pos.getY();
+            // 计算距离误差
+            double predistanceError = Math.sqrt(Math.pow(prediffX, 2) + Math.pow(prediffY, 2));
+            // 计算角度误差
+            double preangle = getHeading() - lastPredictHeading;
+            // 将四个误差保存到txt文件
+            try {
+                FileWriter fw = new FileWriter("..\\PID\\predict.txt", true);
+                fw.append(prediffX + " " + prediffY + " " + predistanceError + " " +
+                        preangle);
+                fw.append("\r");
+                fw.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+        }
         // 获取当前目标工作台,根据是否持有物品判断
         Workbench wb = getProductType() == 0 ? task.getFrom() : task.getTo();
 
         // 获取距离误差
-        double distanceError = Math.sqrt(Math.pow(wb.getPos().getX() - pos.getX(), 2)
-                + Math.pow(wb.getPos().getY() - pos.getY(), 2));
+        double distanceError = Utils.computeDistance(wb.getPos(), pos);
 
         // 计算角度误差，根据两者的坐标
         double diffX = wb.getPos().getX() - pos.getX();
         double diffY = wb.getPos().getY() - pos.getY();
         double quadrant = 1.; // 象限
-        if (diffX > 0 && diffY < 0 || diffX < 0 && diffY < 0) {
+        if (diffY < 0) {
             quadrant = -1.;
         }
         double angle = 0;
@@ -269,7 +301,7 @@ public class Robot {
             angle = quadrant * Math.acos(diffX / distanceError);
         }
 
-        double error = heading - angle;
+        double error = angle - heading;
 
         if (error > Math.PI) {
             error = error - 2 * Math.PI;
@@ -322,7 +354,7 @@ public class Robot {
         integral2Distance = Math.max(integral2Distance, -integralMax2Distance);
 
         // 角度环控制
-        double angularVelocity = -(Kp2Angle * error + Ki2Angle * integral2Angle
+        double angularVelocity = (Kp2Angle * error + Ki2Angle * integral2Angle
                 + Kd2Angle * (error - lastError2Angle));
         lastError2Angle = error;
         integral2Angle += error;
@@ -330,10 +362,80 @@ public class Robot {
         integral2Angle = Math.min(integral2Angle, integralMax2Angle);
         integral2Angle = Math.max(integral2Angle, -integralMax2Angle);
 
+        // 对输出值进行规范化，保证输出的最大值是规范的
+        lineVelocity = lineVelocity > Const.MAX_FORWARD_VELOCITY ? Const.MAX_FORWARD_VELOCITY : lineVelocity;
+        lineVelocity = lineVelocity < Const.MAX_BACKWARD_VELOCITY ? Const.MAX_BACKWARD_VELOCITY : lineVelocity;
+        angularVelocity = angularVelocity > Const.MAX_ANGULAR_VELOCITY ? Const.MAX_ANGULAR_VELOCITY : angularVelocity;
+        angularVelocity = angularVelocity < -Const.MAX_ANGULAR_VELOCITY ? -Const.MAX_ANGULAR_VELOCITY : angularVelocity;
         // 产生转向动作
         actions.add(new Action(ActionType.ROTATE, angularVelocity));
         // 产生前进动作
         actions.add(new Action(ActionType.FORWARD, lineVelocity));
+
+        // // 使用积分对下一帧的位置与朝向进行预测
+        // // 获取现在的合速度
+        // double nowVelocity = Math.sqrt(Math.pow(getVelocity().getX(), 2) +
+
+        // Math.pow(getVelocity().getY(), 2));
+        // double nowAngularVelocity = getAngularVelocity();
+        // double nowX = getPos().getX();
+        // double nowY = getPos().getY();
+        // double nowHeading = getHeading();
+        // // 根据integralTime进行时间块的划分
+        // double integralTime = 0.020;
+        // double integralStep = 0.00001;
+        // double integralTimes = integralTime / integralStep;
+
+        // // 加速度常量
+        // double acceleration = 19.61093396;
+        // double accelerationWithLoad = 14.081;
+        // // 角加速度常量
+        // double angularAcceleration = 38.695931425;
+        // double angularAccelerationWithLoad = 20.130082965;
+        // // 速度上限
+        // double maxVelocity = 6;
+        // // 角速度上限
+        // double maxAngularVelocity = Math.PI;
+        // if (isLoaded()) {
+        // // 加载了货物
+        // acceleration = accelerationWithLoad;
+        // angularAcceleration = angularAccelerationWithLoad;
+        // }
+
+        // for (int i = 0; i < integralTimes; i++) {
+        // // 计算下一帧的合速度
+        // double nextVelocity = nowVelocity + acceleration * integralStep;
+        // // 计算下一帧的角速度
+        // double nextAngularVelocity = nowAngularVelocity + angularAcceleration *
+        // integralStep;
+        // // 速度上限
+        // nextVelocity = Math.min(nextVelocity, maxVelocity);
+        // nextVelocity = Math.max(nextVelocity, -2);
+        // // 角速度上限
+        // nextAngularVelocity = Math.min(nextAngularVelocity, maxAngularVelocity);
+        // nextAngularVelocity = Math.max(nextAngularVelocity, -maxAngularVelocity);
+
+        // // 计算x
+        // nowX += (nowVelocity + nextVelocity) / 2 * integralStep *
+        // Math.cos(nowHeading);
+        // // 计算deltaY
+        // nowY += (nowVelocity + nextVelocity) / 2 * integralStep *
+        // Math.sin(nowHeading);
+        // // 计算deltaAngle
+        // nowHeading += (angularVelocity + nextAngularVelocity) / 2 * integralStep;
+
+        // // 更新当前速度
+        // nowVelocity = nextVelocity;
+        // nowAngularVelocity = nextAngularVelocity;
+        // }
+
+        // // 更新预测值
+        // lastPredictPos = new Coordinate(nowX, nowY);
+        // lastPredictHeading = nowHeading;
+
+        MotionState state = MotionModel.predict(this, lineVelocity, angularVelocity);
+        lastPredictPos = new Coordinate(state.getPosX(), state.getPosY());
+        lastPredictHeading = state.getHeading();
     }
 
     public ArrayList<Action> getActions() {
@@ -363,6 +465,15 @@ public class Robot {
      */
     public boolean isFree() {
         return task == null;
+    }
+
+    /**
+     * 当前机器人是否负载
+     * 
+     * @return: true = loaded
+     */
+    public boolean isLoaded() {
+        return productType != 0;
     }
 
     /**
