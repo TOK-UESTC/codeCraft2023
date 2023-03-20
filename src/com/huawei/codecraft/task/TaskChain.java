@@ -4,7 +4,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.huawei.codecraft.agent.Robot;
+import com.huawei.codecraft.agent.Workbench;
 import com.huawei.codecraft.constants.Const;
+import com.huawei.codecraft.utils.Utils;
 
 public class TaskChain implements Comparable<TaskChain> {
 
@@ -60,7 +62,16 @@ public class TaskChain implements Comparable<TaskChain> {
      */
     public void addTask(Task task) {
         this.taskChain.add(task);
+        // 移动时间
         this.totalFrame += task.getDistance() / Const.MAX_FORWARD_FRAME;
+        // 转向时间，还可以加上机器人最开始接取任务时候的转向，这里为了快捷开发，省略掉
+        if (taskChain.size() > 1) {
+            // 得到上一个任务的预估角度
+            Task lastTask = taskChain.get(taskChain.size() - 1);
+            double diff = Utils.angleDiff(lastTask.getAngle(), task.getAngle());
+
+            this.totalFrame += diff / (Math.PI / Const.FRAME_PER_SECOND);
+        }
     }
 
     /** 删除taskChain[index] */

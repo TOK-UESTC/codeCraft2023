@@ -162,16 +162,9 @@ public class Context {
 
         for (int i = 0; i < 4; i++) {
             Robot rb = robotList.get(i);
-            Force force = new Force();
 
             // 获取合力
-            force = ForceModel.getForce(rb, robotList, workbenchList);
-
-            // // 如果离工作台太近，产生斥力
-            // if (rb.getTask() == null && rb.getWorkbenchIdx() != -1) {
-            // force.sub(ForceModel.getWorkbenchForce(rb,
-            // workbenchList.get(rb.getWorkbenchIdx())));
-            // }
+            Force force = ForceModel.getForce(rb, robotList, workbenchList);
 
             // 决策
             rb.step(force);
