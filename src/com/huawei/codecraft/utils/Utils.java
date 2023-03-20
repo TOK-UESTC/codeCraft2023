@@ -67,11 +67,4 @@ public class Utils {
             return null;
         }
     }
-
-    /** 计算角度差 */
-    public static double angleDiff(double angle1, double angle2) {
-        double result = angle1 - angle2;
-
-        return result > Math.PI ? result - Math.PI : result;
-    }
 }
