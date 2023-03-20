@@ -1,4 +1,4 @@
-package com.huawei.codecraft.action;
+package com.huawei.codecraft.motion;
 
 import java.util.List;
 

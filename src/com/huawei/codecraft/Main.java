@@ -15,7 +15,7 @@ public class Main {
     // 时间开关
     private static final boolean showTime = false;
     // 日志开关
-    private static final boolean saveLog = false;
+    private static final boolean saveLog = true;
     // 任务链记录开关
     private static final boolean saveChain = false;
 

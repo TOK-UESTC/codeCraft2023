@@ -11,6 +11,12 @@ public class Utils {
         return v1.sub(v2).mod();
     }
 
+    /** 计算角度差，范围为(0-PI) */
+    public static double computeAngle(double a1, double a2) {
+        double diff = Math.abs(a1 - a2);
+        return diff >= Math.PI ? diff - Math.PI : diff;
+    }
+
     /** 返回可收购给定类型工作台产物的工作台类型 */
     public static int[] getDeliverableType(int wbType) {
         int[] types = null;

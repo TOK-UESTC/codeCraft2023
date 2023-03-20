@@ -13,7 +13,8 @@ public class Const {
     public static final double ROBOT_RADIUS_LOADED = 0.53; // 机器人负载半径
     public static final double ROBOT_DENSITY = 20; // 机器人密度， 20kg/m^2
     public static final double MAX_FORWARD_VELOCITY = 6; // 机器人最大前进速度
-    public static final double MAX_BACKWARD_VELOCITY = 2; // 机器人最大后退速度
+    public static final double MAX_BACKWARD_VELOCITY = -2; // 机器人最大后退速度
+    public static final double MAX_ANGULAR_VELOCITY = Math.PI;// 机器人最大角速度
     public static final double MAX_ROTATION_VELOCITY = Math.PI; // 机器人最大后退速度
     public static final double MAX_DISTANCE = 100; // 最大距离100， 大于50*sqrt(2)即可
     public static final double MAP_LENGTH = 50.0; // 地图长度
