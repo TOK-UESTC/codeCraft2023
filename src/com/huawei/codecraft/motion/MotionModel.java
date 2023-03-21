@@ -39,11 +39,14 @@ public class MotionModel {
         if (frag.getAngularAcc() >= MIN_ERROR) {
             x += getIntegralXFront(state.vMod(), frag.getAngularAcc(), state.getHeading(), state.getW(), frag.getT());
             x -= getIntegralXFront(state.vMod(), frag.getAngularAcc(), state.getHeading(), state.getW(), 0);
+
             x += getIntegralXBack(frag.getAngularAcc(), frag.getLinearAcc(), state.getHeading(), state.getW(),
                     frag.getT());
             x -= getIntegralXBack(frag.getAngularAcc(), frag.getLinearAcc(), state.getHeading(), state.getW(), 0);
+
             y += getIntegralYFront(state.vMod(), frag.getAngularAcc(), state.getHeading(), state.getW(), frag.getT());
             y -= getIntegralYFront(state.vMod(), frag.getAngularAcc(), state.getHeading(), state.getW(), 0);
+
             y += getIntegralYBack(frag.getAngularAcc(), frag.getLinearAcc(), state.getHeading(), state.getW(),
                     frag.getT());
             y -= getIntegralYBack(frag.getAngularAcc(), frag.getLinearAcc(), state.getHeading(), state.getW(), 0);
