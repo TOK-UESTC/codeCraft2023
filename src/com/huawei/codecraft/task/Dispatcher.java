@@ -95,8 +95,6 @@ public class Dispatcher {
                 }
 
                 receiver.bindChain(bindChain);
-                // 绑定新任务之后预测一下
-                receiver.predict();
 
                 bindChain.occupy();
                 chainsMap.remove(receiver);

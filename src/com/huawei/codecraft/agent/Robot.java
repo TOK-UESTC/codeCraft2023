@@ -4,15 +4,20 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Collections;
+import java.util.Comparator;
 
+import com.huawei.codecraft.action.Action;
+import com.huawei.codecraft.action.ActionModel;
 import com.huawei.codecraft.constants.ActionType;
 import com.huawei.codecraft.constants.Const;
-import com.huawei.codecraft.motion.Action;
 import com.huawei.codecraft.motion.MotionModel;
 import com.huawei.codecraft.motion.MotionState;
 import com.huawei.codecraft.pid.PIDModel;
 import com.huawei.codecraft.task.Task;
 import com.huawei.codecraft.task.TaskChain;
+import com.huawei.codecraft.utils.Utils;
+import com.huawei.codecraft.vector.Vector;
 import com.huawei.codecraft.vector.Coordinate;
 import com.huawei.codecraft.vector.Force;
 import com.huawei.codecraft.vector.Velocity;
@@ -27,6 +32,7 @@ public class Robot {
     private Velocity velocity; // 线速度， 二维向量描述, m/s
     private double heading; // 朝向 [-pi, pi] 0 表示右方向, pi/2表示上方向
     private Coordinate pos; // 机器人坐标位置
+
     private Task task; // 机器人当前任务
     private TaskChain taskChain; // 任务链
     private ArrayList<Action> actions; // 机器人当前动作序列
@@ -44,7 +50,9 @@ public class Robot {
     private Coordinate lastPredictPos = null;
     private double lastPredictHeading = 0;
 
+    // 各种控制器
     private PIDModel PID;
+    private ActionModel actionModel;
 
     public Robot(Coordinate pos, List<Robot> robotList) {
         this.pos = pos;
@@ -65,6 +73,7 @@ public class Robot {
         robotID += 1;
         motionStates = new HashMap<>();
         this.PID = new PIDModel(this);
+        this.actionModel = new ActionModel(this);
     }
 
     /** 更新所有数据 */
@@ -87,8 +96,17 @@ public class Robot {
         actions.clear();
 
         // 更新action列表
-        generateShopActions();
-        generateMoveActions();
+        actionModel.generate();
+    }
+
+    /** 判断是否到达当前waypoints第一个点位 */
+    public boolean isReached() {
+        return Utils.computeDistance(pos, waypoints.get(0)) < 0.1;
+    }
+
+    /** 到达目标点之后，删除第一个点位 */
+    public void reach() {
+        waypoints.remove(0);
     }
 
     /**
@@ -101,31 +119,33 @@ public class Robot {
         }
 
         motionStates.clear();
-        // 获取当前目标工作台,根据是否持有物品判断
-        Workbench wb = getProductType() == 0 ? task.getFrom() : task.getTo();
-        // 产生当前的状态
+
+        // 复制状态，避免直接对原数据进行操作
         MotionState state = new MotionState(this);
-
-        // 新建一个PID对象，避免对控制用PID积分和误差造成影响
         PIDModel pidModel = new PIDModel(PID);
+        int nextFrameId = frameId + 1;
 
-        int predCurrFrameId = frameId + 1;
+        // 进行路径查找
         while (true) {
-            double distanceError = Math.sqrt(Math.pow(state.getPosX() -
-                    wb.getPos().getX(), 2)
-                    + Math.pow(state.getPosY() - wb.getPos().getY(), 2));
-            // 判断是否到达目标
-            if (distanceError < 0.4) {
-                break;
+            // 检查是否到达waypoints
+            if (isReached()) {
+                // 到达，则删除当前waypoint
+                reach();
+
+                // 已经到达最终目标点
+                if (waypoints.size() == 0) {
+                    break;
+                }
             }
-            // 产生PID结果
-            double[] pidVelocityResult = pidModel.control(state, wb.getPos());
-            // 产生预测
-            state = MotionModel.predict(state, pidVelocityResult[0], pidVelocityResult[1]);
+
+            // 得到pid控制量并根据此控制量进行预测
+            double[] controlFactor = pidModel.control(state, waypoints.get(0));
+            state = MotionModel.predict(state, controlFactor[0], controlFactor[1]);
 
             /*
              * 下面写防碰撞逻辑
              */
+            boolean isCollided = false;
             for (Robot rb : robotList) {
                 if (rb == this) {
                     continue;
@@ -134,22 +154,19 @@ public class Robot {
                 MotionState otherState = rb.motionStates.get(frameId);
 
                 if (otherState != null) {
-                    double diffX = state.getPosX() - otherState.getPosX();
-                    double diffY = state.getPosY() - otherState.getPosY();
-                    if (Math.sqrt(diffX * diffX + diffY * diffY) < 1.2) {
-
+                    if (Utils.computeDistance(state.getPos(), otherState.getPos()) < 1.2) {
+                        isCollided = true;
                     }
                 }
             }
 
-            // for (Robot rb : robotList) {
-            // if (rb.motionStates) {
+            // 有碰撞，寻找下一个可能的中间点，并放到waypoints的首位
+            if (isCollided) {
 
-            // }
-            // }
+            }
 
             motionStates.put(frameId, new MotionState(state));
-            predCurrFrameId += 1;
+            nextFrameId += 1;
             // // 保存当前state的位置与朝向
             // try {
             // FileWriter fw = new FileWriter("..\\PID\\state.txt", true);
@@ -171,6 +188,59 @@ public class Robot {
         // } catch (IOException e) {
         // e.printStackTrace();
         // }
+    }
+
+    /**
+     * @param state1: 低优先级回退后的状态
+     * @param state2: 碰撞时高优先级的机器人状态
+     */
+    private List<Coordinate> searchNextWaypoints(MotionState state1, MotionState state2) {
+        List<Coordinate> nextWaypoints = new ArrayList<>();
+        Coordinate pos = state2.getPos();
+        Velocity v = state2.getVelocity();
+        if (v.mod() < 0.001) {
+            // 机器人当前状态为移动，速度为零
+            // 沿速度方向的单位向量
+            Velocity eH = new Velocity(0., 1.);
+            // 沿速度垂直方向的单位向量
+            Velocity eV = new Velocity(1., 0.);
+            for (double offset : new double[] { -1.5, 1.5, -2.5, 2.5 }) {
+                nextWaypoints.add(new Coordinate(pos.getX() + offset * eH.getX(), pos.getY() + offset * eH.getY()));
+                nextWaypoints.add(new Coordinate(pos.getX() + offset * eV.getX(), pos.getY() + offset * eV.getY()));
+            }
+
+        } else {
+            // 沿速度方向的单位向量
+            Velocity eH = new Velocity(v.getX() / v.mod(), v.getY() / v.mod());
+            // 沿速度垂直方向的单位向量
+            Velocity eV = new Velocity(-v.getY() / v.mod(), v.getX() / v.mod());
+            // 机器人当前状态正在移动，移动垂直方向搜索
+            for (double offset : new double[] { -1.5, 1.5, -2.5, 2.5 }) {
+                nextWaypoints.add(new Coordinate(pos.getX() + offset * eH.getX(), pos.getY() + offset * eH.getY()));
+                nextWaypoints.add(new Coordinate(pos.getX() + offset * eV.getX(), pos.getY() + offset * eV.getY()));
+            }
+        }
+        Workbench wb = productType == 0 ? task.getFrom() : task.getTo();
+        // 为搜索点排序
+        List<List<Coordinate>> groupCoordinate = new ArrayList<>();
+        for (Coordinate next : nextWaypoints) {
+            List<Coordinate> a = new ArrayList<>();
+            a.add(state1.getPos());
+            a.add(wb.getPos());
+            a.add(next);
+            groupCoordinate.add(a);
+        }
+
+        Collections.sort(groupCoordinate, new Comparator<List<Coordinate>>() {
+            public int compare(List<Coordinate> a1, List<Coordinate> a2) {
+                Vector v10 = new Vector(a1.get(0).getX() - a1.get(2).getX(), a1.get(0).getY() - a1.get(2).getY());
+                Vector v11 = new Vector(a1.get(1).getX() - a1.get(2).getX(), a1.get(1).getY() - a1.get(2).getY());
+
+                return 0;
+            }
+        });
+
+        return nextWaypoints;
     }
 
     /**
@@ -213,40 +283,6 @@ public class Robot {
     // }
 
     /**
-     * 根据当前任务链执行情况，生成货物Action
-     * 考虑先转向调整姿态，再进行购买操作
-     */
-    public void generateShopActions() {
-        if (task == null) {
-            return;
-        }
-
-        Workbench wb;
-
-        // 购买
-        if (productType == 0) {
-            wb = task.getFrom();
-            // 判断是否在目标工作台附近，并且当前已经调转，开始朝向下一个工作台
-            if (workbenchIdx == wb.getWorkbenchIdx()) {
-                // double posAngle =
-                // task.getTo().getPos().sub(task.getFrom().getPos()).getAngle();
-
-                // if (Math.abs(posAngle - heading) < Math.PI / 32) {
-                // 购买行为
-                addAction(new Action(ActionType.BUY));
-                // }
-            }
-        } else {
-            // 去售出
-            wb = task.getTo();
-            if (workbenchIdx == wb.getWorkbenchIdx()) {
-                // 售出行为
-                addAction(new Action(ActionType.SELL));
-            }
-        }
-    }
-
-    /**
      * 检查售卖情况，根据判题器返回更改状态
      * 
      * @param leftFrame: 游戏剩余时间
@@ -266,6 +302,10 @@ public class Robot {
         if (lastProductType == 0 && productType != 0) {
             // 放开原料购买控制台
             from.setPlanProductStatus(0);
+
+            // 删除当前waypoint，应该删除的是from的位置
+            reach();
+
             predict();
         }
 
@@ -298,6 +338,8 @@ public class Robot {
         if (lastProductType != 0 && productType == 0) {
             to.updatePlanMaterialStatus(from.getType(), true);
             taskChain.removeTask(0);
+            // 到达目标之后，删除所有waypoints
+            waypoints.clear();
             task = taskChain.getNextTask();
 
             // 时间不足时，不继续执行任务链
@@ -309,144 +351,19 @@ public class Robot {
                     task = null;
                 }
             }
+
+            // 更新waypoints
+            if (task != null) {
+                waypoints.add(from.getPos());
+                waypoints.add(to.getPos());
+            }
+
             predict();
         }
     }
 
-    // 距离加角度PID
-    private void generateMoveActions() {
-        // 首先判断是否有任务
-        if (task == null) {
-            return;
-        }
-
-        // 如果上一轮存在预测，那么就保存预测误差
-        if (lastPredictPos != null) {
-            // 横轴误差
-            double prediffX = lastPredictPos.getX() - pos.getX();
-            // 纵轴误差
-            double prediffY = lastPredictPos.getY() - pos.getY();
-            // 计算距离误差
-            double predistanceError = Math.sqrt(Math.pow(prediffX, 2) +
-                    Math.pow(prediffY, 2));
-            // 计算角度误差
-            double preangle = getHeading() - lastPredictHeading;
-            // // 将四个误差保存到txt文件
-            // try {
-            // FileWriter fw = new FileWriter("..\\PID\\predict.txt", true);
-            // fw.append(prediffX + " " + prediffY + " " + predistanceError + " " +
-            // preangle);
-            // fw.append("\r");
-            // fw.close();
-            // } catch (IOException e) {
-            // e.printStackTrace();
-            // }
-            // // 保存当前的合速度,与角速度
-            // try {
-            // FileWriter fw = new FileWriter("..\\PID\\speed.txt", true);
-            // fw.append(Math.sqrt(Math.pow(getVelocity().getX(), 2) +
-            // Math.pow(getVelocity().getY(), 2)) + " "
-            // + getAngularVelocity());
-            // fw.append("\r");
-            // fw.close();
-            // } catch (IOException e) {
-            // e.printStackTrace();
-            // }
-            // // 保存当前的速度夹角，朝向，与他们的差值
-            // try {
-            // double errorAngle = getVelocity().getAngle() - getHeading();
-            // if (errorAngle > Math.PI) {
-            // errorAngle = errorAngle - 2 * Math.PI;
-            // } else if (errorAngle < -Math.PI) {
-            // errorAngle = errorAngle + 2 * Math.PI;
-            // }
-            // // 根据差值将Velocity的侧滑分量分离出来
-            // double slide = getVelocity().mod() * Math.sin(errorAngle);
-            // double forward = getVelocity().mod() * Math.cos(errorAngle);
-            // FileWriter fw = new FileWriter("..\\PID\\speedAngle.txt", true);
-            // fw.append(getVelocity().getAngle() + " " + getHeading() + " "
-            // + (errorAngle) + " " + slide + " " + forward + " " + getVelocity().mod());
-            // fw.append("\r");
-            // fw.close();
-            // } catch (IOException e) {
-            // e.printStackTrace();
-            // }
-        }
-
-        // 获取当前目标工作台,根据是否持有物品判断
-        Workbench wb = getProductType() == 0 ? task.getFrom() : task.getTo();
-
-        double[] predict = PID.control(new MotionState(this), wb.getPos());
-        // 产生转向动作
-        actions.add(new Action(ActionType.ROTATE, predict[1]));
-        // 产生前进动作
-        actions.add(new Action(ActionType.FORWARD, predict[0]));
-
-        // // 使用积分对下一帧的位置与朝向进行预测
-        // // 获取现在的合速度
-        // double nowVelocity = Math.sqrt(Math.pow(getVelocity().getX(), 2) +
-
-        // Math.pow(getVelocity().getY(), 2));
-        // double nowAngularVelocity = getAngularVelocity();
-        // double nowX = getPos().getX();
-        // double nowY = getPos().getY();
-        // double nowHeading = getHeading();
-        // // 根据integralTime进行时间块的划分
-        // double integralTime = 0.020;
-        // double integralStep = 0.00001;
-        // double integralTimes = integralTime / integralStep;
-
-        // // 加速度常量
-        // double acceleration = 19.61093396;
-        // double accelerationWithLoad = 14.081;
-        // // 角加速度常量
-        // double angularAcceleration = 38.695931425;
-        // double angularAccelerationWithLoad = 20.130082965;
-        // // 速度上限
-        // double maxVelocity = 6;
-        // // 角速度上限
-        // double maxAngularVelocity = Math.PI;
-        // if (isLoaded()) {
-        // // 加载了货物
-        // acceleration = accelerationWithLoad;
-        // angularAcceleration = angularAccelerationWithLoad;
-        // }
-
-        // for (int i = 0; i < integralTimes; i++) {
-        // // 计算下一帧的合速度
-        // double nextVelocity = nowVelocity + acceleration * integralStep;
-        // // 计算下一帧的角速度
-        // double nextAngularVelocity = nowAngularVelocity + angularAcceleration *
-        // integralStep;
-        // // 速度上限
-        // nextVelocity = Math.min(nextVelocity, maxVelocity);
-        // nextVelocity = Math.max(nextVelocity, -2);
-        // // 角速度上限
-        // nextAngularVelocity = Math.min(nextAngularVelocity, maxAngularVelocity);
-        // nextAngularVelocity = Math.max(nextAngularVelocity, -maxAngularVelocity);
-
-        // // 计算x
-        // nowX += (nowVelocity + nextVelocity) / 2 * integralStep *
-        // Math.cos(nowHeading);
-        // // 计算deltaY
-        // nowY += (nowVelocity + nextVelocity) / 2 * integralStep *
-        // Math.sin(nowHeading);
-        // // 计算deltaAngle
-        // nowHeading += (angularVelocity + nextAngularVelocity) / 2 * integralStep;
-
-        // // 更新当前速度
-        // nowVelocity = nextVelocity;
-        // nowAngularVelocity = nextAngularVelocity;
-        // }
-
-        // // 更新预测值
-        // lastPredictPos = new Coordinate(nowX, nowY);
-        // lastPredictHeading = nowHeading;
-
-        // MotionState state = MotionModel.predict(new MotionState(this), lineVelocity,
-        // angularVelocity);
-        // lastPredictPos = new Coordinate(state.getPosX(), state.getPosY());
-        // lastPredictHeading = state.getHeading();
+    public double[] control(MotionState ms, Coordinate pos) {
+        return PID.control(ms, pos);
     }
 
     public ArrayList<Action> getActions() {
@@ -462,6 +379,15 @@ public class Robot {
         this.taskChain = taskChain;
         // 机器人绑定任务链的时候就会分配任务
         this.task = taskChain.getTasks().get(0);
+
+        // 更新waypoints
+        if (task != null) {
+            waypoints.add(task.getFrom().getPos());
+            waypoints.add(task.getTo().getPos());
+        }
+
+        // 更换任务后，进行预测
+        predict();
     }
 
     /** 获取当前任务链 */

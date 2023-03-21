@@ -3,9 +3,8 @@ package com.huawei.codecraft.motion;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.huawei.codecraft.agent.Robot;
+import com.huawei.codecraft.vector.Coordinate;
 import com.huawei.codecraft.vector.Velocity;
-import com.huawei.codecraft.constants.Const;
 
 public class MotionModel {
     public static final double FRAME_TIME = 0.02; // 时间常量
@@ -35,8 +34,8 @@ public class MotionModel {
             heading += 2 * Math.PI;
         }
         // 预测位置
-        double x = state.getPosX();
-        double y = state.getPosY();
+        double x = state.getPos().getX();
+        double y = state.getPos().getY();
         // 加速度不为零
         if (frag.getAngularAcc() >= MIN_ERROR) {
             x += getIntegralXFront(state.vMod(), frag.getAngularAcc(), state.getHeading(), state.getW(), frag.getT());
@@ -67,9 +66,12 @@ public class MotionModel {
         }
 
         // 更新state并返回
-        state.setPosX(x);
-        state.setPosY(y);
+        state.setPos(new Coordinate(x, y));
         state.setHeading(heading);
+        double newVx = (state.vMod() + frag.getLinearAcc() * frag.getT()) * Math.cos(state.getHeading());
+        double newVy = (state.vMod() + frag.getLinearAcc() * frag.getT()) * Math.sin(state.getHeading());
+        state.setVelocity(new Velocity(newVx, newVy));
+        state.setW(state.getW() + frag.getAngularAcc() * frag.getT());
 
         // double newVx = state.getVx() + frag.getLinearAcc() * frag.getT() *
         // Math.cos(state.getHeading());
@@ -85,12 +87,6 @@ public class MotionModel {
         // state.setVx(Const.MAX_FORWARD_VELOCITY * Math.cos());
         // state.setVy();
         // }
-
-        state.setVx((state.vMod() + frag.getLinearAcc() * frag.getT()) *
-                Math.cos(state.getHeading()));
-        state.setVy((state.vMod() + frag.getLinearAcc() * frag.getT()) *
-                Math.sin(state.getHeading()));
-        state.setW(state.getW() + frag.getAngularAcc() * frag.getT());
 
         return state;
     }

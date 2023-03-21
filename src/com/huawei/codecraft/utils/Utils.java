@@ -74,4 +74,14 @@ public class Utils {
             return null;
         }
     }
+
+    /** 计算两个向量的innerProduct */
+    public double computeCosin(Vector v1, Vector v2) {
+        if (v1.mod() < 0.001 || v2.mod() < 0.001) {
+            // 存在零向量
+            return 1.;
+        } else {
+
+        }
+    }
 }

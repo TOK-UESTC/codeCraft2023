@@ -9,8 +9,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
 
-import com.huawei.codecraft.motion.Action;
 import com.huawei.codecraft.motion.ForceModel;
+import com.huawei.codecraft.action.Action;
 import com.huawei.codecraft.agent.Robot;
 import com.huawei.codecraft.agent.Workbench;
 import com.huawei.codecraft.constants.Const;

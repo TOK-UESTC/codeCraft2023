@@ -1,74 +1,58 @@
 package com.huawei.codecraft.motion;
 
 import com.huawei.codecraft.agent.Robot;
+import com.huawei.codecraft.vector.Coordinate;
+import com.huawei.codecraft.vector.Velocity;
 
 public class MotionState {
-    private double posX; // 时刻t机器人位置X
-    private double posY; // 时刻t机器人位置Y
+    private Coordinate pos; // 时刻t机器人位置
     private double heading; // 时刻t机器人位置朝向
-    private double vx; // 时刻t机器人x轴方向速度
-    private double vy; // 时刻t机器人y轴方向速度
+    private Velocity velocity;
     private double w; // 时刻t机器人角速度
     private boolean loaded; // 时刻t机器人负载状态， true: 负载
-    private int time; // 时刻t
     private double targetVelocity; // 时刻t机器人目标速度
     private double targetAngularVelocity; // 时刻t机器人目标角速度
 
-    public MotionState(double posX, double posY, double heading, double vx, double vy, double w, boolean loaded) {
-        this.posX = posX;
-        this.posY = posY;
+    public MotionState(Coordinate pos, double heading, Velocity v, double w, boolean loaded) {
+        this.pos = pos;
         this.heading = heading;
-        this.vx = vx;
-        this.vy = vy;
+        this.velocity = v;
         this.w = w;
         this.loaded = loaded;
     }
 
     public MotionState(MotionState state) {
-        this.posX = state.posX;
-        this.posY = state.posY;
+        this.pos = state.pos;
         this.heading = state.heading;
-        this.vx = state.vx;
-        this.vy = state.vy;
+        this.velocity = state.velocity;
         this.w = state.w;
         this.loaded = state.loaded;
     }
 
     public MotionState(Robot rb) {
-        this.posX = rb.getPos().getX();
-        this.posY = rb.getPos().getY();
+        this.pos = rb.getPos();
         this.heading = rb.getHeading();
-        this.vx = rb.getVelocity().getX();
-        this.vy = rb.getVelocity().getY();
+        this.velocity = rb.getVelocity();
         this.w = rb.getAngularVelocity();
         this.loaded = rb.isLoaded();
-        this.time = rb.getFrame();
         this.targetVelocity = 0;
         this.targetAngularVelocity = 0;
     }
 
     public double vMod() {
-        return Math.sqrt(vx * vx + vy * vy);
+        return velocity.mod();
     }
 
-    public double getPosX() {
-        return posX;
-    }
-
-    public double getPosY() {
-        return posY;
+    public Coordinate getPos() {
+        return pos;
     }
 
     public double getHeading() {
         return heading;
     }
 
-    public double getVx() {
-        return vx;
-    }
-
-    public double getVy() {
-        return vy;
+    public Velocity getVelocity() {
+        return velocity;
     }
 
     public double getW() {
@@ -79,24 +63,16 @@ public class MotionState {
         return loaded;
     }
 
-    public void setPosX(double posX) {
-        this.posX = posX;
-    }
-
-    public void setPosY(double posY) {
-        this.posY = posY;
+    public void setPos(Coordinate pos) {
+        this.pos = pos;
     }
 
     public void setHeading(double heading) {
         this.heading = heading;
     }
 
-    public void setVx(double vx) {
-        this.vx = vx;
-    }
-
-    public void setVy(double vy) {
-        this.vy = vy;
+    public void setVelocity(Velocity v) {
+        this.velocity = v;
     }
 
     public void setW(double w) {

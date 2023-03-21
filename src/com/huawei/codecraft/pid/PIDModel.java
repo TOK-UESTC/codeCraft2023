@@ -3,6 +3,7 @@ package com.huawei.codecraft.pid;
 import com.huawei.codecraft.agent.Robot;
 import com.huawei.codecraft.constants.Const;
 import com.huawei.codecraft.motion.MotionState;
+import com.huawei.codecraft.utils.Utils;
 import com.huawei.codecraft.vector.Coordinate;
 
 public class PIDModel {
@@ -49,15 +50,19 @@ public class PIDModel {
         this.rb = model.rb;
     }
 
-    // 根据当前MotionState与目标POS，计算PID结果
+    /** 根据当前MotionState与目标POS，计算控制律 */
     public double[] control(MotionState ms, Coordinate targetPos) {
+        Coordinate currPos = ms.getPos();
+        double currX = currPos.getX();
+        double currY = currPos.getY();
+        double currHeading = ms.getHeading();
+
         // 获取距离误差
-        double distanceError = Math.sqrt(Math.pow(ms.getPosX() - targetPos.getX(), 2)
-                + Math.pow(ms.getPosY() - targetPos.getY(), 2));
+        double distanceError = Utils.computeDistance(currPos, targetPos);
 
         // 计算角度误差，根据两者的坐标
-        double diffX = targetPos.getX() - ms.getPosX();
-        double diffY = targetPos.getY() - ms.getPosY();
+        double diffX = targetPos.getX() - currX;
+        double diffY = targetPos.getY() - currY;
         double quadrant = 1.; // 象限
         if (diffY < 0) {
             quadrant = -1.;
@@ -76,32 +81,21 @@ public class PIDModel {
         }
 
         // 判断离墙是否太近
-        double minDsitance2WallThreshold = 2;
+        double minWallDistThreshold = 2;
         // 减速系数
         double deceleration = 0.4;
-        double minDistance2WallX = rb.getPos().getX() < 25 ? rb.getPos().getX() : 50 - rb.getPos().getX();
-        double minDistance2WallY = rb.getPos().getY() < 25 ? rb.getPos().getY() : 50 - rb.getPos().getY();
-        // 直接固定速度的方案
-        // if (minDistance2WallX < minDsitance2WallThreshold) {
-        // lineVelocity = 2;
-        // }
-        // if (minDistance2WallY < minDsitance2WallThreshold) {
-        // lineVelocity = 2;
-        // }
+        double minDistance2WallX = currX < 25 ? currX : 50 - currX;
+        double minDistance2WallY = currY < 25 ? currY : 50 - currY;
 
         // 根据当前角度与离墙距离的关系，进行距离误差的修正
-        if (rb.getPos().getX() < minDsitance2WallThreshold && rb.getHeading() > Math.PI * 3 / 4
-                && rb.getHeading() < -Math.PI * 3 / 4) {
+        if (currX < minWallDistThreshold && currHeading > Math.PI * 3 / 4 && currHeading < -Math.PI * 3 / 4) {
             distanceError = Math.min(distanceError, deceleration * minDistance2WallX);
-        } else if (rb.getPos().getX() > 50 - minDsitance2WallThreshold && rb.getHeading() < Math.PI / 4
-                && rb.getHeading() > -Math.PI / 4) {
+        } else if (currX > 50 - minWallDistThreshold && currHeading < Math.PI / 4 && currHeading > -Math.PI / 4) {
             distanceError = Math.min(distanceError, deceleration * minDistance2WallX);
         }
-        if (rb.getPos().getY() < minDsitance2WallThreshold && rb.getHeading() < -Math.PI / 4
-                && rb.getHeading() > -Math.PI * 3 / 4) {
+        if (currY < minWallDistThreshold && currHeading < -Math.PI / 4 && currHeading > -Math.PI * 3 / 4) {
             distanceError = Math.min(distanceError, deceleration * minDistance2WallY);
-        } else if (rb.getPos().getY() > 50 - minDsitance2WallThreshold && rb.getHeading() > Math.PI / 4
-                && rb.getHeading() < Math.PI * 3 / 4) {
+        } else if (currY > 50 - minWallDistThreshold && currHeading > Math.PI / 4 && currHeading < Math.PI * 3 / 4) {
             distanceError = Math.min(distanceError, deceleration * minDistance2WallY);
         }
 

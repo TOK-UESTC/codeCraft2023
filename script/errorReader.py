@@ -42,10 +42,10 @@ def drawPid(pid, n=7000):
 
 
 if __name__ == '__main__':
-    # pidFile = 'predict.txt'
-    # pidFile = 'predictjifen.txt'
-    # pidFile = 'speed.txt'
-    pidFile = '../log/speedAngle.txt'
+    # pidFile = './log/predict.txt'
+    # pidFile = './log/predictjifen.txt'
+    # pidFile = './log/speed.txt'
+    pidFile = './log/speedAngle.txt'
     # 获取文件夹下最新的txt文件
     # pidFile = max(glob.iglob('*.txt'), key=os.path.getctime)
     pid = readPidFile(pidFile)
