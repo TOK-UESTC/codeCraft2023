@@ -17,6 +17,13 @@ public class Utils {
         return diff >= Math.PI ? diff - Math.PI : diff;
     }
 
+    /** 计算角度差 */
+    public static double angleDiff(double angle1, double angle2) {
+        double result = angle1 - angle2;
+
+        return result > Math.PI ? result - Math.PI : result;
+    }
+
     /** 返回可收购给定类型工作台产物的工作台类型 */
     public static int[] getDeliverableType(int wbType) {
         int[] types = null;

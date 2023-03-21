@@ -73,15 +73,52 @@ public class MotionModel {
     }
 
     /**
+     * @param isloaded: true 负载
+     * @param sign:     true 加速, false 减速
+     * @param w:        当前角速度 w>0 正向加速
+     * @param t:        当前时间
+     * @return 加速度大小
+     */
+    private static double getAngularAcc(boolean isloaded, double targetAngularVelocity, double w, double t) {
+        boolean sign = Math.abs(targetAngularVelocity) > Math.abs(w);
+        if (sign) {
+            double A = isloaded ? 20.150170343276994 : 38.773244625;
+            double eta = 3.86566;
+            // 初始加速度
+            double a;
+            if (w > 0) {
+                a = Math.sqrt(A * A - 2 * eta * w);
+            } else {
+                a = -Math.sqrt(A * A + 2 * eta * w);
+            }
+
+            return a - t * eta / 2;
+        } else {
+
+            double A = isloaded ? 20.313264124202313 : 39.087072;
+            double eta = 3.89725;
+            // 初始加速度
+            double a;
+            double MAX_W = 3.141420364;
+            if (w > 0) {
+                a = -Math.sqrt(A * A - 2 * eta * (MAX_W - w));
+            } else {
+                a = Math.sqrt(A * A - 2 * eta * (MAX_W + w));
+            }
+
+            return a - t * eta / 2;
+        }
+    }
+
+    /**
      * 根据输入进行预测
      * 
      * @param state:                 上一帧得到的预测状态
      * @param targetVelocity:        目标速度
      * @param targetAngularVelocity: 目标角度
      */
-    public static MotionState predict(Robot rb, double targetVelocity, double targetAngularVelocity) {
-        // 组装一个state
-        MotionState state = new MotionState(rb);
+    public static MotionState predict(MotionState state, double targetVelocity, double targetAngularVelocity) {
+
         // 计算合速度v0
         double v0 = state.vMod();
 
@@ -90,9 +127,13 @@ public class MotionModel {
         double tempLinearAcc = 0;
         if (!state.isLoaded()) {
             tempAngularAcc = targetAngularVelocity > state.getW() ? ANGULAR_ACC : -ANGULAR_ACC;
+            // tempAngularAcc = getAngularAcc(false, targetAngularVelocity, state.getW(),
+            // 0.02);
             tempLinearAcc = targetVelocity > v0 ? LINEAR_ACC : -LINEAR_ACC;
         } else {
             tempAngularAcc = targetAngularVelocity > state.getW() ? LOADED_ANGULAR_ACC : -LOADED_ANGULAR_ACC;
+            // tempAngularAcc = getAngularAcc(true, targetAngularVelocity, state.getW(),
+            // 0.02);
             tempLinearAcc = targetVelocity > v0 ? LOADED_LINEAR_ACC : -LOADED_LINEAR_ACC;
         }
 
@@ -206,7 +247,7 @@ public class MotionModel {
     private static double getIntegralYFront(double v0, double angularAcc, double theta0, double omega0, double t) {
         // 根据公式计算
         // sqrtPI*v0/Math.sqrt(ANGULAR_ACC)
-        double result = sqrtPI * v0 / sqrt(ANGULAR_ACC);
+        double result = sqrtPI * v0 / sqrt(angularAcc);
 
         double a = (pow(omega0, 2)) / (2 * angularAcc) - theta0;
         double b = (angularAcc * t + omega0) / (sqrt(angularAcc) * sqrtPI);
@@ -214,7 +255,7 @@ public class MotionModel {
         // cos((Math.pow(ANGULAR_ACC,2)/2*ANGULAR_ACC)-theta0)*FresnelS((ANGULAR_ACC*FRAME_TIME+omega0)/(Math.sqrt(ANGULAR_ACC)*sqrtPI))
         double item1 = Math.cos(a) * FresnelS(b);
         // sin((pow(ANGULAR_ACC,2)/2*ANGULAR_ACC)-theta0)*FresnelC((ANGULAR_ACC*FRAME_TIME+omega0)/(Math.sqrt(ANGULAR_ACC)*sqrtPI))
-        double item2 = Math.sin(a) * FresnelC(b);
+        double item2 = -Math.sin(a) * FresnelC(b);
         return result * (item1 + item2);
     }
 

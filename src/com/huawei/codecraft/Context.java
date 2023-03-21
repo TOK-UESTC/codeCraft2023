@@ -152,7 +152,7 @@ public class Context {
 
     /** 发起决策过程 */
     public void step() {
-        if (frameId == 5) {
+        if (frameId == 431) {
             int i = 0;
         }
         printLine(String.format("%d", frameId));
