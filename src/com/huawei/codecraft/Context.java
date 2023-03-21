@@ -88,7 +88,7 @@ public class Context {
                         break;
                     // 机器人
                     case 'A':
-                        Robot robot = new Robot(new Coordinate(x, y));
+                        Robot robot = new Robot(new Coordinate(x, y), robotList);
                         robotList.add(robot);
                         break;
                     // 工作台
@@ -140,7 +140,7 @@ public class Context {
 
             // 按照顺序读取
             Robot rb = robotList.get(i);
-            rb.update(line.split(" "));
+            rb.update(line.split(" "), frameId);
 
             // 根据买卖情况修改task
             rb.checkDeal(Const.DURATION_OF_GAME * Const.FRAME_PER_SECOND - frameId);
@@ -154,7 +154,7 @@ public class Context {
 
     /** 发起决策过程 */
     public void step() {
-        if (frameId == 5) {
+        if (frameId == 431) {
             int i = 0;
         }
         printLine(String.format("%d", frameId));

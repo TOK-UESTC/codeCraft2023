@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.huawei.codecraft.agent.Robot;
+import com.huawei.codecraft.vector.Velocity;
+import com.huawei.codecraft.constants.Const;
 
 public class MotionModel {
     public static final double FRAME_TIME = 0.02; // 时间常量
@@ -68,11 +70,67 @@ public class MotionModel {
         state.setPosX(x);
         state.setPosY(y);
         state.setHeading(heading);
-        state.setVx((state.vMod() + frag.getLinearAcc() * frag.getT()) * Math.cos(state.getHeading()));
-        state.setVy((state.vMod() + frag.getLinearAcc() * frag.getT()) * Math.sin(state.getHeading()));
+
+        // double newVx = state.getVx() + frag.getLinearAcc() * frag.getT() *
+        // Math.cos(state.getHeading());
+        // double newVy = state.getVy() + frag.getLinearAcc() * frag.getT() *
+        // Math.sin(state.getHeading());
+        // Velocity newSpeed = new Velocity(newVx, newVy);
+
+        // state.setVx(newVx);
+        // state.setVy(newVy);
+
+        // if (newSpeed.mod() > Const.MAX_FORWARD_VELOCITY) {
+        // double angle =newSpeed.getAngle();
+        // state.setVx(Const.MAX_FORWARD_VELOCITY * Math.cos());
+        // state.setVy();
+        // }
+
+        state.setVx((state.vMod() + frag.getLinearAcc() * frag.getT()) *
+                Math.cos(state.getHeading()));
+        state.setVy((state.vMod() + frag.getLinearAcc() * frag.getT()) *
+                Math.sin(state.getHeading()));
         state.setW(state.getW() + frag.getAngularAcc() * frag.getT());
 
         return state;
+    }
+
+    /**
+     * @param isloaded: true 负载
+     * @param sign:     true 加速, false 减速
+     * @param w:        当前角速度 w>0 正向加速
+     * @param t:        当前时间
+     * @return 加速度大小
+     */
+    private static double getAngularAcc(boolean isloaded, double targetAngularVelocity, double w, double t) {
+        boolean sign = Math.abs(targetAngularVelocity) > Math.abs(w);
+        if (sign) {
+            double A = isloaded ? 20.150170343276994 : 38.773244625;
+            double eta = 3.86566;
+            // 初始加速度
+            double a;
+            if (w > 0) {
+                a = Math.sqrt(A * A - 2 * eta * w);
+            } else {
+                a = -Math.sqrt(A * A + 2 * eta * w);
+            }
+
+            return a - t * eta / 2;
+        } else {
+
+            double A = isloaded ? 20.313264124202313 : 39.087072;
+            double eta = 3.89725;
+            // 初始加速度
+            double a;
+            double MAX_W = 3.141420364;
+            if (w > 0) {
+                a = -Math.sqrt(A * A - 2 * eta * (MAX_W - w));
+            } else {
+                a = Math.sqrt(A * A - 2 * eta * (MAX_W + w));
+            }
+
+            return a - t * eta / 2;
+        }
     }
 
     /**
@@ -82,9 +140,8 @@ public class MotionModel {
      * @param targetVelocity:        目标速度
      * @param targetAngularVelocity: 目标角度
      */
-    public static MotionState predict(Robot rb, double targetVelocity, double targetAngularVelocity) {
-        // 组装一个state
-        MotionState state = new MotionState(rb);
+    public static MotionState predict(MotionState state, double targetVelocity, double targetAngularVelocity) {
+
         // 计算合速度v0
         double v0 = state.vMod();
 
@@ -93,9 +150,13 @@ public class MotionModel {
         double tempLinearAcc = 0;
         if (!state.isLoaded()) {
             tempAngularAcc = targetAngularVelocity > state.getW() ? ANGULAR_ACC : -ANGULAR_ACC;
+            // tempAngularAcc = getAngularAcc(false, targetAngularVelocity, state.getW(),
+            // 0.02);
             tempLinearAcc = targetVelocity > v0 ? LINEAR_ACC : -LINEAR_ACC;
         } else {
             tempAngularAcc = targetAngularVelocity > state.getW() ? LOADED_ANGULAR_ACC : -LOADED_ANGULAR_ACC;
+            // tempAngularAcc = getAngularAcc(true, targetAngularVelocity, state.getW(),
+            // 0.02);
             tempLinearAcc = targetVelocity > v0 ? LOADED_LINEAR_ACC : -LOADED_LINEAR_ACC;
         }
 
@@ -148,7 +209,9 @@ public class MotionModel {
         for (MotionFrag frag : frags) {
             result = predictFrag(result, frag);
         }
-
+        // result同时也要记录所需的线速度与角速度指令
+        result.setTargetVelocity(targetVelocity);
+        result.setTargetAngularVelocity(targetAngularVelocity);
         return result;
     }
 
