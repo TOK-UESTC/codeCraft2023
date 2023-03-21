@@ -209,7 +209,9 @@ public class MotionModel {
         for (MotionFrag frag : frags) {
             result = predictFrag(result, frag);
         }
-
+        // result同时也要记录所需的线速度与角速度指令
+        result.setTargetVelocity(targetVelocity);
+        result.setTargetAngularVelocity(targetAngularVelocity);
         return result;
     }
 

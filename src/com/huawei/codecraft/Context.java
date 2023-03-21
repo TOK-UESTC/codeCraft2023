@@ -88,7 +88,7 @@ public class Context {
                         break;
                     // 机器人
                     case 'A':
-                        Robot robot = new Robot(new Coordinate(x, y));
+                        Robot robot = new Robot(new Coordinate(x, y), robotList);
                         robotList.add(robot);
                         break;
                     // 工作台

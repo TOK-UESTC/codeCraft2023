@@ -1,11 +1,12 @@
 package com.huawei.codecraft.agent;
 
-import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 
 import com.huawei.codecraft.constants.ActionType;
 import com.huawei.codecraft.constants.Const;
@@ -42,8 +43,9 @@ public class Robot {
     private TaskChain taskChain; // 任务链
     private ArrayList<Action> actions; // 机器人当前动作序列
     private int id;
-    private ArrayList<MotionState> motionStates; // 机器人运动状态序列
     private int frameId;
+    private List<Robot> robotList;
+    private Map<Integer, MotionState> motionStates; // 机器人运动状态序列
 
     public static int robotID = 0;
 
@@ -58,12 +60,12 @@ public class Robot {
 
     // 距离PID参数
     private double Kp2Distance = 4.2;
-    private double Ki2Distance = 0;
+    private double Ki2Distance = 0.1;
     private double Kd2Distance = 1;
     private double lastError2Distance = 0;
     private double integral2Distance = 0;
     // 积分值上限
-    private double integralMax2Distance = 50;
+    private double integralMax2Distance = 0.7;
 
     // 上一轮预测的位置与朝向
     private Coordinate lastPredictPos = null;
@@ -71,7 +73,7 @@ public class Robot {
     // 积分时间间隔
     private double integralTime = 0.1;
 
-    public Robot(Coordinate pos) {
+    public Robot(Coordinate pos, List<Robot> robotList) {
         this.pos = pos;
         this.workbenchIdx = -1;
         this.productType = 0;
@@ -86,9 +88,10 @@ public class Robot {
         this.taskChain = null;
         this.actions = new ArrayList<Action>();
         this.frameId = 0;
+        this.robotList = robotList;
         id = robotID;
         robotID += 1;
-        motionStates = new ArrayList<MotionState>();
+        motionStates = new HashMap<>();
     }
 
     /** 更新所有数据 */
@@ -146,34 +149,60 @@ public class Robot {
         double innerIntegral2Distance = integral2Distance;
         double lastError2Angle = this.lastError2Angle;
         double lastError2Distance = this.lastError2Distance;
+        int predCurrFrameId = frameId + 1;
+        while (true) {
+            double distanceError = Math.sqrt(Math.pow(state.getPosX() -
+                    wb.getPos().getX(), 2)
+                    + Math.pow(state.getPosY() - wb.getPos().getY(), 2));
+            // 判断是否到达目标
+            if (distanceError < 0.4) {
+                break;
+            }
+            // 产生PID结果
+            double[] pidVelocityResult = getPIDResult(state, wb.getPos());
+            // 产生预测
+            state = MotionModel.predict(state, pidVelocityResult[0], pidVelocityResult[1]);
 
-        // while (true) {
-        // double distanceError = Math.sqrt(Math.pow(state.getPosX() -
-        // wb.getPos().getX(), 2)
-        // + Math.pow(state.getPosY() - wb.getPos().getY(), 2));
-        // // 判断是否到达目标
-        // if (distanceError < 0.4) {
-        // break;
-        // }
-        // // 产生PID结果
-        // double[] pidVelocityResult = getPIDResult(state, wb.getPos());
-        // // 产生预测
-        // state = MotionModel.predict(state, pidVelocityResult[0],
-        // pidVelocityResult[1]);
-        // motionStates.add(new MotionState(state));
+            /*
+             * 下面写防碰撞逻辑
+             */
+            for (Robot rb : robotList) {
+                if (rb == this) {
+                    continue;
+                }
 
-        // // // 保存当前state的位置与朝向
-        // // try {
-        // // FileWriter fw = new FileWriter("..\\PID\\state.txt", true);
-        // // fw.write(state.getPosX() + " " + state.getPosY() + " " +
-        // state.getHeading() +
-        // // "\r");
-        // // fw.close();
-        // // } catch (IOException e) {
-        // // e.printStackTrace();
-        // // }
+                MotionState otherState = rb.motionStates.get(frameId);
 
-        // }
+                if (otherState != null) {
+                    double diffX = state.getPosX() - otherState.getPosX();
+                    double diffY = state.getPosY() - otherState.getPosY();
+                    if (Math.sqrt(diffX * diffX + diffY * diffY) < 1.2) {
+                        // 碰撞
+
+                    }
+                }
+            }
+
+            // for (Robot rb : robotList) {
+            // if (rb.motionStates) {
+
+            // }
+            // }
+
+            motionStates.put(frameId, new MotionState(state));
+            predCurrFrameId += 1;
+            // // 保存当前state的位置与朝向
+            // try {
+            // FileWriter fw = new FileWriter("..\\PID\\state.txt", true);
+            // fw.write(state.getPosX() + " " + state.getPosY() + " " +
+            // state.getHeading() +
+            // "\r");
+            // fw.close();
+            // } catch (IOException e) {
+            // e.printStackTrace();
+            // }
+
+        }
 
         // 预测后恢复PID的积分和误差
         integral2Angle = innerIntegral2Angle;
@@ -181,16 +210,54 @@ public class Robot {
         this.lastError2Angle = lastError2Angle;
         this.lastError2Distance = lastError2Distance;
 
-        // // 保存预测的目标与帧数
-        // try {
-        // FileWriter fw = new FileWriter("..\\PID\\taskpredict.txt", true);
-        // fw.write("id:" + this.id + "->" + wb.getType() + "frame" +
-        // (frameId - 1 + motionStates.size()) + "\r");
-        // fw.close();
-        // } catch (IOException e) {
-        // e.printStackTrace();
-        // }
+        // 保存预测的目标与帧数
+        try {
+            FileWriter fw = new FileWriter("..\\PID\\taskpredict.txt", true);
+            fw.write("id:" + this.id + "->" + wb.getType() + "frame" +
+                    (frameId - 1 + motionStates.size()) + "\r");
+            fw.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
 
+    }
+
+    /**
+     * 寻找路径
+     * 回退帧数 k
+     */
+    private List<MotionState> findRoad(int frameId) {
+        // 获取当前帧信息
+        MotionState currState = stateMap.get(frameId);
+
+        // 查看是否满足结束条件，是的话，返回
+        if (到达终点 || frameId已经到底) {
+            // 根据情况进行返回
+            return;
+        }
+
+        List<Coordinate> positions = new ArrayList<Coordinate>();
+        if (碰撞) {
+            positions.addAll(getRelativePos(currState));
+        } else {
+            positions.add(new Coordinate(currState.getPosX(), currState.getPosY()));
+        }
+
+        for (Coordinate pos : positions) {
+            // 复制当前状态
+            MotionState state = new MotionState(currState);
+            // 产生PID结果
+            double[] pidVelocityResult = getPIDResult(state, pos);
+            // 产生预测
+            state = MotionModel.predict(state, pidVelocityResult[0], pidVelocityResult[1]);
+
+            // 将state添加到list中及逆行判断
+            stateMap.put(state, frameId + 1);
+            // 对每个位置进行回退，检测是否会碰撞
+            findRoad(frameId + 1);
+
+            stateMap.remove(frameId + 1);
+        }
     }
 
     // 根据当前MotionState与目标POS，计算PID结果
@@ -277,6 +344,11 @@ public class Robot {
         lineVelocity = lineVelocity < Const.MAX_BACKWARD_VELOCITY ? Const.MAX_BACKWARD_VELOCITY : lineVelocity;
         angularVelocity = angularVelocity > Const.MAX_ANGULAR_VELOCITY ? Const.MAX_ANGULAR_VELOCITY : angularVelocity;
         angularVelocity = angularVelocity < -Const.MAX_ANGULAR_VELOCITY ? -Const.MAX_ANGULAR_VELOCITY : angularVelocity;
+
+        // 策略：角度大就先停止
+        if (Math.abs(error) > Math.PI / 32) {
+            lineVelocity = 0;
+        }
 
         // 返回PID结果
         return new double[] { lineVelocity, angularVelocity };
@@ -674,6 +746,11 @@ public class Robot {
     /** 获取机器人当前任务 */
     public Task getTask() {
         return task;
+    }
+
+    /** 获取机器人frameID */
+    public int getFrame() {
+        return frameId;
     }
 
     /** hashcode */

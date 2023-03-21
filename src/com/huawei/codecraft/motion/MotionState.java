@@ -10,6 +10,9 @@ public class MotionState {
     private double vy; // 时刻t机器人y轴方向速度
     private double w; // 时刻t机器人角速度
     private boolean loaded; // 时刻t机器人负载状态， true: 负载
+    private int time; // 时刻t
+    private double targetVelocity; // 时刻t机器人目标速度
+    private double targetAngularVelocity; // 时刻t机器人目标角速度
 
     public MotionState(double posX, double posY, double heading, double vx, double vy, double w, boolean loaded) {
         this.posX = posX;
@@ -39,6 +42,9 @@ public class MotionState {
         this.vy = rb.getVelocity().getY();
         this.w = rb.getAngularVelocity();
         this.loaded = rb.isLoaded();
+        this.time = rb.getFrame();
+        this.targetVelocity = 0;
+        this.targetAngularVelocity = 0;
     }
 
     public double vMod() {
@@ -96,4 +102,21 @@ public class MotionState {
     public void setW(double w) {
         this.w = w;
     }
+
+    public void setTargetVelocity(double targetVelocity) {
+        this.targetVelocity = targetVelocity;
+    }
+
+    public void setTargetAngularVelocity(double targetAngularVelocity) {
+        this.targetAngularVelocity = targetAngularVelocity;
+    }
+
+    public double getTargetVelocity() {
+        return targetVelocity;
+    }
+
+    public double getTargetAngularVelocity() {
+        return targetAngularVelocity;
+    }
+
 }

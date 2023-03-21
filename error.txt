@@ -1,3 +1,5 @@
 
-{"status":"Successful","score":809677}
-{"status":"Successful","score":672522}
+{"status":"Successful","score":610307}
+{"status":"Successful","score":614136}
+{"status":"Successful","score":244479}
+{"status":"Successful","score":574598}
