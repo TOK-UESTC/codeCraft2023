@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.huawei.codecraft.agent.Robot;
+import com.huawei.codecraft.vector.Velocity;
+import com.huawei.codecraft.constants.Const;
 
 public class MotionModel {
     public static final double FRAME_TIME = 0.02; // 时间常量
@@ -68,8 +70,26 @@ public class MotionModel {
         state.setPosX(x);
         state.setPosY(y);
         state.setHeading(heading);
-        state.setVx((state.vMod() + frag.getLinearAcc() * frag.getT()) * Math.cos(state.getHeading()));
-        state.setVy((state.vMod() + frag.getLinearAcc() * frag.getT()) * Math.sin(state.getHeading()));
+
+        // double newVx = state.getVx() + frag.getLinearAcc() * frag.getT() *
+        // Math.cos(state.getHeading());
+        // double newVy = state.getVy() + frag.getLinearAcc() * frag.getT() *
+        // Math.sin(state.getHeading());
+        // Velocity newSpeed = new Velocity(newVx, newVy);
+
+        // state.setVx(newVx);
+        // state.setVy(newVy);
+
+        // if (newSpeed.mod() > Const.MAX_FORWARD_VELOCITY) {
+        // double angle =newSpeed.getAngle();
+        // state.setVx(Const.MAX_FORWARD_VELOCITY * Math.cos());
+        // state.setVy();
+        // }
+
+        state.setVx((state.vMod() + frag.getLinearAcc() * frag.getT()) *
+                Math.cos(state.getHeading()));
+        state.setVy((state.vMod() + frag.getLinearAcc() * frag.getT()) *
+                Math.sin(state.getHeading()));
         state.setW(state.getW() + frag.getAngularAcc() * frag.getT());
 
         return state;

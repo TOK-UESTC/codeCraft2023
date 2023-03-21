@@ -38,10 +38,12 @@ public class Robot {
     private double heading; // 朝向 [-pi, pi] 0 表示右方向, pi/2表示上方向
     private Coordinate pos; // 机器人坐标位置
     private Task task; // 机器人当前任务
+    private boolean taskChanged; // 机器人在当前帧是否更改过任务
     private TaskChain taskChain; // 任务链
     private ArrayList<Action> actions; // 机器人当前动作序列
     private int id;
     private ArrayList<MotionState> motionStates; // 机器人运动状态序列
+    private int frameId;
 
     public static int robotID = 0;
 
@@ -80,15 +82,17 @@ public class Robot {
         this.velocity = null;
         this.heading = 0;
         this.task = null;
+        this.taskChanged = false;
         this.taskChain = null;
         this.actions = new ArrayList<Action>();
+        this.frameId = 0;
         id = robotID;
         robotID += 1;
         motionStates = new ArrayList<MotionState>();
     }
 
     /** 更新所有数据 */
-    public void update(String[] info) {
+    public void update(String[] info, int frameId) {
         this.workbenchIdx = Integer.parseInt(info[0]);
         this.lastProductType = this.productType;
         this.productType = Integer.parseInt(info[1]);
@@ -98,6 +102,7 @@ public class Robot {
         this.velocity = new Velocity(Double.parseDouble(info[5]), Double.parseDouble(info[6]));
         this.heading = Double.parseDouble(info[7]);
         this.pos = new Coordinate(Double.parseDouble(info[8]), Double.parseDouble(info[9]));
+        this.frameId = frameId;
     }
 
     /** 机器人根据当前任务和状态进行动作决策。将决策Action输入到列表中，等待执行 */
@@ -106,12 +111,22 @@ public class Robot {
         actions.clear();
 
         if (savePid && lastPredictPos != null) {
-            writePid();
+            // writePid();
         }
         // 更新action列表
         generateShopActions();
         // generateMoveActions(force);
         generateMoveActions();
+    }
+
+    /** 当前帧任务是否改变 */
+    public boolean isTaskChanged() {
+        return taskChanged;
+    }
+
+    /** 设定taskchanged */
+    public void setTaskChanged(boolean state) {
+        this.taskChanged = false;
     }
 
     /** 根据当前任务产生预测 */
@@ -132,30 +147,33 @@ public class Robot {
         double lastError2Angle = this.lastError2Angle;
         double lastError2Distance = this.lastError2Distance;
 
-        while (true) {
-            double distanceError = Math.sqrt(Math.pow(state.getPosX() - wb.getPos().getX(), 2)
-                    + Math.pow(state.getPosY() - wb.getPos().getY(), 2));
-            // 判断是否到达目标
-            if (distanceError < 0.4) {
-                break;
-            }
-            // 产生PID结果
-            double[] pidVelocityResult = getPIDResult(state, wb.getPos());
-            // 产生预测
-            state = MotionModel.predict(state, pidVelocityResult[0], pidVelocityResult[1]);
-            motionStates.add(new MotionState(state));
+        // while (true) {
+        // double distanceError = Math.sqrt(Math.pow(state.getPosX() -
+        // wb.getPos().getX(), 2)
+        // + Math.pow(state.getPosY() - wb.getPos().getY(), 2));
+        // // 判断是否到达目标
+        // if (distanceError < 0.4) {
+        // break;
+        // }
+        // // 产生PID结果
+        // double[] pidVelocityResult = getPIDResult(state, wb.getPos());
+        // // 产生预测
+        // state = MotionModel.predict(state, pidVelocityResult[0],
+        // pidVelocityResult[1]);
+        // motionStates.add(new MotionState(state));
 
-            // // 保存当前state的位置与朝向
-            // try {
-            // FileWriter fw = new FileWriter("..\\PID\\state.txt", true);
-            // fw.write(state.getPosX() + " " + state.getPosY() + " " + state.getHeading() +
-            // "\r");
-            // fw.close();
-            // } catch (IOException e) {
-            // e.printStackTrace();
-            // }
+        // // // 保存当前state的位置与朝向
+        // // try {
+        // // FileWriter fw = new FileWriter("..\\PID\\state.txt", true);
+        // // fw.write(state.getPosX() + " " + state.getPosY() + " " +
+        // state.getHeading() +
+        // // "\r");
+        // // fw.close();
+        // // } catch (IOException e) {
+        // // e.printStackTrace();
+        // // }
 
-        }
+        // }
 
         // 预测后恢复PID的积分和误差
         integral2Angle = innerIntegral2Angle;
@@ -163,15 +181,15 @@ public class Robot {
         this.lastError2Angle = lastError2Angle;
         this.lastError2Distance = lastError2Distance;
 
-        // 保存预测的目标与帧数
-        try {
-            FileWriter fw = new FileWriter("..\\PID\\taskpredict.txt", true);
-            fw.write("id:" + this.id + "->" + wb.getType() + "frame" +
-                    motionStates.size() + "\r");
-            fw.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        // // 保存预测的目标与帧数
+        // try {
+        // FileWriter fw = new FileWriter("..\\PID\\taskpredict.txt", true);
+        // fw.write("id:" + this.id + "->" + wb.getType() + "frame" +
+        // (frameId - 1 + motionStates.size()) + "\r");
+        // fw.close();
+        // } catch (IOException e) {
+        // e.printStackTrace();
+        // }
 
     }
 
@@ -294,19 +312,6 @@ public class Robot {
             if (workbenchIdx == wb.getWorkbenchIdx()) {
                 // 售出行为
                 addAction(new Action(ActionType.SELL));
-
-                // 判断是否有后续任务，如果角度满足，同帧进行买卖
-                task = taskChain.getNextTask();
-
-                // if (task != null && workbenchIdx == task.getFrom().getWorkbenchIdx()) {
-                // double posAngle =
-                // task.getTo().getPos().sub(task.getFrom().getPos()).getAngle();
-                // if (Math.abs(posAngle - heading) < Math.PI / 32
-                // && workbenchIdx == task.getFrom().getWorkbenchIdx()) {
-                // 购买行为
-                // addAction(new Action(ActionType.BUY));
-                // }
-                // }
             }
         }
     }
@@ -364,6 +369,7 @@ public class Robot {
             to.updatePlanMaterialStatus(from.getType(), true);
             taskChain.removeTask(0);
             task = taskChain.getNextTask();
+            taskChanged = true;
 
             // 时间不足时，不继续执行任务链
             if (task != null) {
@@ -372,8 +378,10 @@ public class Robot {
 
                 if (moveFrame > leftFrame) {
                     task = null;
+                    taskChanged = false;
                 }
             }
+            predict();
         }
     }
 
@@ -492,91 +500,11 @@ public class Robot {
         // 获取当前目标工作台,根据是否持有物品判断
         Workbench wb = getProductType() == 0 ? task.getFrom() : task.getTo();
 
-        // 获取距离误差
-        double distanceError = Utils.computeDistance(wb.getPos(), pos);
-
-        // 计算角度误差，根据两者的坐标
-        double diffX = wb.getPos().getX() - pos.getX();
-        double diffY = wb.getPos().getY() - pos.getY();
-        double quadrant = 1.; // 象限
-        if (diffY < 0) {
-            quadrant = -1.;
-        }
-        double angle = 0;
-        if (distanceError > 0.04) {
-            angle = quadrant * Math.acos(diffX / distanceError);
-        }
-
-        double error = angle - heading;
-
-        if (error > Math.PI) {
-            error = error - 2 * Math.PI;
-        } else if (error < -Math.PI) {
-            error = error + 2 * Math.PI;
-        }
-
-        // 判断离墙是否太近
-        double minDsitance2WallThreshold = 2;
-        // 减速系数
-        double deceleration = 0.4;
-        double minDistance2WallX = getPos().getX() < 25 ? getPos().getX() : 50 - getPos().getX();
-        double minDistance2WallY = getPos().getY() < 25 ? getPos().getY() : 50 - getPos().getY();
-        // 直接固定速度的方案
-        // if (minDistance2WallX < minDsitance2WallThreshold) {
-        // lineVelocity = 2;
-        // }
-        // if (minDistance2WallY < minDsitance2WallThreshold) {
-        // lineVelocity = 2;
-        // }
-
-        // 根据当前角度与离墙距离的关系，进行距离误差的修正
-        if (getPos().getX() < minDsitance2WallThreshold && heading > Math.PI * 3 / 4
-                && heading < -Math.PI * 3 / 4) {
-            distanceError = Math.min(distanceError, deceleration * minDistance2WallX);
-        } else if (getPos().getX() > 50 - minDsitance2WallThreshold && heading < Math.PI / 4
-                && heading > -Math.PI / 4) {
-            distanceError = Math.min(distanceError, deceleration * minDistance2WallX);
-        }
-        if (getPos().getY() < minDsitance2WallThreshold && heading < -Math.PI / 4
-                && heading > -Math.PI * 3 / 4) {
-            distanceError = Math.min(distanceError, deceleration * minDistance2WallY);
-        } else if (getPos().getY() > 50 - minDsitance2WallThreshold && heading > Math.PI / 4
-                && heading < Math.PI * 3 / 4) {
-            distanceError = Math.min(distanceError, deceleration * minDistance2WallY);
-        }
-
-        // // 根据角度偏差，进行距离误差的修正
-        // if (Math.abs(error) > Math.PI / 4) {
-        // distanceError = distanceError * deceleration;
-        // }
-
-        // 距离环控制
-        double lineVelocity = (Kp2Distance * distanceError + Ki2Distance * integral2Distance
-                + Kd2Distance * (distanceError - lastError2Distance));
-        lastError2Distance = distanceError;
-        integral2Distance += distanceError;
-        // 积分值上限
-        integral2Distance = Math.min(integral2Distance, integralMax2Distance);
-        integral2Distance = Math.max(integral2Distance, -integralMax2Distance);
-
-        // 角度环控制
-        double angularVelocity = (Kp2Angle * error + Ki2Angle * integral2Angle
-                + Kd2Angle * (error - lastError2Angle));
-        lastError2Angle = error;
-        integral2Angle += error;
-        // 积分值上限
-        integral2Angle = Math.min(integral2Angle, integralMax2Angle);
-        integral2Angle = Math.max(integral2Angle, -integralMax2Angle);
-
-        // 对输出值进行规范化，保证输出的最大值是规范的
-        lineVelocity = lineVelocity > Const.MAX_FORWARD_VELOCITY ? Const.MAX_FORWARD_VELOCITY : lineVelocity;
-        lineVelocity = lineVelocity < Const.MAX_BACKWARD_VELOCITY ? Const.MAX_BACKWARD_VELOCITY : lineVelocity;
-        angularVelocity = angularVelocity > Const.MAX_ANGULAR_VELOCITY ? Const.MAX_ANGULAR_VELOCITY : angularVelocity;
-        angularVelocity = angularVelocity < -Const.MAX_ANGULAR_VELOCITY ? -Const.MAX_ANGULAR_VELOCITY : angularVelocity;
+        double[] predict = getPIDResult(new MotionState(this), wb.getPos());
         // 产生转向动作
-        actions.add(new Action(ActionType.ROTATE, angularVelocity));
+        actions.add(new Action(ActionType.ROTATE, predict[1]));
         // 产生前进动作
-        actions.add(new Action(ActionType.FORWARD, lineVelocity));
+        actions.add(new Action(ActionType.FORWARD, predict[0]));
 
         // // 使用积分对下一帧的位置与朝向进行预测
         // // 获取现在的合速度
@@ -639,10 +567,10 @@ public class Robot {
         // lastPredictPos = new Coordinate(nowX, nowY);
         // lastPredictHeading = nowHeading;
 
-        MotionState state = MotionModel.predict(new MotionState(this), lineVelocity,
-                angularVelocity);
-        lastPredictPos = new Coordinate(state.getPosX(), state.getPosY());
-        lastPredictHeading = state.getHeading();
+        // MotionState state = MotionModel.predict(new MotionState(this), lineVelocity,
+        // angularVelocity);
+        // lastPredictPos = new Coordinate(state.getPosX(), state.getPosY());
+        // lastPredictHeading = state.getHeading();
     }
 
     public ArrayList<Action> getActions() {

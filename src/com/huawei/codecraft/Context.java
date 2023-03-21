@@ -140,7 +140,7 @@ public class Context {
 
             // 按照顺序读取
             Robot rb = robotList.get(i);
-            rb.update(line.split(" "));
+            rb.update(line.split(" "), frameId);
 
             // 根据买卖情况修改task
             rb.checkDeal(Const.DURATION_OF_GAME * Const.FRAME_PER_SECOND - frameId);

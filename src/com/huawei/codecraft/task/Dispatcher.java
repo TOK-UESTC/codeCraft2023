@@ -95,10 +95,33 @@ public class Dispatcher {
                 }
 
                 receiver.bindChain(bindChain);
+                // 绑定新任务之后预测一下
+                receiver.predict();
+
                 bindChain.occupy();
                 chainsMap.remove(receiver);
             }
         }
+
+        // // 当任务改变了之后，进行预测
+        // for (Robot rb : robotList) {
+        // if (rb.isTaskChanged()) {
+        // rb.predict();
+        // // 预测完成后，将flag取消掉
+        // rb.setTaskChanged(false);
+
+        // // 预测时间不足时，不继续执行任务链
+        // // if (task != null) {
+        // // // 运动需要的frame
+        // // double moveFrame = task.getDistance() / Const.MAX_FORWARD_FRAME;
+
+        // // if (moveFrame > leftFrame) {
+        // // task = null;
+        // // }
+        // // }
+        // }
+        // }
+
     }
 
     /** 筛选空闲机器人 */
