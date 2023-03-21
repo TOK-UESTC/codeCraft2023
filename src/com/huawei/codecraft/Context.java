@@ -22,17 +22,20 @@ import com.huawei.codecraft.vector.Force;
 public class Context {
     private Scanner inStream;
     private PrintStream outStream;
-    private boolean saveLog;
-    private boolean saveChain;
 
     private int frameId;
     private int money;
 
+    // 日志开关
+    private static final boolean saveLog = false;
+    // 任务链记录开关
+    private static final boolean saveChain = false;
+
     // log用
     private String inFilePath = "./log/input.txt";
     private String outFilePath = "./log/output.txt";
-    private FileOutputStream loginStream;
-    private FileOutputStream logoutStream;
+    private FileOutputStream loginStream = null;
+    private FileOutputStream logoutStream = null;
 
     // key: 机器人ID value: 机器人对象
     private List<Robot> robotList = new ArrayList<Robot>();
@@ -43,11 +46,10 @@ public class Context {
 
     private Dispatcher dispatcher;
 
-    Context(Scanner inStream, PrintStream outStream, boolean saveLog, boolean saveChain) {
+    Context(Scanner inStream, PrintStream outStream) {
         frameId = 0;
         money = 0;
 
-        this.saveLog = saveLog;
         this.inStream = inStream;
         this.outStream = outStream;
 

@@ -1,8 +1,11 @@
 package com.huawei.codecraft.agent;
 
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.List;
 
 import com.huawei.codecraft.constants.ActionType;
 import com.huawei.codecraft.constants.Const;
@@ -15,9 +18,15 @@ import com.huawei.codecraft.utils.Utils;
 import com.huawei.codecraft.vector.Coordinate;
 import com.huawei.codecraft.vector.Force;
 import com.huawei.codecraft.vector.Velocity;
-import com.huawei.codecraft.utils.Utils;
 
 public class Robot {
+
+    private static final boolean savePid = true;
+    private String pidFilePath = "./log/predict.txt";
+    private String speedFilePath = "./log/speed.txt";
+    private String speedAnglePath = "./log/speedAngle.txt";
+
+    private List<FileOutputStream> pidStream = null;
 
     private int workbenchIdx; // 所处工作台下标, -1表示没有处于任何工作台, [0, K-1]表是某工作台下标
     private int productType; // 携带物品类型[0, 7], 0表示未携带物品
@@ -74,6 +83,13 @@ public class Robot {
         this.actions = new ArrayList<Action>();
         id = robotID;
         robotID += 1;
+
+        if (savePid) {
+            pidStream = new ArrayList<>();
+            pidStream.add(Utils.getFileStream(pidFilePath));
+            pidStream.add(Utils.getFileStream(speedFilePath));
+            pidStream.add(Utils.getFileStream(speedAnglePath));
+        }
     }
 
     /** 更新所有数据 */
@@ -94,10 +110,35 @@ public class Robot {
         // 清空动作列表
         actions.clear();
 
+        if (savePid && lastPredictPos != null) {
+            writePid();
+        }
         // 更新action列表
         generateShopActions();
         // generateMoveActions(force);
         generateMoveActions();
+    }
+
+    private void writePid() {
+        try {
+            // 横轴误差
+            double prediffX = lastPredictPos.getX() - pos.getX();
+            // 纵轴误差
+            double prediffY = lastPredictPos.getY() - pos.getY();
+            // 计算距离误差
+            double predistanceError = Math.sqrt(Math.pow(prediffX, 2) + Math.pow(prediffY, 2));
+            // 计算角度误差
+            double preangle = getHeading() - lastPredictHeading;
+            // 将四个误差保存到txt文件
+            pidStream.get(0).write(
+                    (String.format(" %f %f %f %f\n", prediffX, prediffY, predistanceError, preangle)).getBytes());
+            pidStream.get(1).write(((Math.pow(getVelocity().getX(), 2) + Math.pow(getVelocity().getY(), 2)) + " "
+                    + getAngularVelocity()).getBytes());
+            pidStream.get(2).write((getVelocity().getAngle() + " " + getHeading() + " "
+                    + (getVelocity().getAngle() - getHeading())).getBytes());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     /**
@@ -204,9 +245,8 @@ public class Robot {
             if (task != null) {
                 // 运动需要的frame
                 double moveFrame = task.getDistance() / Const.MAX_FORWARD_FRAME;
-                double turnFrame = Utils.angleDiff(task.getAngle(), heading) / (Math.PI / Const.FRAME_PER_SECOND);
 
-                if (moveFrame + turnFrame > leftFrame) {
+                if (moveFrame > leftFrame) {
                     task = null;
                 }
             }
@@ -272,28 +312,7 @@ public class Robot {
         if (task == null) {
             return;
         }
-        // 如果上一轮存在预测，那么就保存预测误差
-        if (lastPredictPos != null) {
-            // 横轴误差
-            double prediffX = lastPredictPos.getX() - pos.getX();
-            // 纵轴误差
-            double prediffY = lastPredictPos.getY() - pos.getY();
-            // 计算距离误差
-            double predistanceError = Math.sqrt(Math.pow(prediffX, 2) + Math.pow(prediffY, 2));
-            // 计算角度误差
-            double preangle = getHeading() - lastPredictHeading;
-            // 将四个误差保存到txt文件
-            try {
-                FileWriter fw = new FileWriter("..\\PID\\predict.txt", true);
-                fw.append(prediffX + " " + prediffY + " " + predistanceError + " " +
-                        preangle);
-                fw.append("\r");
-                fw.close();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
 
-        }
         // 获取当前目标工作台,根据是否持有物品判断
         Workbench wb = getProductType() == 0 ? task.getFrom() : task.getTo();
 

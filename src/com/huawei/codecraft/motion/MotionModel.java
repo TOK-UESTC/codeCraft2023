@@ -39,11 +39,14 @@ public class MotionModel {
         if (frag.getAngularAcc() >= MIN_ERROR) {
             x += getIntegralXFront(state.vMod(), frag.getAngularAcc(), state.getHeading(), state.getW(), frag.getT());
             x -= getIntegralXFront(state.vMod(), frag.getAngularAcc(), state.getHeading(), state.getW(), 0);
+
             x += getIntegralXBack(frag.getAngularAcc(), frag.getLinearAcc(), state.getHeading(), state.getW(),
                     frag.getT());
             x -= getIntegralXBack(frag.getAngularAcc(), frag.getLinearAcc(), state.getHeading(), state.getW(), 0);
+
             y += getIntegralYFront(state.vMod(), frag.getAngularAcc(), state.getHeading(), state.getW(), frag.getT());
             y -= getIntegralYFront(state.vMod(), frag.getAngularAcc(), state.getHeading(), state.getW(), 0);
+
             y += getIntegralYBack(frag.getAngularAcc(), frag.getLinearAcc(), state.getHeading(), state.getW(),
                     frag.getT());
             y -= getIntegralYBack(frag.getAngularAcc(), frag.getLinearAcc(), state.getHeading(), state.getW(), 0);
@@ -206,7 +209,7 @@ public class MotionModel {
     private static double getIntegralYFront(double v0, double angularAcc, double theta0, double omega0, double t) {
         // 根据公式计算
         // sqrtPI*v0/Math.sqrt(ANGULAR_ACC)
-        double result = sqrtPI * v0 / sqrt(ANGULAR_ACC);
+        double result = sqrtPI * v0 / sqrt(angularAcc);
 
         double a = (pow(omega0, 2)) / (2 * angularAcc) - theta0;
         double b = (angularAcc * t + omega0) / (sqrt(angularAcc) * sqrtPI);
@@ -214,7 +217,7 @@ public class MotionModel {
         // cos((Math.pow(ANGULAR_ACC,2)/2*ANGULAR_ACC)-theta0)*FresnelS((ANGULAR_ACC*FRAME_TIME+omega0)/(Math.sqrt(ANGULAR_ACC)*sqrtPI))
         double item1 = Math.cos(a) * FresnelS(b);
         // sin((pow(ANGULAR_ACC,2)/2*ANGULAR_ACC)-theta0)*FresnelC((ANGULAR_ACC*FRAME_TIME+omega0)/(Math.sqrt(ANGULAR_ACC)*sqrtPI))
-        double item2 = Math.sin(a) * FresnelC(b);
+        double item2 = -Math.sin(a) * FresnelC(b);
         return result * (item1 + item2);
     }
 

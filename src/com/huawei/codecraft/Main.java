@@ -14,13 +14,9 @@ public class Main {
 
     // 时间开关
     private static final boolean showTime = false;
-    // 日志开关
-    private static final boolean saveLog = true;
-    // 任务链记录开关
-    private static final boolean saveChain = false;
 
     private static final int totalFrame = 50 * 60 * 3;
-    private static final Context ctx = new Context(inStream, outStream, saveLog, saveChain);
+    private static final Context ctx = new Context(inStream, outStream);
     private static final Statistics statistics = new Statistics(totalFrame);
 
     public static void main(String[] args) {
