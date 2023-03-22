@@ -4,6 +4,8 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -16,7 +18,6 @@ import com.huawei.codecraft.constants.Const;
 import com.huawei.codecraft.task.Dispatcher;
 import com.huawei.codecraft.utils.Utils;
 import com.huawei.codecraft.vector.Coordinate;
-import com.huawei.codecraft.task.Task;
 
 public class Context {
     private Scanner inStream;
@@ -158,29 +159,29 @@ public class Context {
         }
         printLine(String.format("%d", frameId));
 
-        System.err.println(frameId);
-
         // 调度器分配任务
         dispatcher.dispatch();
 
-        for (int i = 0; i < 4; i++) {
-            Robot rb = robotList.get(i);
-
-            Task task = rb.getTask();
-            Coordinate target = rb.getCurrentTarget();
-
-            // 注意，这里只管理人为添加的中间pos，to和from的pos在checkdeal里面管理
-            if (task != null && target != task.getFrom().getPos() && target != task.getTo().getPos()
-                    && rb.isReached()) {
-                rb.reach();
+        List<Robot> rbList = new ArrayList<Robot>();
+        rbList.addAll(robotList);
+        Collections.sort(rbList, new Comparator<Robot>() {
+            @Override
+            public int compare(Robot r1, Robot r2){
+                return Double.compare(r1.getPriority(), r2.getPriority());
             }
+        });
+        // for(Robot r:rbList){
+        //     r.predict();
+        // }
+        for (int i = 0; i < 4; i++) {
+            Robot rb = rbList.get(i);
 
             // 决策
             rb.step();
 
             // 打印决策
             for (Action a : rb.getActions()) {
-                printLine(a.toString(i));
+                printLine(a.toString(rb.getId()));
             }
         }
         endStep();

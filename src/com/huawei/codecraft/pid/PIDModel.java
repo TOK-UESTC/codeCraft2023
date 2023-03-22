@@ -129,9 +129,9 @@ public class PIDModel {
         angularVelocity = angularVelocity < -Const.MAX_ANGULAR_VELOCITY ? -Const.MAX_ANGULAR_VELOCITY : angularVelocity;
 
         // 策略：角度大就先停止
-        if (Math.abs(error) > Math.PI / 32) {
-            lineVelocity = 0;
-        }
+        // if (Math.abs(error) > Math.PI / 32) {
+        //     lineVelocity = 0;
+        // }
 
         // 返回PID结果
         return new double[] { lineVelocity, angularVelocity };
