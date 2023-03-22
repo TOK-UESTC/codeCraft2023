@@ -24,35 +24,11 @@ public class ActionModel {
             return;
         }
 
-        // 如果上一轮存在预测，那么就保存预测误差
-        // if (lastPredictPos != null) {
-        // // 横轴误差
-        // double prediffX = lastPredictPos.getX() - pos.getX();
-        // // 纵轴误差
-        // double prediffY = lastPredictPos.getY() - pos.getY();
-        // // 计算距离误差
-        // double predistanceError = Math.sqrt(Math.pow(prediffX, 2) +
-        // Math.pow(prediffY, 2));
-        // // 计算角度误差
-        // double preangle = getHeading() - lastPredictHeading;
-        // // // 将四个误差保存到txt文件
-        // // try {
-        // // FileWriter fw = new FileWriter("..\\PID\\predict.txt", true);
-        // // fw.append(prediffX + " " + prediffY + " " + predistanceError + " " +
-        // // preangle);
-        // // fw.append("\r");
-        // // fw.close();
-        // // } catch (IOException e) {
-        // // e.printStackTrace();
-        // // }
-        // }
-
-        // TODO： 这里需要检查，当task为null的时候，waypoints有没有可能为空
-        double[] controlFactor = rb.control(new MotionState(rb), rb.getCurrentTarget());
-        // 产生前进动作
-        rb.addAction(new Action(ActionType.FORWARD, controlFactor[0]));
+        double[] controlFactor = rb.control(new MotionState(rb), rb.predict());
         // 产生转向动作
         rb.addAction(new Action(ActionType.ROTATE, controlFactor[1]));
+        // 产生前进动作
+        rb.addAction(new Action(ActionType.FORWARD, controlFactor[0]));
     }
 
     /**
@@ -71,10 +47,6 @@ public class ActionModel {
             wb = rb.getTask().getFrom();
             // 判断是否在目标工作台附近，并且当前已经调转，开始朝向下一个工作台
             if (rb.getWorkbenchIdx() == wb.getWorkbenchIdx()) {
-                // double posAngle =
-                // task.getTo().getPos().sub(task.getFrom().getPos()).getAngle();
-
-                // if (Math.abs(posAngle - heading) < Math.PI / 32) {
                 // 购买行为
                 rb.addAction(new Action(ActionType.BUY));
                 // }
