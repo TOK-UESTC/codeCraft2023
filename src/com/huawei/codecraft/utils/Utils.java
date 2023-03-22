@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 
 import com.huawei.codecraft.vector.Vector;
+import com.huawei.codecraft.vector.Coordinate;
 
 public class Utils {
     /** 计算距离 */
@@ -75,13 +76,43 @@ public class Utils {
         }
     }
 
-    /** 计算两个向量的innerProduct */
-    public double computeCosin(Vector v1, Vector v2) {
+    /** 计算两个向量的cosin */
+    public static double computeCosin(Vector v1, Vector v2) {
         if (v1.mod() < 0.001 || v2.mod() < 0.001) {
             // 存在零向量
             return 1.;
         } else {
-
+            // 不存在零向量
+            return (v1.getX() * v2.getX() + v1.getY() * v2.getY()) / (v1.mod() * v2.mod());
         }
+    }
+
+    /** 判断是否在地图外 */
+    public static boolean isOutMap(Coordinate pos) {
+        double x = pos.getX();
+        double y = pos.getY();
+
+        if (x < 0.53 || x > 50 - 0.53 || y < 0.53 || y > 50 - 0.53) {
+            return true;
+        }
+
+        return false;
+    }
+
+    /** 当前位置，中间位置和碰撞位置是否在同一条连线上，当前判断角度为10° */
+    public static boolean online(Coordinate curr, Coordinate pos, Coordinate crash) {
+        return getAngleDiff(curr, pos, crash) < 10. * Math.PI / 180.0;
+    }
+
+    /** 获取当前位置, 中间位置, 和目标位置连线夹角差 */
+    public static double getAngleDiff(Coordinate curr, Coordinate middle, Coordinate target) {
+        double diff = middle.sub(curr).getAngle() - target.sub(middle).getAngle();
+        if (diff > Math.PI) {
+            diff -= 2 * Math.PI;
+        } else if (diff < -Math.PI) {
+            diff += 2 * Math.PI;
+        }
+
+        return diff;
     }
 }

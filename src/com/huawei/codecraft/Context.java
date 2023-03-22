@@ -9,7 +9,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
 
-import com.huawei.codecraft.motion.ForceModel;
 import com.huawei.codecraft.action.Action;
 import com.huawei.codecraft.agent.Robot;
 import com.huawei.codecraft.agent.Workbench;
@@ -17,7 +16,7 @@ import com.huawei.codecraft.constants.Const;
 import com.huawei.codecraft.task.Dispatcher;
 import com.huawei.codecraft.utils.Utils;
 import com.huawei.codecraft.vector.Coordinate;
-import com.huawei.codecraft.vector.Force;
+import com.huawei.codecraft.task.Task;
 
 public class Context {
     private Scanner inStream;
@@ -154,10 +153,12 @@ public class Context {
 
     /** 发起决策过程 */
     public void step() {
-        if (frameId == 431) {
+        if (frameId == 1675) {
             int i = 0;
         }
         printLine(String.format("%d", frameId));
+
+        System.err.println(frameId);
 
         // 调度器分配任务
         dispatcher.dispatch();
@@ -165,11 +166,17 @@ public class Context {
         for (int i = 0; i < 4; i++) {
             Robot rb = robotList.get(i);
 
-            // 获取合力
-            Force force = ForceModel.getForce(rb, robotList, workbenchList);
+            Task task = rb.getTask();
+            Coordinate target = rb.getCurrentTarget();
+
+            // 注意，这里只管理人为添加的中间pos，to和from的pos在checkdeal里面管理
+            if (task != null && target != task.getFrom().getPos() && target != task.getTo().getPos()
+                    && rb.isReached()) {
+                rb.reach();
+            }
 
             // 决策
-            rb.step(force);
+            rb.step();
 
             // 打印决策
             for (Action a : rb.getActions()) {

@@ -34,7 +34,7 @@ public class Vector {
             quadrant = -1.;
         }
 
-        // TODO: 返回0 ？ 是否需要修正
+        // 避免除0
         if (mod() < 0.000000001) {
             return 0.;
         } else {

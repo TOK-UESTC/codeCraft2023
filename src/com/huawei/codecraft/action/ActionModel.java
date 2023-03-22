@@ -47,14 +47,12 @@ public class ActionModel {
         // // }
         // }
 
-        // 获取当前目标工作台,根据是否持有物品判断
-        Workbench wb = rb.getProductType() == 0 ? rb.getTask().getFrom() : rb.getTask().getTo();
-
-        double[] controlFactor = rb.control(new MotionState(rb), wb.getPos());
-        // 产生转向动作
-        rb.addAction(new Action(ActionType.ROTATE, controlFactor[1]));
+        // TODO： 这里需要检查，当task为null的时候，waypoints有没有可能为空
+        double[] controlFactor = rb.control(new MotionState(rb), rb.getCurrentTarget());
         // 产生前进动作
         rb.addAction(new Action(ActionType.FORWARD, controlFactor[0]));
+        // 产生转向动作
+        rb.addAction(new Action(ActionType.ROTATE, controlFactor[1]));
     }
 
     /**
