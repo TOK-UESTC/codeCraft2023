@@ -45,7 +45,7 @@ public class Main {
                 ctx.step();
 
                 if (showTime) {
-                    statistics.showTime();
+                    statistics.showTime(ctx.getFrame());
                 }
             }
 
