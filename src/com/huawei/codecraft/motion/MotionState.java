@@ -21,16 +21,6 @@ public class MotionState {
         this.loaded = loaded;
     }
 
-    public MotionState(Robot rb) {
-        this.pos = rb.getPos();
-        this.heading = rb.getHeading();
-        this.velocity = rb.getVelocity();
-        this.w = rb.getAngularVelocity();
-        this.loaded = rb.isLoaded();
-        this.targetVelocity = 0;
-        this.targetAngularVelocity = 0;
-    }
-
     public void update(Robot rb) {
         this.pos.setValue(rb.getPos());
         this.heading = rb.getHeading();

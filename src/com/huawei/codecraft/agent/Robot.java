@@ -71,7 +71,7 @@ public class Robot {
         this.timeCoefficients = 1;
         this.collisionCoefficients = 1;
         this.angularVelocity = 0;
-        this.velocity = null;
+        this.velocity = new Velocity(0, 0);
         this.heading = 0;
         this.task = null;
         this.taskChain = null;
@@ -86,7 +86,7 @@ public class Robot {
         if (args.length == 7) {
             this.PID = new PIDModel(this, args);
         }
-        this.actionModel = new ActionModel(this);
+        this.actionModel = new ActionModel(this, statePool, coordPool);
         this.motionModel = new MotionModel(statePool, fragPool);
 
         // 对象池
@@ -103,9 +103,9 @@ public class Robot {
         this.timeCoefficients = Double.parseDouble(info[2]);
         this.collisionCoefficients = Double.parseDouble(info[3]);
         this.angularVelocity = Double.parseDouble(info[4]);
-        this.velocity = new Velocity(Double.parseDouble(info[5]), Double.parseDouble(info[6]));
+        velocity.setValue(Double.parseDouble(info[5]), Double.parseDouble(info[6]));
+        pos.setValue(Double.parseDouble(info[8]), Double.parseDouble(info[9]));
         this.heading = Double.parseDouble(info[7]);
-        this.pos = new Coordinate(Double.parseDouble(info[8]), Double.parseDouble(info[9]));
         this.frameId = frameId;
     }
 
@@ -176,7 +176,9 @@ public class Robot {
             nextFrameId++;
         }
         pidPool.release(pidModel);
-        return wb.getPos();
+        Coordinate next = coordPool.acquire();
+        next.setValue(wb.getPos());
+        return next;
     }
 
     /**
@@ -187,8 +189,7 @@ public class Robot {
     private Coordinate findMiddle(MotionState crash) {
         int predictFrameLength = 200;
         double range = 1.5;
-        boolean isFindNextWaypoint = false;
-        while (!isFindNextWaypoint) {
+        while (true) {
             MotionState s = statePool.acquire();
             s.update(this);
             List<Coordinate> nextWaypoints = searchNextWaypoints(s, crash, range);
@@ -199,7 +200,8 @@ public class Robot {
                 clearStates();
                 s = statePool.acquire();
                 s.update(this);
-                motionStates.put(frameId, crash);
+                motionStates.put(frameId, s);
+
                 PIDModel p = pidPool.acquire();
                 p.update(PID);
                 int searchNextFrameId = frameId + 1;
@@ -223,12 +225,12 @@ public class Robot {
                             break;
                         }
                     }
+
                     if (isSearchCollided) {
                         break;
                     }
                     searchNextFrameId++;
                     if (j == predictFrameLength - 1) {
-                        isFindNextWaypoint = true;
                         pidPool.release(p);
 
                         for (Coordinate points : nextWaypoints) {
@@ -239,7 +241,6 @@ public class Robot {
                         return next;
                     }
                 }
-
                 // 每一轮进行释放
                 pidPool.release(p);
             }
@@ -253,8 +254,12 @@ public class Robot {
                 break;
             }
         }
+        // 到这里什么都没有找到
         Workbench wb = productType == 0 ? task.getFrom() : task.getTo();
-        return wb.getPos();
+        clearStates();
+        Coordinate next = coordPool.acquire();
+        next.setValue(wb.getPos());
+        return next;
     }
 
     /**
@@ -320,7 +325,7 @@ public class Robot {
 
             // 机器人当前状态正在移动，移动垂直方向搜索
             for (double offset : new double[] { -range, range }) {
-                Coordinate item = (Coordinate) coordPool.acquire();
+                Coordinate item = coordPool.acquire();
                 item.setValue(pos.getX() + offset * eH.getX(), pos.getY() + offset * eH.getY());
                 nextWaypoints.add(item);
                 item = coordPool.acquire();

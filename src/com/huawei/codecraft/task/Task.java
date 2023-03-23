@@ -123,11 +123,6 @@ public class Task {
         return distance;
     }
 
-    /** 获取从from到to的直线连线角度 */
-    public double getAngle() {
-        return to.getPos().sub(from.getPos()).getAngle();
-    }
-
     /**  */
     public boolean isVisited() {
         return visited;

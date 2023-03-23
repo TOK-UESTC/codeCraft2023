@@ -1,15 +1,21 @@
 package com.huawei.codecraft.action;
 
+import com.huawei.codecraft.ObjectPool;
 import com.huawei.codecraft.agent.Robot;
 import com.huawei.codecraft.agent.Workbench;
 import com.huawei.codecraft.constants.ActionType;
 import com.huawei.codecraft.motion.MotionState;
+import com.huawei.codecraft.vector.Coordinate;
 
 public class ActionModel {
     private Robot rb;
+    private ObjectPool<MotionState> statePool;
+    private ObjectPool<Coordinate> coordPool;
 
-    public ActionModel(Robot rb) {
+    public ActionModel(Robot rb, ObjectPool<MotionState> statePool, ObjectPool<Coordinate> coordPool) {
         this.rb = rb;
+        this.statePool = statePool;
+        this.coordPool = coordPool;
     }
 
     public void generate() {
@@ -24,7 +30,14 @@ public class ActionModel {
             return;
         }
 
-        double[] controlFactor = rb.control(new MotionState(rb), rb.predict());
+        // 获取state
+        MotionState state = statePool.acquire();
+        state.update(rb);
+
+        Coordinate next = rb.predict();
+        double[] controlFactor = rb.control(state, next);
+        coordPool.release(next);
+        statePool.release(state);
         // 产生转向动作
         rb.addAction(new Action(ActionType.ROTATE, controlFactor[1]));
         // 产生前进动作

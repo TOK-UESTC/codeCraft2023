@@ -76,17 +76,6 @@ public class Utils {
         }
     }
 
-    /** 计算两个向量的cosin */
-    public static double computeCosin(Vector v1, Vector v2) {
-        if (v1.mod() < 0.001 || v2.mod() < 0.001) {
-            // 存在零向量
-            return 1.;
-        } else {
-            // 不存在零向量
-            return (v1.getX() * v2.getX() + v1.getY() * v2.getY()) / (v1.mod() * v2.mod());
-        }
-    }
-
     /** 判断是否在地图外 */
     public static boolean isOutMap(Coordinate pos) {
         double x = pos.getX();
@@ -104,9 +93,26 @@ public class Utils {
         return getAngleDiff(curr, pos, crash) < 10. * Math.PI / 180.0;
     }
 
+    public static double getAngle(double x, double y) {
+        double quadrant = 1.; // 象限
+        if (y < 0) {
+            quadrant = -1.;
+        }
+        double mod = Math.sqrt(x * x + y * y);
+        // 避免除0
+        if (mod < 0.000000001) {
+            return 0.;
+        } else {
+            return quadrant * Math.acos(x / mod); // (-pi/2, pi/2)
+        }
+    }
+
     /** 获取当前位置, 中间位置, 和目标位置连线夹角差 */
     public static double getAngleDiff(Coordinate curr, Coordinate middle, Coordinate target) {
-        double diff = middle.sub(curr).getAngle() - target.sub(middle).getAngle();
+        double angle1 = getAngle(middle.getX() - curr.getX(), middle.getY() - curr.getY());
+        double angle2 = getAngle(target.getX() - middle.getX(), target.getY() - middle.getY());
+
+        double diff = angle1 - angle2;
         if (diff > Math.PI) {
             diff -= 2 * Math.PI;
         } else if (diff < -Math.PI) {

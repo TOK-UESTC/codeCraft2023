@@ -19,7 +19,8 @@ public class Statistics {
         long endTime = System.nanoTime();
 
         double time = (endTime - lastTime) / 1000000.0;
-        if (time >= 15) {
+        if (time >= 14) {
+            outLimit += 1;
             System.err.printf("time: [%.3f]ms\n", time);
             System.err.flush();
         }
