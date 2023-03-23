@@ -61,6 +61,7 @@ public class PIDModel {
         this.lastErrDist = model.lastErrDist;
         this.intDist = model.intDist;
         this.intMaxDist = model.intMaxDist;
+        this.rb = model.rb;
     }
 
     /** 根据当前MotionState与目标POS，计算控制律 */
