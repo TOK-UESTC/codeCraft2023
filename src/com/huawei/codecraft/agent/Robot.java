@@ -73,12 +73,9 @@ public class Robot {
         robotID += 1;
         motionStates = new HashMap<>();
 
-        this.PID = new PIDModel();
+        this.PID = new PIDModel(this);
         if (args.length == 4) {
-            this.PID = new PIDModel(
-                    Double.parseDouble(args[1]),
-                    Double.parseDouble(args[2]),
-                    Double.parseDouble(args[3]));
+            this.PID = new PIDModel(this, args);
         }
         this.actionModel = new ActionModel(this);
     }
