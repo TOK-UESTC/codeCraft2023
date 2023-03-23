@@ -1,31 +1,45 @@
+package com.huawei.codecraft;
+
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.function.Function;
+import java.util.function.Supplier;
 
 public class ObjectPool<T> {
-    private final List<T> freeObjects;
+    private final List<T> pool;
     private final Set<T> used;
-    private final Function supply;
+    private final Supplier<T> supplier;
 
-    public ObjectPool(ObjectFactory<T> objectFactory) {
-        this.freeObjects = new ArrayList<>();
-        this.objectFactory = objectFactory;
+    public ObjectPool(Supplier<T> supplier) {
+        this.supplier = supplier;
+        pool = new ArrayList<>();
+        used = new HashSet<>();
     }
 
     public T acquire() {
-        if (freeObjects.isEmpty()) {
-            return objectFactory.createNew();
+        T t;
+        if (pool.isEmpty()) {
+            t = supplier.get();
         } else {
-            return freeObjects.remove(freeObjects.size() - 1);
+            // 从池中取出，放到使用池中
+            t = pool.remove(pool.size() - 1);
+        }
+        used.add(t);
+        return t;
+    }
+
+    public void release(T t) {
+        if (used.remove(t)) {
+            pool.add(t);
         }
     }
 
-    public void release(T object) {
-        freeObjects.add(object);
+    public int availableSize() {
+        return pool.size();
     }
 
-    public interface ObjectFactory<T> {
-        T createNew();
+    public int usedSize() {
+        return used.size();
     }
 }
