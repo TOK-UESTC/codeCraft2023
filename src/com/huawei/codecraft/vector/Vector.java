@@ -43,10 +43,10 @@ public class Vector {
     }
 
     public Vector add(Vector v) {
-        return new Force(x + v.x, y + v.y);
+        return new Vector(x + v.x, y + v.y);
     }
 
     public Vector sub(Vector v) {
-        return new Force(x - v.x, y - v.y);
+        return new Vector(x - v.x, y - v.y);
     }
 }

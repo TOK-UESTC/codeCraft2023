@@ -10,7 +10,6 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Scanner;
 
 import com.huawei.codecraft.action.Action;
 import com.huawei.codecraft.agent.Robot;

@@ -4,9 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.huawei.codecraft.agent.Robot;
-import com.huawei.codecraft.agent.Workbench;
 import com.huawei.codecraft.constants.Const;
-import com.huawei.codecraft.utils.Utils;
 
 public class TaskChain implements Comparable<TaskChain> {
 
