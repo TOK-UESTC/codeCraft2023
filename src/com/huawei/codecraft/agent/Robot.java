@@ -71,7 +71,7 @@ public class Robot {
         this.timeCoefficients = 1;
         this.collisionCoefficients = 1;
         this.angularVelocity = 0;
-        this.velocity = null;
+        this.velocity = new Velocity();
         this.heading = 0;
         this.task = null;
         this.taskChain = null;
@@ -103,9 +103,11 @@ public class Robot {
         this.timeCoefficients = Double.parseDouble(info[2]);
         this.collisionCoefficients = Double.parseDouble(info[3]);
         this.angularVelocity = Double.parseDouble(info[4]);
-        this.velocity = new Velocity(Double.parseDouble(info[5]), Double.parseDouble(info[6]));
+        // this.velocity = new Velocity(Double.parseDouble(info[5]), Double.parseDouble(info[6]));
+        this.velocity.setValue(Double.parseDouble(info[5]), Double.parseDouble(info[6]));
         this.heading = Double.parseDouble(info[7]);
-        this.pos = new Coordinate(Double.parseDouble(info[8]), Double.parseDouble(info[9]));
+        // this.pos = new Coordinate(Double.parseDouble(info[8]), Double.parseDouble(info[9]));
+        this.pos.setValue(Double.parseDouble(info[8]), Double.parseDouble(info[9]));
         this.frameId = frameId;
     }
 
@@ -133,10 +135,9 @@ public class Robot {
         if (task == null) {
             return null;
         }
-
+        // System.err.println(statePool.usedSize() + statePool.availableSize());
         clearStates();
         Workbench wb = productType == 0 ? task.getFrom() : task.getTo();
-
         // 复制状态，避免直接对原数据进行操作
         MotionState state = statePool.acquire();
         state.update(this);
@@ -170,8 +171,11 @@ public class Robot {
             }
 
             if (isCollided) {
+
                 pidPool.release(pidModel);
-                return findMiddle(state);
+                Coordinate next = findMiddle(state);
+                coordPool.release(next);
+                return next;
             }
             nextFrameId++;
         }
@@ -188,25 +192,29 @@ public class Robot {
         int predictFrameLength = 200;
         double range = 1.5;
         boolean isFindNextWaypoint = false;
+        
         while (!isFindNextWaypoint) {
             MotionState s = statePool.acquire();
             s.update(this);
             List<Coordinate> nextWaypoints = searchNextWaypoints(s, crash, range);
             // 寻找完后迅速释放
             statePool.release(s);
-
+            
             for (Coordinate next : nextWaypoints) {
                 clearStates();
                 s = statePool.acquire();
                 s.update(this);
-                motionStates.put(frameId, crash);
+                motionStates.put(frameId, s);
                 PIDModel p = pidPool.acquire();
                 p.update(PID);
                 int searchNextFrameId = frameId + 1;
                 for (int j = 0; j < predictFrameLength; j++) {
                     double[] searchNextControlFactor = p.control(s, next);
+                    int inV = statePool.usedSize() + statePool.availableSize();
+                    if(statePool.availableSize() == 0){
+                        int iii=0;
+                    }
                     s = motionModel.predict(s, searchNextControlFactor[0], searchNextControlFactor[1]);
-                    motionStates.put(searchNextFrameId, s);
                     boolean isSearchCollided = false;
                     // 检测新点是否会碰撞，内部遍历
                     for (Robot r : robotList) {
@@ -223,10 +231,11 @@ public class Robot {
                             break;
                         }
                     }
+                    motionStates.put(searchNextFrameId, s);
+                    searchNextFrameId++;
                     if (isSearchCollided) {
                         break;
                     }
-                    searchNextFrameId++;
                     if (j == predictFrameLength - 1) {
                         isFindNextWaypoint = true;
                         pidPool.release(p);
@@ -235,6 +244,9 @@ public class Robot {
                             if (points != next) {
                                 coordPool.release(points);
                             }
+                        }
+                        if(inV != statePool.usedSize() + statePool.availableSize()){
+                            int ii=0;
                         }
                         return next;
                     }
@@ -254,6 +266,7 @@ public class Robot {
             }
         }
         Workbench wb = productType == 0 ? task.getFrom() : task.getTo();
+        // System.err.println(statePool.usedSize() + statePool.availableSize());
         return wb.getPos();
     }
 

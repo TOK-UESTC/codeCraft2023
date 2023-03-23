@@ -51,12 +51,4 @@ public class Vector {
             return quadrant * Math.acos(x / mod()); // (-pi/2, pi/2)
         }
     }
-
-    public Vector add(Vector v) {
-        return new Vector(x + v.x, y + v.y);
-    }
-
-    public Vector sub(Vector v) {
-        return new Vector(x - v.x, y - v.y);
-    }
 }

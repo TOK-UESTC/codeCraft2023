@@ -28,6 +28,9 @@ public class Dispatcher {
     private Map<Integer, List<Workbench>> workbenchTypeMap;
     // key: 工作台种类, value: 以工作台产物为原料的所有任务
     private Map<Integer, List<Task>> taskTypeMap;
+    private PriorityQueue<TaskChain> oldTaskChainList[];
+    private PriorityQueue<TaskChain> newTaskChainList[];
+    private Map<Robot, PriorityQueue<TaskChain>> taskChainQueueMap;
 
     public Dispatcher(List<Robot> robotList, List<Workbench> workbenchList,
             Map<Integer, List<Workbench>> workbenchTypeMap, boolean saveChain) {
@@ -39,10 +42,18 @@ public class Dispatcher {
 
         this.workbenchTypeMap = workbenchTypeMap;
         this.taskTypeMap = new HashMap<>();
+        this.taskChainQueueMap = new HashMap<>();
+        this.oldTaskChainList = new PriorityQueue[4];
+        this.newTaskChainList = new PriorityQueue[4];
+        for(int i=0; i<4; i++){
+            this.oldTaskChainList[i] = new PriorityQueue<TaskChain>();
+            this.newTaskChainList[i] = new PriorityQueue<TaskChain>();
+        }
 
         if (saveChain) {
             chainStream = Utils.getFileStream(chainPath);
         }
+
 
         // 初始化所有任务
         init();
@@ -113,20 +124,18 @@ public class Dispatcher {
     private void updateTaskChain(Map<Robot, PriorityQueue<TaskChain>> taskChainQueueMap) {
         // 以机器人的初始任务链为单位, 添加后续任务
         for (Robot rb : freeRobots) {
-            PriorityQueue<TaskChain> oldTaskChainList = taskChainQueueMap.get(rb);
-            PriorityQueue<TaskChain> newTaskChainList = new PriorityQueue<TaskChain>();
 
-            if (oldTaskChainList == null) {
+            if (oldTaskChainList[rb.getId()] == null) {
                 continue;
             }
 
-            for (TaskChain taskChain : oldTaskChainList) {
+            for (TaskChain taskChain : oldTaskChainList[rb.getId()]) {
                 boolean addNewTaskChain = false;
                 Task lastTask = taskChain.getTasks().get(taskChain.length() - 1);
 
                 // 遍历任务链中最后一个任务的后续任务,如果没有后续任务进行下一次遍历
                 if (lastTask.getPostTaskList().isEmpty()) {
-                    newTaskChainList.add(taskChain);
+                    newTaskChainList[rb.getId()].add(taskChain);
                     continue;
                 }
 
@@ -165,15 +174,15 @@ public class Dispatcher {
                     newTaskChain.addTask(postTask);
 
                     // 保存
-                    newTaskChainList.add(newTaskChain);
+                    newTaskChainList[rb.getId()].add(newTaskChain);
                     addNewTaskChain = true;
                 }
 
                 if (!addNewTaskChain) {
-                    newTaskChainList.add(taskChain);
+                    newTaskChainList[rb.getId()].add(taskChain);
                 }
             }
-            taskChainQueueMap.put(rb, newTaskChainList);
+            taskChainQueueMap.put(rb, newTaskChainList[rb.getId()]);
         }
     }
 
@@ -219,8 +228,11 @@ public class Dispatcher {
     /** 生成初始任务链 */
     public Map<Robot, PriorityQueue<TaskChain>> generateTaskChains() {
         // key: 执行任务的机器人, value: 任务链列表
-        Map<Robot, PriorityQueue<TaskChain>> taskChainQueueMap = new HashMap<>();
-
+        taskChainQueueMap.clear();
+        for(int i=0; i<4; i++){
+            oldTaskChainList[i].clear();
+            newTaskChainList[i].clear();
+        }
         // 遍历所有task
         for (List<Task> taskList : taskTypeMap.values()) {
             for (Task task : taskList) {
@@ -263,7 +275,7 @@ public class Dispatcher {
                     if (taskChainQueueMap.containsKey(rb)) {
                         taskChainQueueMap.get(rb).add(taskChain);
                     } else {
-                        PriorityQueue<TaskChain> taskChainQueue = new PriorityQueue<TaskChain>();
+                        PriorityQueue<TaskChain> taskChainQueue = oldTaskChainList[rb.getId()];
                         taskChainQueue.add(taskChain);
                         taskChainQueueMap.put(rb, taskChainQueue);
                     }

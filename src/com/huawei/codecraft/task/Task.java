@@ -125,7 +125,20 @@ public class Task {
 
     /** 获取从from到to的直线连线角度 */
     public double getAngle() {
-        return to.getPos().sub(from.getPos()).getAngle();
+        double x = to.getPos().getX() - from.getPos().getX();
+        double y = to.getPos().getY() - from.getPos().getY();
+        double quadrant = 1.; // 象限
+        if (y < 0) {
+            quadrant = -1.;
+        }
+
+        // 避免除0
+        double mod = Math.sqrt(x*x+y*y);
+        if (mod < 0.000000001) {
+            return 0.;
+        } else {
+            return quadrant * Math.acos(x / mod); // (-pi/2, pi/2)
+        }
     }
 
     /**  */
