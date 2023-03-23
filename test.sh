@@ -7,6 +7,10 @@
 cd ./src/
 javac -encoding UTF-8 com/huawei/codecraft/Main.java -g:lines,vars,source
 
+# 打一个jar包, 方便调试
+# make a jar package for debugging
+jar cvf ../main.jar com/huawei/codecraft/Main.class
+
 # 整理项目, 将二进制文件移动到bin目录下
 # move .class file to bin/
 find ./ -name "*.class" -exec cp --parents {} ../bin/ \;
@@ -19,7 +23,7 @@ then
     name=$1
     # 与答题器交互
     # interact with discriminator
-    ../robot.exe "java -classpath ./bin com.huawei.codecraft.Main" -f  -m ../maps/$name.txt
+    ../robot.exe "java -classpath ./bin com.huawei.codecraft.Main restart" -f -m ../maps/$name.txt
 else
     # 与答题器交互
     # interact with discriminator

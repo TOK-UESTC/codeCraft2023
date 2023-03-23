@@ -1,5 +1,6 @@
 package com.huawei.codecraft;
 
+import java.io.BufferedReader;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
@@ -20,7 +21,7 @@ import com.huawei.codecraft.utils.Utils;
 import com.huawei.codecraft.vector.Coordinate;
 
 public class Context {
-    private Scanner inStream;
+    private BufferedReader inStream;
     private PrintStream outStream;
 
     private int frameId;
@@ -46,7 +47,7 @@ public class Context {
 
     private Dispatcher dispatcher;
 
-    Context(Scanner inStream, PrintStream outStream) {
+    Context(BufferedReader inStream, PrintStream outStream) {
         frameId = 0;
         money = 0;
 
@@ -60,16 +61,20 @@ public class Context {
         }
     }
 
-    /** 进行初始化，读取地图 */
-    public void init() {
+    /**
+     * 进行初始化，读取地图
+     * 
+     * @throws IOException
+     */
+    public void init() throws IOException {
         int row = 0; // 地图行数
         double x, y; // 地图坐标
         int workbenchCount = 0; // 工作台数量
 
         String line;
 
-        while (inStream.hasNextLine()) {
-            line = readLine();
+        while ((line = inStream.readLine()) != null) {
+            // line = readLine();
 
             // 地图数据读取完毕
             if (line.equals("OK")) {
@@ -114,8 +119,12 @@ public class Context {
         endStep();
     }
 
-    /** 与判题器交互，更新信息 */
-    public void update() {
+    /**
+     * 与判题器交互，更新信息
+     * 
+     * @throws IOException
+     */
+    public void update() throws IOException {
         String line;
         line = readLine();
 
@@ -157,6 +166,7 @@ public class Context {
         if (frameId == 1675) {
             int i = 0;
         }
+
         printLine(String.format("%d", frameId));
 
         // 调度器分配任务
@@ -202,9 +212,13 @@ public class Context {
         outStream.flush();
     }
 
-    /** readline包装，方便log */
-    public String readLine() {
-        String line = inStream.nextLine();
+    /**
+     * readline包装，方便log
+     * 
+     * @throws IOException
+     */
+    public String readLine() throws IOException {
+        String line = inStream.readLine();
         if (saveLog) {
             try {
                 loginStream.write((line + '\n').getBytes());

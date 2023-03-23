@@ -15,8 +15,10 @@ public class Statistics {
     /** 显示每轮的计算时间 */
     public void showTime() {
         long endTime = System.nanoTime();
-        System.err.printf("time: [%.3f]ms\n", (endTime - lastTime) / 1000000.0);
-        System.err.flush();
+        if (endTime - lastTime > 1000000 * 10) {
+            System.err.printf("time: [%.3f]ms\n", (endTime - lastTime) / 1000000.0);
+            System.err.flush();
+        }
         lastTime = endTime;
     }
 
