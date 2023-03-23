@@ -3,3 +3,4 @@ replay
 *.class
 *.zip
 log
+*.jar
