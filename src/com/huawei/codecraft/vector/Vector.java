@@ -22,6 +22,16 @@ public class Vector {
         return y;
     }
 
+    public void setValue(Vector s) {
+        this.x = s.x;
+        this.y = s.y;
+    }
+
+    public void setValue(double x, double y) {
+        this.x = x;
+        this.y = y;
+    }
+
     /** 获取模 */
     public double mod() {
         return Math.sqrt(Math.pow(x, 2) + Math.pow(y, 2));

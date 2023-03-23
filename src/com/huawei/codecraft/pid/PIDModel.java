@@ -48,7 +48,23 @@ public class PIDModel {
         KdDistLoad = Double.parseDouble(args[6]);
     }
 
-    public PIDModel(PIDModel model) {
+    // public PIDModel(PIDModel model) {
+    // this.KpAngle = model.KpAngle;
+    // this.KiAngle = model.KiAngle;
+    // this.KdAngle = model.KdAngle;
+    // this.lastErrAngle = model.lastErrAngle;
+    // this.intAngle = model.intAngle;
+    // this.intMaxAngle = model.intMaxAngle;
+    // this.KpDist = model.KpDist;
+    // this.KiDist = model.KiDist;
+    // this.KdDist = model.KdDist;
+    // this.lastErrDist = model.lastErrDist;
+    // this.intDist = model.intDist;
+    // this.intMaxDist = model.intMaxDist;
+    // this.rb = model.rb;
+    // }
+
+    public void update(PIDModel model) {
         this.KpAngle = model.KpAngle;
         this.KiAngle = model.KiAngle;
         this.KdAngle = model.KdAngle;

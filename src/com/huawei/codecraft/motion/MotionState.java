@@ -21,20 +21,32 @@ public class MotionState {
         this.loaded = loaded;
     }
 
-    public MotionState(MotionState state) {
-        this.pos = state.pos;
-        this.heading = state.heading;
-        this.velocity = state.velocity;
-        this.w = state.w;
-        this.loaded = state.loaded;
-    }
-
     public MotionState(Robot rb) {
         this.pos = rb.getPos();
         this.heading = rb.getHeading();
         this.velocity = rb.getVelocity();
         this.w = rb.getAngularVelocity();
         this.loaded = rb.isLoaded();
+        this.targetVelocity = 0;
+        this.targetAngularVelocity = 0;
+    }
+
+    public void update(Robot rb) {
+        this.pos.setValue(rb.getPos());
+        this.heading = rb.getHeading();
+        this.velocity.setValue(rb.getVelocity());
+        this.w = rb.getAngularVelocity();
+        this.loaded = rb.isLoaded();
+        this.targetVelocity = 0;
+        this.targetAngularVelocity = 0;
+    }
+
+    public void update(MotionState state) {
+        this.pos.setValue(state.pos);
+        this.heading = state.heading;
+        this.velocity.setValue(state.velocity);
+        this.w = state.w;
+        this.loaded = state.loaded;
         this.targetVelocity = 0;
         this.targetAngularVelocity = 0;
     }
@@ -67,12 +79,20 @@ public class MotionState {
         this.pos = pos;
     }
 
+    public void setPos(double x, double y) {
+        this.pos.setValue(x, y);
+    }
+
     public void setHeading(double heading) {
         this.heading = heading;
     }
 
     public void setVelocity(Velocity v) {
         this.velocity = v;
+    }
+
+    public void setVelocity(double x, double y) {
+        this.velocity.setValue(x, y);
     }
 
     public void setW(double w) {

@@ -22,4 +22,10 @@ public class MotionFrag {
     public double getAngularAcc() {
         return angularAcc;
     }
+
+    public void update(double t, double linearAcc, double angularAcc) {
+        this.t = t;
+        this.linearAcc = linearAcc;
+        this.angularAcc = angularAcc;
+    }
 }
