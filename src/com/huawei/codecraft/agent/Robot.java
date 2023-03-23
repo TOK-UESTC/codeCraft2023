@@ -45,6 +45,11 @@ public class Robot {
 
     // 各种控制器
     private PIDModel PID;
+
+    public void clear() {
+        motionStates.clear();
+    }
+
     public int getId() {
         return id;
     }
@@ -95,11 +100,11 @@ public class Robot {
         actionModel.generate();
     }
 
-    public double getPriority(){
-        if(task == null){
+    public double getPriority() {
+        if (task == null) {
             return 1000.;
         }
-        Workbench wb = productType == 0? task.getFrom():task.getTo();
+        Workbench wb = productType == 0 ? task.getFrom() : task.getTo();
         return Utils.computeDistance(pos, wb.getPos());
     }
 
@@ -113,13 +118,13 @@ public class Robot {
         }
 
         motionStates.clear();
-        Workbench wb = productType == 0? task.getFrom():task.getTo();
+        Workbench wb = productType == 0 ? task.getFrom() : task.getTo();
         // 复制状态，避免直接对原数据进行操作
         MotionState state = new MotionState(this);
         PIDModel pidModel = new PIDModel(PID);
         int nextFrameId = frameId + 1;
-        int predictFrameLength=200;
-        for(int i=0; i<predictFrameLength; i++){
+        int predictFrameLength = 200;
+        for (int i = 0; i < predictFrameLength; i++) {
             double[] controlFactor = pidModel.control(state, wb.getPos());
             state = MotionModel.predict(state, controlFactor[0], controlFactor[1]);
 
@@ -132,7 +137,7 @@ public class Robot {
                 }
                 // 获取同帧下其他机器人状态，判断是否碰撞
                 otherState = rb.motionStates.get(nextFrameId);
-                if(otherState == null){
+                if (otherState == null) {
                     continue;
                 }
                 if (Utils.computeDistance(state.getPos(), otherState.getPos()) < 1.5) {
@@ -144,14 +149,14 @@ public class Robot {
             boolean isFindNextWaypoint = false;
             if (isCollided) {
                 double range = 1.5;
-                while(!isFindNextWaypoint){
+                while (!isFindNextWaypoint) {
                     List<Coordinate> nextWaypoints = searchNextWaypoints(new MotionState(this), state, range);
                     for (Coordinate next : nextWaypoints) {
                         motionStates.clear();
                         MotionState s = new MotionState(this);
                         PIDModel p = new PIDModel(PID);
                         int searchNextFrameId = frameId + 1;
-                        for(int j=0; j<predictFrameLength; j++){
+                        for (int j = 0; j < predictFrameLength; j++) {
                             double[] searchNextControlFactor = p.control(s, next);
                             s = MotionModel.predict(s, searchNextControlFactor[0], searchNextControlFactor[1]);
                             boolean isSearchCollided = false;
@@ -162,7 +167,7 @@ public class Robot {
                                 }
 
                                 MotionState searchOtherState = r.motionStates.get(searchNextFrameId);
-                                if(searchOtherState == null){
+                                if (searchOtherState == null) {
                                     continue;
                                 }
                                 if (Utils.computeDistance(s.getPos(), searchOtherState.getPos()) < 1.5) {
@@ -170,12 +175,12 @@ public class Robot {
                                     break;
                                 }
                             }
-                            if(isSearchCollided){
+                            if (isSearchCollided) {
                                 break;
                             }
                             motionStates.put(searchNextFrameId, s);
                             searchNextFrameId++;
-                            if(j == predictFrameLength -1){
+                            if (j == predictFrameLength - 1) {
                                 isFindNextWaypoint = true;
                                 return next;
                             }
@@ -183,7 +188,7 @@ public class Robot {
 
                     }
                     range += 0.5;
-                    if(range > 10){
+                    if (range > 10) {
                         break;
                     }
                 }

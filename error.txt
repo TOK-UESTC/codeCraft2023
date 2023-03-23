@@ -1,3 +1,5 @@
 
-{"status":"Successful","score":672727}
-{"status":"Runtime error.","score":0}
+{"status":"Successful","score":875565}
+{"status":"Successful","score":740755}
+{"status":"Successful","score":678463}
+{"status":"Successful","score":731520}

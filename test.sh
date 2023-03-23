@@ -19,7 +19,7 @@ then
     name=$1
     # 与答题器交互
     # interact with discriminator
-    ../robot.exe "java -classpath ./bin com.huawei.codecraft.Main" -f -d -m ../maps/$name.txt
+    ../robot.exe "java -classpath ./bin com.huawei.codecraft.Main" -f  -m ../maps/$name.txt
 else
     # 与答题器交互
     # interact with discriminator

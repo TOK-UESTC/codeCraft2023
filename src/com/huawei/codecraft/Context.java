@@ -166,12 +166,12 @@ public class Context {
         rbList.addAll(robotList);
         Collections.sort(rbList, new Comparator<Robot>() {
             @Override
-            public int compare(Robot r1, Robot r2){
+            public int compare(Robot r1, Robot r2) {
                 return Double.compare(r1.getPriority(), r2.getPriority());
             }
         });
-        // for(Robot r:rbList){
-        //     r.predict();
+        // for (Robot r : rbList) {
+        // r.clear();
         // }
         for (int i = 0; i < 4; i++) {
             Robot rb = rbList.get(i);

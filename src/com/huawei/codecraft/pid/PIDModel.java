@@ -18,14 +18,14 @@ public class PIDModel {
     private double integralMax2Angle = 0.5;
 
     // 距离PID参数
-    private double Kp2Distance = 4.2;
+    private double Kp2Distance = 6.2;
     private double Ki2Distance = 0.1;
     private double Kd2Distance = 1;
 
     private double lastError2Distance = 0;
     private double integral2Distance = 0;
     // 积分值上限
-    private double integralMax2Distance = 0.7;
+    private double integralMax2Distance = 5.7;
 
     // 机器人对象，方便直接调用
     private Robot rb;
@@ -130,8 +130,12 @@ public class PIDModel {
 
         // 策略：角度大就先停止
         // if (Math.abs(error) > Math.PI / 32) {
-        //     lineVelocity = 0;
+        // lineVelocity = 0;
         // }
+        // 策略:角度越大,速度越小
+        if (Math.abs(error) > Math.PI / 4) {
+            lineVelocity = lineVelocity * deceleration / Math.abs(error);
+        }
 
         // 返回PID结果
         return new double[] { lineVelocity, angularVelocity };
