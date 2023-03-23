@@ -9,7 +9,7 @@ import com.huawei.codecraft.vector.Coordinate;
 public class Utils {
     /** 计算距离 */
     public static double computeDistance(Vector v1, Vector v2) {
-        return v1.sub(v2).mod();
+        return Math.sqrt(Math.pow((v1.getX() - v2.getX()), 2) + Math.pow((v1.getY() - v2.getY()), 2));
     }
 
     /** 计算角度差，范围为(0-PI) */

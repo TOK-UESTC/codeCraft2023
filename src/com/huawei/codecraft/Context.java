@@ -15,9 +15,14 @@ import com.huawei.codecraft.action.Action;
 import com.huawei.codecraft.agent.Robot;
 import com.huawei.codecraft.agent.Workbench;
 import com.huawei.codecraft.constants.Const;
+import com.huawei.codecraft.motion.MotionFrag;
+import com.huawei.codecraft.motion.MotionState;
+import com.huawei.codecraft.pid.PIDModel;
 import com.huawei.codecraft.task.Dispatcher;
+import com.huawei.codecraft.task.Task;
 import com.huawei.codecraft.utils.Utils;
 import com.huawei.codecraft.vector.Coordinate;
+import com.huawei.codecraft.vector.Velocity;
 
 public class Context {
     private BufferedReader inStream;
@@ -46,6 +51,12 @@ public class Context {
 
     private Dispatcher dispatcher;
 
+    private ObjectPool<MotionState> statePool;
+    private ObjectPool<MotionFrag> fragPool;
+    private ObjectPool<Coordinate> coordPool;
+    private ObjectPool<PIDModel> pidPool;
+    private ObjectPool<Task> taskPool;
+
     Context(BufferedReader inStream, PrintStream outStream) {
         frameId = 0;
         money = 0;
@@ -58,6 +69,12 @@ public class Context {
             loginStream = Utils.getFileStream(inFilePath);
             logoutStream = Utils.getFileStream(outFilePath);
         }
+
+        // 初始化对象池，传入生成函数
+        this.statePool = new ObjectPool<>(() -> new MotionState(new Coordinate(0, 0), 0, new Velocity(0, 0), 0, false));
+        this.fragPool = new ObjectPool<>(() -> new MotionFrag(0, 0, 0));
+        this.coordPool = new ObjectPool<>(() -> new Coordinate(0, 0));
+        this.pidPool = new ObjectPool<>(() -> new PIDModel((Robot) null));
     }
 
     /**
@@ -92,7 +109,8 @@ public class Context {
                         break;
                     // 机器人
                     case 'A':
-                        Robot robot = new Robot(new Coordinate(x, y), robotList, args);
+                        Robot robot = new Robot(new Coordinate(x, y), robotList, args, statePool, fragPool, coordPool,
+                                pidPool);
                         robotList.add(robot);
                         break;
                     // 工作台

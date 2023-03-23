@@ -7,9 +7,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.huawei.codecraft.ObjectPool;
 import com.huawei.codecraft.action.Action;
 import com.huawei.codecraft.action.ActionModel;
 import com.huawei.codecraft.constants.Const;
+import com.huawei.codecraft.motion.MotionFrag;
 import com.huawei.codecraft.motion.MotionModel;
 import com.huawei.codecraft.motion.MotionState;
 import com.huawei.codecraft.pid.PIDModel;
@@ -17,7 +19,6 @@ import com.huawei.codecraft.task.Task;
 import com.huawei.codecraft.task.TaskChain;
 import com.huawei.codecraft.utils.Utils;
 import com.huawei.codecraft.vector.Coordinate;
-import com.huawei.codecraft.vector.Vector;
 import com.huawei.codecraft.vector.Velocity;
 
 public class Robot {
@@ -39,12 +40,21 @@ public class Robot {
     private List<Robot> robotList;
     private Map<Integer, MotionState> motionStates; // 机器人运动状态序列
 
+    private ObjectPool<MotionState> statePool;
+    private ObjectPool<Coordinate> coordPool;
+    private ObjectPool<PIDModel> pidPool;
+
     public static int robotID = 0;
 
     // 各种控制器
     private PIDModel PID;
+    private ActionModel actionModel;
+    private MotionModel motionModel;
 
-    public void clear() {
+    public void clearStates() {
+        for (MotionState state : motionStates.values()) {
+            statePool.release(state);
+        }
         motionStates.clear();
     }
 
@@ -52,9 +62,8 @@ public class Robot {
         return id;
     }
 
-    private ActionModel actionModel;
-
-    public Robot(Coordinate pos, List<Robot> robotList, String[] args) {
+    public Robot(Coordinate pos, List<Robot> robotList, String[] args, ObjectPool<MotionState> statePool,
+            ObjectPool<MotionFrag> fragPool, ObjectPool<Coordinate> coordPool, ObjectPool<PIDModel> pidPool) {
         this.pos = pos;
         this.workbenchIdx = -1;
         this.productType = 0;
@@ -78,6 +87,12 @@ public class Robot {
             this.PID = new PIDModel(this, args);
         }
         this.actionModel = new ActionModel(this);
+        this.motionModel = new MotionModel(statePool, fragPool);
+
+        // 对象池
+        this.statePool = statePool;
+        this.coordPool = coordPool;
+        this.pidPool = pidPool;
     }
 
     /** 更新所有数据 */
@@ -119,17 +134,23 @@ public class Robot {
             return null;
         }
 
-        motionStates.clear();
+        clearStates();
         Workbench wb = productType == 0 ? task.getFrom() : task.getTo();
+
         // 复制状态，避免直接对原数据进行操作
-        MotionState state = new MotionState(this);
-        PIDModel pidModel = new PIDModel(PID);
+        MotionState state = statePool.acquire();
+        state.update(this);
+        motionStates.put(frameId, state);
+
+        PIDModel pidModel = pidPool.acquire();
+        pidModel.update(PID);
+
         int nextFrameId = frameId + 1;
         int predictFrameLength = 200;
         for (int i = 0; i < predictFrameLength; i++) {
             double[] controlFactor = pidModel.control(state, wb.getPos());
-            state = MotionModel.predict(state, controlFactor[0], controlFactor[1]);
-
+            state = motionModel.predict(state, controlFactor[0], controlFactor[1]);
+            motionStates.put(nextFrameId, state);
             // 检查是否有碰撞
             boolean isCollided = false;
             MotionState otherState = null;
@@ -148,58 +169,91 @@ public class Robot {
                 }
             }
 
-            boolean isFindNextWaypoint = false;
             if (isCollided) {
-                double range = 1.5;
-                while (!isFindNextWaypoint) {
-                    List<Coordinate> nextWaypoints = searchNextWaypoints(new MotionState(this), state, range);
-                    for (Coordinate next : nextWaypoints) {
-                        motionStates.clear();
-                        MotionState s = new MotionState(this);
-                        PIDModel p = new PIDModel(PID);
-                        int searchNextFrameId = frameId + 1;
-                        for (int j = 0; j < predictFrameLength; j++) {
-                            double[] searchNextControlFactor = p.control(s, next);
-                            s = MotionModel.predict(s, searchNextControlFactor[0], searchNextControlFactor[1]);
-                            boolean isSearchCollided = false;
-                            // 检测新点是否会碰撞，内部遍历
-                            for (Robot r : robotList) {
-                                if (r == this) {
-                                    continue;
-                                }
+                pidPool.release(pidModel);
+                return findMiddle(state);
+            }
+            nextFrameId++;
+        }
+        pidPool.release(pidModel);
+        return wb.getPos();
+    }
 
-                                MotionState searchOtherState = r.motionStates.get(searchNextFrameId);
-                                if (searchOtherState == null) {
-                                    continue;
-                                }
-                                if (Utils.computeDistance(s.getPos(), searchOtherState.getPos()) < 1.5) {
-                                    isSearchCollided = true;
-                                    break;
-                                }
-                            }
-                            if (isSearchCollided) {
-                                break;
-                            }
-                            motionStates.put(searchNextFrameId, s);
-                            searchNextFrameId++;
-                            if (j == predictFrameLength - 1) {
-                                isFindNextWaypoint = true;
-                                return next;
-                            }
+    /**
+     * 寻找可以到达的中间点
+     * 
+     * @param crash: 碰撞点state
+     */
+    private Coordinate findMiddle(MotionState crash) {
+        int predictFrameLength = 200;
+        double range = 1.5;
+        boolean isFindNextWaypoint = false;
+        while (!isFindNextWaypoint) {
+            MotionState s = statePool.acquire();
+            s.update(this);
+            List<Coordinate> nextWaypoints = searchNextWaypoints(s, crash, range);
+            // 寻找完后迅速释放
+            statePool.release(s);
+
+            for (Coordinate next : nextWaypoints) {
+                clearStates();
+                s = statePool.acquire();
+                s.update(this);
+                motionStates.put(frameId, crash);
+                PIDModel p = pidPool.acquire();
+                p.update(PID);
+                int searchNextFrameId = frameId + 1;
+                for (int j = 0; j < predictFrameLength; j++) {
+                    double[] searchNextControlFactor = p.control(s, next);
+                    s = motionModel.predict(s, searchNextControlFactor[0], searchNextControlFactor[1]);
+                    motionStates.put(searchNextFrameId, s);
+                    boolean isSearchCollided = false;
+                    // 检测新点是否会碰撞，内部遍历
+                    for (Robot r : robotList) {
+                        if (r == this) {
+                            continue;
                         }
 
+                        MotionState searchOtherState = r.motionStates.get(searchNextFrameId);
+                        if (searchOtherState == null) {
+                            continue;
+                        }
+                        if (Utils.computeDistance(s.getPos(), searchOtherState.getPos()) < 1.5) {
+                            isSearchCollided = true;
+                            break;
+                        }
                     }
-                    range += 0.5;
-                    if (range > 10) {
+                    if (isSearchCollided) {
                         break;
+                    }
+                    searchNextFrameId++;
+                    if (j == predictFrameLength - 1) {
+                        isFindNextWaypoint = true;
+                        pidPool.release(p);
+
+                        for (Coordinate points : nextWaypoints) {
+                            if (points != next) {
+                                coordPool.release(points);
+                            }
+                        }
+                        return next;
                     }
                 }
 
+                // 每一轮进行释放
+                pidPool.release(p);
             }
 
-            motionStates.put(nextFrameId, state);
-            nextFrameId++;
+            for (Coordinate next : nextWaypoints) {
+                coordPool.release(next);
+            }
+
+            range += 0.5;
+            if (range > 10) {
+                break;
+            }
         }
+        Workbench wb = productType == 0 ? task.getFrom() : task.getTo();
         return wb.getPos();
     }
 
@@ -213,39 +267,77 @@ public class Robot {
         Coordinate pos = state2.getPos();
         Velocity v = state2.getVelocity();
         Workbench wb = productType == 0 ? task.getFrom() : task.getTo();
+
+        // 根据速度生成待遍历的点位
         if (v.mod() < 0.001) {
             // 机器人当前状态为移动，速度为零
             // 沿速度方向的单位向量
-            Velocity eH = new Velocity(0., 1.);
+            Coordinate eH = coordPool.acquire();
+            eH.setValue(0, 1);
             // 沿速度垂直方向的单位向量
-            Velocity eV = new Velocity(1., 0.);
+            Coordinate eV = coordPool.acquire();
+            eV.setValue(1, 0);
             // 沿速度45方向的单位向量
-            Velocity e45 = new Velocity(Math.sqrt(2) / 2, Math.sqrt(2) / 2);
+            Coordinate e45 = coordPool.acquire();
+            e45.setValue(Math.sqrt(2) / 2, Math.sqrt(2) / 2);
             // 沿速度135方向的单位向量
-            Velocity e135 = new Velocity(-Math.sqrt(2) / 2, Math.sqrt(2) / 2);
+            Coordinate e135 = coordPool.acquire();
+            e135.setValue(-Math.sqrt(2) / 2, Math.sqrt(2) / 2);
+
             for (double offset : new double[] { -range, range }) {
-                nextWaypoints.add(new Coordinate(pos.getX() + offset * eH.getX(), pos.getY() + offset * eH.getY()));
-                nextWaypoints.add(new Coordinate(pos.getX() + offset * eV.getX(), pos.getY() + offset * eV.getY()));
-                nextWaypoints.add(new Coordinate(pos.getX() + offset * e45.getX(), pos.getY() + offset * e45.getY()));
-                nextWaypoints.add(new Coordinate(pos.getX() + offset * e135.getX(), pos.getY() + offset * e135.getY()));
+                Coordinate item = coordPool.acquire();
+                item.setValue(pos.getX() + offset * eH.getX(), pos.getY() + offset * eH.getY());
+                nextWaypoints.add(item);
+                item = coordPool.acquire();
+                item.setValue(pos.getX() + offset * eV.getX(), pos.getY() + offset * eV.getY());
+                nextWaypoints.add(item);
+                item = coordPool.acquire();
+                item.setValue(pos.getX() + offset * e45.getX(), pos.getY() + offset * e45.getY());
+                nextWaypoints.add(item);
+                item = coordPool.acquire();
+                item.setValue(pos.getX() + offset * e135.getX(), pos.getY() + offset * e135.getY());
+                nextWaypoints.add(item);
             }
 
+            coordPool.release(eH);
+            coordPool.release(eV);
+            coordPool.release(e45);
+            coordPool.release(e135);
         } else {
+            // 机器人当前状态为移动，速度为零
             // 沿速度方向的单位向量
-            Velocity eH = new Velocity(v.getX() / v.mod(), v.getY() / v.mod());
+            Coordinate eH = coordPool.acquire();
+            eH.setValue(v.getX() / v.mod(), v.getY() / v.mod());
             // 沿速度垂直方向的单位向量
-            Velocity eV = new Velocity(-v.getY() / v.mod(), v.getX() / v.mod());
+            Coordinate eV = coordPool.acquire();
+            eV.setValue(-v.getY() / v.mod(), v.getX() / v.mod());
             // 沿速度45方向的单位向量
-            Velocity e45 = new Velocity(Math.sqrt(2) / 2 * v.getX() / v.mod(), Math.sqrt(2) / 2 * v.getY() / v.mod());
+            Coordinate e45 = coordPool.acquire();
+            e45.setValue(Math.sqrt(2) / 2 * v.getX() / v.mod(), Math.sqrt(2) / 2 * v.getY() / v.mod());
             // 沿速度135方向的单位向量
-            Velocity e135 = new Velocity(-Math.sqrt(2) / 2 * v.getY() / v.mod(), Math.sqrt(2) / 2 * v.getX() / v.mod());
+            Coordinate e135 = coordPool.acquire();
+            e135.setValue(-Math.sqrt(2) / 2 * v.getY() / v.mod(), Math.sqrt(2) / 2 * v.getX() / v.mod());
+
             // 机器人当前状态正在移动，移动垂直方向搜索
             for (double offset : new double[] { -range, range }) {
-                nextWaypoints.add(new Coordinate(pos.getX() + offset * eH.getX(), pos.getY() + offset * eH.getY()));
-                nextWaypoints.add(new Coordinate(pos.getX() + offset * eV.getX(), pos.getY() + offset * eV.getY()));
-                nextWaypoints.add(new Coordinate(pos.getX() + offset * e45.getX(), pos.getY() + offset * e45.getY()));
-                nextWaypoints.add(new Coordinate(pos.getX() + offset * e135.getX(), pos.getY() + offset * e135.getY()));
+                Coordinate item = (Coordinate) coordPool.acquire();
+                item.setValue(pos.getX() + offset * eH.getX(), pos.getY() + offset * eH.getY());
+                nextWaypoints.add(item);
+                item = coordPool.acquire();
+                item.setValue(pos.getX() + offset * eV.getX(), pos.getY() + offset * eV.getY());
+                nextWaypoints.add(item);
+                item = coordPool.acquire();
+                item.setValue(pos.getX() + offset * e45.getX(), pos.getY() + offset * e45.getY());
+                nextWaypoints.add(item);
+                item = coordPool.acquire();
+                item.setValue(pos.getX() + offset * e135.getX(), pos.getY() + offset * e135.getY());
+                nextWaypoints.add(item);
             }
+
+            coordPool.release(eH);
+            coordPool.release(eV);
+            coordPool.release(e45);
+            coordPool.release(e135);
         }
 
         // 组装 当前点，目标点，中间点 点位，方便后续排序
@@ -256,13 +348,15 @@ public class Robot {
 
             // 在同一条线上或者超出地图，都抛弃掉
             if (Utils.online(curr, next, target) || Utils.isOutMap(next)) {
+                // 释放不满足条件的point
+                coordPool.release(next);
                 continue;
             }
 
             List<Coordinate> a = new ArrayList<>();
             a.add(curr);
-            a.add(target);
             a.add(next);
+            a.add(target);
 
             groupCoordinate.add(a);
         }
@@ -270,19 +364,22 @@ public class Robot {
         // 为搜索点排序
         Collections.sort(groupCoordinate, new Comparator<List<Coordinate>>() {
             public int compare(List<Coordinate> a1, List<Coordinate> a2) {
-                Vector v10 = new Vector(a1.get(0).getX() - a1.get(2).getX(), a1.get(0).getY() - a1.get(2).getY());
-                Vector v11 = new Vector(a1.get(1).getX() - a1.get(2).getX(), a1.get(1).getY() - a1.get(2).getY());
-
-                Vector v20 = new Vector(a2.get(0).getX() - a2.get(2).getX(), a2.get(0).getY() - a2.get(2).getY());
-                Vector v21 = new Vector(a2.get(1).getX() - a2.get(2).getX(), a2.get(1).getY() - a2.get(2).getY());
-
-                return Double.compare(Utils.computeCosin(v10, v11), Utils.computeCosin(v20, v21));
+                return Double.compare(
+                        Utils.getAngleDiff(a1.get(0), a1.get(1), a1.get(2)),
+                        Utils.getAngleDiff(a2.get(0), a2.get(1), a2.get(2)));
             }
         });
 
         nextWaypoints = new ArrayList<>();
         for (List<Coordinate> gc : groupCoordinate) {
-            nextWaypoints.add(gc.get(2));
+            Coordinate nextpoint = coordPool.acquire();
+            nextpoint.setValue(gc.get(1));
+            nextWaypoints.add(nextpoint);
+
+            // 释放所有groupCoordinate
+            for (Coordinate cd : gc) {
+                coordPool.release(cd);
+            }
         }
 
         return nextWaypoints;
