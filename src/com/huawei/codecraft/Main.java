@@ -15,14 +15,13 @@ public class Main {
     private static final PrintStream outStream = new PrintStream(new BufferedOutputStream(System.out));
 
     // 时间开关
-    private static final boolean showTime = true;
+    private static final boolean showTime = false;
 
     private static final int totalFrame = 50 * 60 * 3;
     private static final Context ctx = new Context(inStream, outStream);
     private static final Statistics statistics = new Statistics(totalFrame);
 
     public static void main(String[] args) throws IOException, InterruptedException {
-
         // 如果在本地调试时不需要重启，在启动参数中添加restart，如：java -jar main.jar restart
         if (args.length <= 0) {
             ProcessBuilder pb = new ProcessBuilder();
@@ -36,7 +35,7 @@ public class Main {
         } else if (!args[0].equals("restart")) {
             System.out.println("err");
         } else {
-            ctx.init(); // 初始化地图
+            ctx.init(args); // 初始化地图
             // 经验证，答题器并不会输出第0帧的信息，故可以忽略控制台输出的
             // player skipped frames: 0
             while (ctx.getFrame() < totalFrame) {

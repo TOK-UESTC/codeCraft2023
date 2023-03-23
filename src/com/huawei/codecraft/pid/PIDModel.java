@@ -27,11 +27,13 @@ public class PIDModel {
     // 积分值上限
     private double integralMax2Distance = 5.7;
 
-    // 机器人对象，方便直接调用
-    private Robot rb;
+    public PIDModel() {
+    }
 
-    public PIDModel(Robot rb) {
-        this.rb = rb;
+    public PIDModel(double kpd, double kid, double kdd) {
+        Kp2Distance = kpd;
+        Ki2Distance = kid;
+        Kd2Distance = kdd;
     }
 
     public PIDModel(PIDModel model) {
@@ -47,7 +49,6 @@ public class PIDModel {
         this.lastError2Distance = model.lastError2Distance;
         this.integral2Distance = model.integral2Distance;
         this.integralMax2Distance = model.integralMax2Distance;
-        this.rb = model.rb;
     }
 
     /** 根据当前MotionState与目标POS，计算控制律 */

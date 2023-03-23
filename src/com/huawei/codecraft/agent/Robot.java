@@ -6,8 +6,6 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.PriorityQueue;
-import java.util.Set;
 
 import com.huawei.codecraft.action.Action;
 import com.huawei.codecraft.action.ActionModel;
@@ -56,7 +54,7 @@ public class Robot {
 
     private ActionModel actionModel;
 
-    public Robot(Coordinate pos, List<Robot> robotList) {
+    public Robot(Coordinate pos, List<Robot> robotList, String[] args) {
         this.pos = pos;
         this.workbenchIdx = -1;
         this.productType = 0;
@@ -74,7 +72,14 @@ public class Robot {
         id = robotID;
         robotID += 1;
         motionStates = new HashMap<>();
-        this.PID = new PIDModel(this);
+
+        this.PID = new PIDModel();
+        if (args.length == 4) {
+            this.PID = new PIDModel(
+                    Double.parseDouble(args[1]),
+                    Double.parseDouble(args[2]),
+                    Double.parseDouble(args[3]));
+        }
         this.actionModel = new ActionModel(this);
     }
 
@@ -110,7 +115,7 @@ public class Robot {
 
     /**
      * 根据当前任务产生预测，暴露在外供给robot直接调用
-     * 
+     *
      */
     public Coordinate predict() {
         if (task == null) {

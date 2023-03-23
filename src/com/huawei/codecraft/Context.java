@@ -66,7 +66,7 @@ public class Context {
      * 
      * @throws IOException
      */
-    public void init() throws IOException {
+    public void init(String[] args) throws IOException {
         int row = 0; // 地图行数
         double x, y; // 地图坐标
         int workbenchCount = 0; // 工作台数量
@@ -93,7 +93,7 @@ public class Context {
                         break;
                     // 机器人
                     case 'A':
-                        Robot robot = new Robot(new Coordinate(x, y), robotList);
+                        Robot robot = new Robot(new Coordinate(x, y), robotList, args);
                         robotList.add(robot);
                         break;
                     // 工作台
