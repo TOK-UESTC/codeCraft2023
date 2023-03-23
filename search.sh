@@ -11,21 +11,17 @@ find ./ -name "*.class" -exec cp --parents {} ../bin/ \;
 find ./ -name "*.class" -exec rm {} \;
 cd ..
 
-
-count=0
-max_processes=24
-
-if [ $# -eq 1 ]
-then
+function search()
+{
     name=$1
     echo "" > score$name.txt
-    for kpd in $(seq 4.2 0.1 4.3)
+    for kpd in $(seq 4.2 0.1 7.2)
     do
-        for kid in $(seq 0.1 0.1 0.2)
+        for kid in $(seq 0.0 0.01 0.2)
         do
-            for kdd in $(seq 1 0.1 1.1)
+            for kdd in $(seq 0.7 0.1 1.3)
             do
-                ../robot.exe "java -classpath ./bin com.huawei.codecraft.Main restart $kpd $kid $kdd" -f -d -m  ../maps/$name.txt | sed "s/$/ $kpd $kid $kdd/"  >> score$name.txt &
+                ../robot.exe "java -classpath ./bin com.huawei.codecraft.Main restart $kpd $kid $kdd $kpd $kid $kdd" -f -d -m  ../maps/$name.txt | sed "s/$/ $kpd $kid $kdd $kpd $kid $kdd/"  >> score$name.txt &
                 let count+=1
                 while [ $(jobs -p | wc -l) -ge $max_processes ] ; do
                     sleep 1
@@ -33,5 +29,19 @@ then
                 shift
             done
         done
+    done
+}
+
+count=0
+max_processes=12
+
+if [ $# -eq 1 ]
+then
+    name=$1
+    search $name
+else
+    for name in $(seq 1 1 4)
+    do
+        search $name
     done
 fi

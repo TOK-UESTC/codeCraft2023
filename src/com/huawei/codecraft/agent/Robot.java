@@ -74,7 +74,7 @@ public class Robot {
         motionStates = new HashMap<>();
 
         this.PID = new PIDModel(this);
-        if (args.length == 4) {
+        if (args.length == 7) {
             this.PID = new PIDModel(this, args);
         }
         this.actionModel = new ActionModel(this);
