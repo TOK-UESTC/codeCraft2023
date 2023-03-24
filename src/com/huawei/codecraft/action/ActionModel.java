@@ -1,9 +1,11 @@
 package com.huawei.codecraft.action;
 
+import com.huawei.codecraft.ObjectPool;
 import com.huawei.codecraft.agent.Robot;
 import com.huawei.codecraft.agent.Workbench;
 import com.huawei.codecraft.constants.ActionType;
 import com.huawei.codecraft.motion.MotionState;
+import com.huawei.codecraft.vector.Coordinate;
 
 public class ActionModel {
     private Robot rb;
@@ -13,8 +15,10 @@ public class ActionModel {
     Action forwardAction;
     Action buyAction;
     Action sellAction;
+    private ObjectPool<MotionState> statePool;
+    private ObjectPool<Coordinate> coordPool;
 
-    public ActionModel(Robot rb) {
+    public ActionModel(Robot rb, ObjectPool<MotionState> statePool, ObjectPool<Coordinate> coordPool) {
         this.rb = rb;
         this.ms = new MotionState(rb);
         // TODO:不优雅的实现
@@ -36,8 +40,15 @@ public class ActionModel {
         if (rb.getTask() == null) {
             return;
         }
-        ms.update(rb);
-        double[] controlFactor = rb.control(ms, rb.predict());
+
+        // 获取state
+        MotionState state = statePool.acquire();
+        state.update(rb);
+
+        Coordinate next = rb.predict();
+        double[] controlFactor = rb.control(state, next);
+        coordPool.release(next);
+        statePool.release(state);
         // 产生转向动作
         rb.addAction(this.rotateAction.update(ActionType.ROTATE, controlFactor[1]));
         // 产生前进动作

@@ -76,17 +76,6 @@ public class Utils {
         }
     }
 
-    /** 计算两个向量的cosin */
-    public static double computeCosin(Vector v1, Vector v2) {
-        if (v1.mod() < 0.001 || v2.mod() < 0.001) {
-            // 存在零向量
-            return 1.;
-        } else {
-            // 不存在零向量
-            return (v1.getX() * v2.getX() + v1.getY() * v2.getY()) / (v1.mod() * v2.mod());
-        }
-    }
-
     /** 判断是否在地图外 */
     public static boolean isOutMap(Coordinate pos) {
         double x = pos.getX();
@@ -106,7 +95,7 @@ public class Utils {
 
     /** 获取从from到to的直线连线角度 */
     public static double getAngle(Coordinate from, Coordinate to) {
-        double x = from.getX() - to.getX() ;
+        double x = from.getX() - to.getX();
         double y = from.getY() - to.getY();
         double quadrant = 1.; // 象限
         if (y < 0) {
@@ -114,7 +103,7 @@ public class Utils {
         }
 
         // 避免除0
-        double mod = Math.sqrt(x*x+y*y);
+        double mod = Math.sqrt(x * x + y * y);
         if (mod < 0.0001) {
             return 0.;
         } else {

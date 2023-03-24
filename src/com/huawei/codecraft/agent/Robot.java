@@ -71,7 +71,7 @@ public class Robot {
         this.timeCoefficients = 1;
         this.collisionCoefficients = 1;
         this.angularVelocity = 0;
-        this.velocity = new Velocity();
+        this.velocity = new Velocity(0, 0);
         this.heading = 0;
         this.task = null;
         this.taskChain = null;
@@ -86,7 +86,7 @@ public class Robot {
         if (args.length == 7) {
             this.PID = new PIDModel(this, args);
         }
-        this.actionModel = new ActionModel(this);
+        this.actionModel = new ActionModel(this, statePool, coordPool);
         this.motionModel = new MotionModel(statePool, fragPool);
 
         // 对象池
@@ -103,10 +103,8 @@ public class Robot {
         this.timeCoefficients = Double.parseDouble(info[2]);
         this.collisionCoefficients = Double.parseDouble(info[3]);
         this.angularVelocity = Double.parseDouble(info[4]);
-        // this.velocity = new Velocity(Double.parseDouble(info[5]), Double.parseDouble(info[6]));
         this.velocity.setValue(Double.parseDouble(info[5]), Double.parseDouble(info[6]));
         this.heading = Double.parseDouble(info[7]);
-        // this.pos = new Coordinate(Double.parseDouble(info[8]), Double.parseDouble(info[9]));
         this.pos.setValue(Double.parseDouble(info[8]), Double.parseDouble(info[9]));
         this.frameId = frameId;
     }
@@ -180,7 +178,9 @@ public class Robot {
             nextFrameId++;
         }
         pidPool.release(pidModel);
-        return wb.getPos();
+        Coordinate next = coordPool.acquire();
+        next.setValue(wb.getPos());
+        return next;
     }
 
     /**
@@ -205,15 +205,12 @@ public class Robot {
                 s = statePool.acquire();
                 s.update(this);
                 motionStates.put(frameId, s);
+
                 PIDModel p = pidPool.acquire();
                 p.update(PID);
                 int searchNextFrameId = frameId + 1;
                 for (int j = 0; j < predictFrameLength; j++) {
                     double[] searchNextControlFactor = p.control(s, next);
-                    int inV = statePool.usedSize() + statePool.availableSize();
-                    if(statePool.availableSize() == 0){
-                        int iii=0;
-                    }
                     s = motionModel.predict(s, searchNextControlFactor[0], searchNextControlFactor[1]);
                     boolean isSearchCollided = false;
                     // 检测新点是否会碰撞，内部遍历
@@ -233,11 +230,11 @@ public class Robot {
                     }
                     motionStates.put(searchNextFrameId, s);
                     searchNextFrameId++;
+
                     if (isSearchCollided) {
                         break;
                     }
                     if (j == predictFrameLength - 1) {
-                        isFindNextWaypoint = true;
                         pidPool.release(p);
 
                         for (Coordinate points : nextWaypoints) {
@@ -245,13 +242,9 @@ public class Robot {
                                 coordPool.release(points);
                             }
                         }
-                        if(inV != statePool.usedSize() + statePool.availableSize()){
-                            int ii=0;
-                        }
                         return next;
                     }
                 }
-
                 // 每一轮进行释放
                 pidPool.release(p);
             }
@@ -265,6 +258,7 @@ public class Robot {
                 break;
             }
         }
+        // 到这里什么都没有找到
         Workbench wb = productType == 0 ? task.getFrom() : task.getTo();
         // System.err.println(statePool.usedSize() + statePool.availableSize());
         return wb.getPos();
@@ -333,7 +327,7 @@ public class Robot {
 
             // 机器人当前状态正在移动，移动垂直方向搜索
             for (double offset : new double[] { -range, range }) {
-                Coordinate item = (Coordinate) coordPool.acquire();
+                Coordinate item = coordPool.acquire();
                 item.setValue(pos.getX() + offset * eH.getX(), pos.getY() + offset * eH.getY());
                 nextWaypoints.add(item);
                 item = coordPool.acquire();
