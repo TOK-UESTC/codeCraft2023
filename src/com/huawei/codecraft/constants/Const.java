@@ -3,6 +3,7 @@ package com.huawei.codecraft.constants;
 import java.util.HashMap;
 import java.util.Map;
 
+
 public class Const {
     public static final int DURATION_OF_GAME = 180; // 比赛时长，单位: s
     public static final int ROBOT_NUMBER = 4; // 机器人数量
@@ -23,6 +24,8 @@ public class Const {
 
     // key: 物品类型， value: [购买价格， 售出价格]
     public static final Map<Integer, Integer[]> priceMapper;
+    // key: 工作台类型类型， value: [工作台数量]
+    public static final Map<Integer, Integer> workbenchMapper;
 
     static {
         priceMapper = new HashMap<Integer, Integer[]>();
@@ -33,5 +36,9 @@ public class Const {
         priceMapper.put(5, new Integer[] { 17200, 25000 });
         priceMapper.put(6, new Integer[] { 19200, 27500 });
         priceMapper.put(7, new Integer[] { 76000, 105000 });
+    }
+
+    static {
+        workbenchMapper = new HashMap<Integer, Integer>();
     }
 }
