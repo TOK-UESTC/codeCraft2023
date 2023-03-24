@@ -131,9 +131,20 @@ public class Task {
         double weightCross = isCross();
 
         // 稀缺增益
-        // double weightScarcity = 1./Const.workbenchMapper.get(to.getType());
+        double weightScarcity = getWeightScarcity();
 
-        return weightBlock*weightCommand*((sellPrice * timeCoefficient) - price)/weightCross;
+        return weightScarcity*weightBlock*weightCommand*((sellPrice * timeCoefficient) - price)/weightCross;
+    }
+
+    private double getWeightScarcity(){
+
+        if(to.getType() == 4 || to.getType() == 5 || to.getType() == 6 ){
+            if(Const.workbenchMapper.get(to.getType())<3){
+                return 2.;
+            }
+        }
+        return 1.;
+
     }
 
     /** 获取任务距离 */
