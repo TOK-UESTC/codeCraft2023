@@ -93,7 +93,7 @@ public class Workbench {
 
     /** 是否空闲，rest==-1 */
     public boolean isFree() {
-        return rest == -1;
+        return (rest == -1)&&(productStatus == 0);
     }
 
     /** 是否已经有产物, productStatus==1 */
@@ -160,5 +160,9 @@ public class Workbench {
                 break;
         }
         return ret;
+    }
+
+    public int getProductStatus() {
+        return productStatus;
     }
 }

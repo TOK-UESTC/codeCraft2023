@@ -12,5 +12,5 @@ fi
 
 $current = pwd;
 cd ..
-./robot_gui.exe "java -Xverify:none -agentlib:jdwp=transport=dt_socket,address=5005,server=y,suspend=y -classpath ./codeCraft2023/bin com.huawei.codecraft.Main restart" -f -d -m ./maps/$name.txt
+./robot_gui.exe "java -Xverify:none -agentlib:jdwp=transport=dt_socket,address=5005,server=y,suspend=y -classpath ./codeCraft2023/bin com.huawei.codecraft.Main restart" -f -d -m ./oldMaps/$name.txt
 cd current

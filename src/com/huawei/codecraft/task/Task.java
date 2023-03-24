@@ -116,11 +116,24 @@ public class Task {
         }
         // 增添需求权重
         int status = to.getMaterialStatus();
-        int weight = 1;
+        double weightCommand = 1;
         for(int i=1; i<7; i++){
-            weight += (((status&(1<<i))!=0)?1:0);
+            weightCommand += (((status&(1<<i))!=0)?1:0);
         }
-        return weight*((sellPrice * timeCoefficient) - price);
+
+        // 添加阻塞权重
+        double weightBlock = 1.;
+        if(from.isBlocked()){
+            weightBlock = 4.;
+        }
+
+        // 添加跨生产线衰减
+        double weightCross = isCross();
+
+        // 稀缺增益
+        // double weightScarcity = 1./Const.workbenchMapper.get(to.getType());
+
+        return weightBlock*weightCommand*((sellPrice * timeCoefficient) - price)/weightCross;
     }
 
     /** 获取任务距离 */
@@ -153,6 +166,36 @@ public class Task {
 
     public void setVisited(boolean visited) {
         this.visited = visited;
+    }
+
+    /** 判断是否跨生产线生产 */
+    public double isCross() {
+        if(from.getType() == 1 || from.getType() == 2 || from.getType() == 3){
+            if(to.getType() == 4 || to.getType() == 5 || to.getType() == 6){
+                return 1.;
+            }
+
+            if(to.getType() == 9){
+                return 4.;
+            }
+        }
+
+        if(from.getType() == 4 || from.getType() == 5 || from.getType() == 6){
+            if(to.getType() == 7){
+                return 1.;
+            }
+
+            if(Const.workbenchMapper.get(7) == 0){
+                // 没有7,9就就不算跨级
+                return 1.;
+
+            }
+            if(to.getType() == 9){
+                return 4.;
+            }
+        }
+
+        return 1.;
     }
 
 }

@@ -131,6 +131,14 @@ public class Context {
             row++;
         }
 
+        for(int t=1; t<=9;t++){
+            if(workbenchTypeMap.get(t) == null){
+                Const.workbenchMapper.put(t, 0);
+                continue;
+            }
+            Const.workbenchMapper.put(t, workbenchTypeMap.get(t).size());
+        }        
+
         dispatcher = new Dispatcher(robotList, workbenchList, workbenchTypeMap, saveChain);
         endStep();
     }
