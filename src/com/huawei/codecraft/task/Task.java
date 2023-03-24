@@ -114,8 +114,13 @@ public class Task {
         } else {
             timeCoefficient = (1 - Math.sqrt(1 - Math.pow(1 - (predictedFrame / 9000), 2))) * (1 - 0.8) + 0.8;
         }
-
-        return (sellPrice * timeCoefficient) - price;
+        // 增添需求权重
+        int status = to.getMaterialStatus();
+        int weight = 1;
+        for(int i=1; i<7; i++){
+            weight += (((status&(1<<i))!=0)?1:0);
+        }
+        return weight*((sellPrice * timeCoefficient) - price);
     }
 
     /** 获取任务距离 */
