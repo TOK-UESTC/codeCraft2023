@@ -55,7 +55,6 @@ public class Context {
     private ObjectPool<MotionFrag> fragPool;
     private ObjectPool<Coordinate> coordPool;
     private ObjectPool<PIDModel> pidPool;
-    private ObjectPool<Task> taskPool;
 
     Context(BufferedReader inStream, PrintStream outStream) {
         frameId = 0;

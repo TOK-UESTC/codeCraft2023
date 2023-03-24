@@ -133,7 +133,7 @@ public class Task {
         }
 
         // 避免除0
-        double mod = Math.sqrt(x*x+y*y);
+        double mod = Math.sqrt(x * x + y * y);
         if (mod < 0.000000001) {
             return 0.;
         } else {

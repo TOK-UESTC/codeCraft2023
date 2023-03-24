@@ -13,7 +13,7 @@ public class MotionModel {
     public static final double LOADED_ANGULAR_ACC = 20.130082965; // 单位：rad/s
 
     public static final double PI = Math.PI;
-    public static final double PI2 = Math.PI * Math.PI;
+    public static final double PI2 = PI * PI;
     public static final double sqrtPI = Math.sqrt(PI);
     public static final double MIN_ERROR = 0.0001;
 
@@ -55,7 +55,7 @@ public class MotionModel {
         bc = FresnelC(b);
         bs = FresnelS(b);
 
-        b0 = fragAcc / (sqrt(fragAcc) * sqrtPI);
+        b0 = w / (sqrt(fragAcc) * sqrtPI);
         b0c = FresnelC(b0);
         b0s = FresnelS(b0);
 
@@ -333,14 +333,6 @@ public class MotionModel {
 
     // 菲涅尔函数C
     private double FresnelC(double x) {
-        // 根据公式计算
-        // double k1 = x;
-        // double k2 = pow(PI, 2) * pow(x, 5) / 40;
-        // double k3 = pow(PI, 4) * pow(x, 9) / 3456;
-        // double k4 = pow(PI, 6) * pow(x, 13) / 599040;
-
-        // return k1 - k2 + k3 - k4;
-
         double xp4 = x * x * x * x;
         double PI2xp4 = PI2 * xp4;
         return x * (1. + PI2xp4 * (-1. / 40. + PI2xp4 * (1. / 3456. - PI2xp4 /
@@ -353,7 +345,6 @@ public class MotionModel {
         double xp3 = x * x * x;
         double xp4 = xp3 * x;
         double PI2xp4 = PI2 * xp4;
-
         return PI * xp3 * (1. / 6. + PI2xp4 * (-1. / 336. + PI2xp4 * (1. / 42240. - PI2xp4 / 9676800.)));
     }
 
