@@ -17,6 +17,18 @@ public class Action {
         this.value = 0;
     }
 
+    public Action update(ActionType type, double value){
+        this.type = type;
+        this.value = value;
+        return this;
+    }
+
+    public Action update(ActionType type) {
+        this.type = type;
+        this.value = 0;
+        return this;
+    }
+
     /** 输出为字符串，方便直接调用 */
     public String toString(int robotId) {
         switch (type) {

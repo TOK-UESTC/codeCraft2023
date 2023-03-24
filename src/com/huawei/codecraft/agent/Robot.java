@@ -103,9 +103,9 @@ public class Robot {
         this.timeCoefficients = Double.parseDouble(info[2]);
         this.collisionCoefficients = Double.parseDouble(info[3]);
         this.angularVelocity = Double.parseDouble(info[4]);
-        velocity.setValue(Double.parseDouble(info[5]), Double.parseDouble(info[6]));
-        pos.setValue(Double.parseDouble(info[8]), Double.parseDouble(info[9]));
+        this.velocity.setValue(Double.parseDouble(info[5]), Double.parseDouble(info[6]));
         this.heading = Double.parseDouble(info[7]);
+        this.pos.setValue(Double.parseDouble(info[8]), Double.parseDouble(info[9]));
         this.frameId = frameId;
     }
 
@@ -133,10 +133,9 @@ public class Robot {
         if (task == null) {
             return null;
         }
-
+        // System.err.println(statePool.usedSize() + statePool.availableSize());
         clearStates();
         Workbench wb = productType == 0 ? task.getFrom() : task.getTo();
-
         // 复制状态，避免直接对原数据进行操作
         MotionState state = statePool.acquire();
         state.update(this);
@@ -170,8 +169,11 @@ public class Robot {
             }
 
             if (isCollided) {
+
                 pidPool.release(pidModel);
-                return findMiddle(state);
+                Coordinate next = findMiddle(state);
+                coordPool.release(next);
+                return next;
             }
             nextFrameId++;
         }
@@ -189,13 +191,15 @@ public class Robot {
     private Coordinate findMiddle(MotionState crash) {
         int predictFrameLength = 200;
         double range = 1.5;
-        while (true) {
+        boolean isFindNextWaypoint = false;
+        
+        while (!isFindNextWaypoint) {
             MotionState s = statePool.acquire();
             s.update(this);
             List<Coordinate> nextWaypoints = searchNextWaypoints(s, crash, range);
             // 寻找完后迅速释放
             statePool.release(s);
-
+            
             for (Coordinate next : nextWaypoints) {
                 clearStates();
                 s = statePool.acquire();
@@ -208,7 +212,6 @@ public class Robot {
                 for (int j = 0; j < predictFrameLength; j++) {
                     double[] searchNextControlFactor = p.control(s, next);
                     s = motionModel.predict(s, searchNextControlFactor[0], searchNextControlFactor[1]);
-                    motionStates.put(searchNextFrameId, s);
                     boolean isSearchCollided = false;
                     // 检测新点是否会碰撞，内部遍历
                     for (Robot r : robotList) {
@@ -225,11 +228,12 @@ public class Robot {
                             break;
                         }
                     }
+                    motionStates.put(searchNextFrameId, s);
+                    searchNextFrameId++;
 
                     if (isSearchCollided) {
                         break;
                     }
-                    searchNextFrameId++;
                     if (j == predictFrameLength - 1) {
                         pidPool.release(p);
 
@@ -256,10 +260,8 @@ public class Robot {
         }
         // 到这里什么都没有找到
         Workbench wb = productType == 0 ? task.getFrom() : task.getTo();
-        clearStates();
-        Coordinate next = coordPool.acquire();
-        next.setValue(wb.getPos());
-        return next;
+        // System.err.println(statePool.usedSize() + statePool.availableSize());
+        return wb.getPos();
     }
 
     /**

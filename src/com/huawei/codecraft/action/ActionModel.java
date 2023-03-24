@@ -9,11 +9,22 @@ import com.huawei.codecraft.vector.Coordinate;
 
 public class ActionModel {
     private Robot rb;
+
+    Action rotateAction;
+    Action forwardAction;
+    Action buyAction;
+    Action sellAction;
     private ObjectPool<MotionState> statePool;
     private ObjectPool<Coordinate> coordPool;
 
     public ActionModel(Robot rb, ObjectPool<MotionState> statePool, ObjectPool<Coordinate> coordPool) {
         this.rb = rb;
+        // TODO:不优雅的实现
+        this.rotateAction = new Action(ActionType.ROTATE);
+        this.forwardAction = new Action(ActionType.FORWARD);
+        this.buyAction = new Action(ActionType.BUY);
+        this.sellAction = new Action(ActionType.SELL);
+
         this.statePool = statePool;
         this.coordPool = coordPool;
     }
@@ -39,9 +50,9 @@ public class ActionModel {
         coordPool.release(next);
         statePool.release(state);
         // 产生转向动作
-        rb.addAction(new Action(ActionType.ROTATE, controlFactor[1]));
+        rb.addAction(this.rotateAction.update(ActionType.ROTATE, controlFactor[1]));
         // 产生前进动作
-        rb.addAction(new Action(ActionType.FORWARD, controlFactor[0]));
+        rb.addAction(this.forwardAction.update(ActionType.FORWARD, controlFactor[0]));
     }
 
     /**
@@ -61,7 +72,7 @@ public class ActionModel {
             // 判断是否在目标工作台附近，并且当前已经调转，开始朝向下一个工作台
             if (rb.getWorkbenchIdx() == wb.getWorkbenchIdx()) {
                 // 购买行为
-                rb.addAction(new Action(ActionType.BUY));
+                rb.addAction(this.buyAction.update(ActionType.BUY));
                 // }
             }
         } else {
@@ -69,7 +80,7 @@ public class ActionModel {
             wb = rb.getTask().getTo();
             if (rb.getWorkbenchIdx() == wb.getWorkbenchIdx()) {
                 // 售出行为
-                rb.addAction(new Action(ActionType.SELL));
+                rb.addAction(this.sellAction.update(ActionType.SELL));
             }
         }
     }

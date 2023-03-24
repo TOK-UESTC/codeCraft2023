@@ -93,14 +93,18 @@ public class Utils {
         return getAngleDiff(curr, pos, crash) < 10. * Math.PI / 180.0;
     }
 
-    public static double getAngle(double x, double y) {
+    /** 获取从from到to的直线连线角度 */
+    public static double getAngle(Coordinate from, Coordinate to) {
+        double x = from.getX() - to.getX();
+        double y = from.getY() - to.getY();
         double quadrant = 1.; // 象限
         if (y < 0) {
             quadrant = -1.;
         }
-        double mod = Math.sqrt(x * x + y * y);
+
         // 避免除0
-        if (mod < 0.000000001) {
+        double mod = Math.sqrt(x * x + y * y);
+        if (mod < 0.0001) {
             return 0.;
         } else {
             return quadrant * Math.acos(x / mod); // (-pi/2, pi/2)
@@ -109,10 +113,8 @@ public class Utils {
 
     /** 获取当前位置, 中间位置, 和目标位置连线夹角差 */
     public static double getAngleDiff(Coordinate curr, Coordinate middle, Coordinate target) {
-        double angle1 = getAngle(middle.getX() - curr.getX(), middle.getY() - curr.getY());
-        double angle2 = getAngle(target.getX() - middle.getX(), target.getY() - middle.getY());
-
-        double diff = angle1 - angle2;
+        // double diff = middle.sub(curr).getAngle() - target.sub(middle).getAngle();
+        double diff = getAngle(middle, curr) - getAngle(target, middle);
         if (diff > Math.PI) {
             diff -= 2 * Math.PI;
         } else if (diff < -Math.PI) {

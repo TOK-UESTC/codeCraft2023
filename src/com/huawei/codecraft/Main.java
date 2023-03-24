@@ -25,7 +25,7 @@ public class Main {
         // 如果在本地调试时不需要重启，在启动参数中添加restart，如：java -jar main.jar restart
         if (args.length <= 0) {
             ProcessBuilder pb = new ProcessBuilder();
-            pb.command("java", "-jar", "-Xmn512m", "-Xms1024m", "-Xmx1024m",
+            pb.command("java", "-jar", "-Xmn256m", "-Xms1024m", "-Xmx1024m",
                     "-XX:TieredStopAtLevel=1", "main.jar", "restart");
             pb.redirectOutput(ProcessBuilder.Redirect.INHERIT);
             pb.redirectError(ProcessBuilder.Redirect.INHERIT);
