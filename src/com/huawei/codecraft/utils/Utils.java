@@ -113,7 +113,6 @@ public class Utils {
 
     /** 获取当前位置, 中间位置, 和目标位置连线夹角差 */
     public static double getAngleDiff(Coordinate curr, Coordinate middle, Coordinate target) {
-        // double diff = middle.sub(curr).getAngle() - target.sub(middle).getAngle();
         double diff = getAngle(middle, curr) - getAngle(target, middle);
         if (diff > Math.PI) {
             diff -= 2 * Math.PI;

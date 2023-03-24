@@ -184,8 +184,6 @@ public class Context {
             int i = 0;
         }
 
-        printLine(String.format("%d", frameId));
-
         // 调度器分配任务
         dispatcher.dispatch();
 
@@ -200,12 +198,14 @@ public class Context {
         // for (Robot r : rbList) {
         // r.clear();
         // }
-        for (int i = 0; i < 4; i++) {
-            Robot rb = rbList.get(i);
-
+        for (Robot rb : rbList) {
             // 决策
             rb.step();
+        }
 
+        printLine(String.format("%d", frameId));
+        for (int i = 0; i < 4; i++) {
+            Robot rb = rbList.get(i);
             // 打印决策
             for (Action a : rb.getActions()) {
                 printLine(a.toString(rb.getId()));

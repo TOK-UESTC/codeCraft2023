@@ -152,14 +152,12 @@ public class MotionModel {
         if (!state.isLoaded()) {
             // tempAngularAcc = targetAngularVelocity > state.getW() ? ANGULAR_ACC :
             // -ANGULAR_ACC;
-            tempAngularAcc = getAngularAcc(false, targetAngularVelocity, state.getW(),
-                    0.02);
+            tempAngularAcc = getAngularAcc(false, targetAngularVelocity, state.getW(), 0.02);
             tempLinearAcc = targetVelocity > v0 ? LINEAR_ACC : -LINEAR_ACC;
         } else {
             // tempAngularAcc = targetAngularVelocity > state.getW() ? LOADED_ANGULAR_ACC :
             // -LOADED_ANGULAR_ACC;
-            tempAngularAcc = getAngularAcc(true, targetAngularVelocity, state.getW(),
-                    0.02);
+            tempAngularAcc = getAngularAcc(true, targetAngularVelocity, state.getW(), 0.02);
             tempLinearAcc = targetVelocity > v0 ? LOADED_LINEAR_ACC : -LOADED_LINEAR_ACC;
         }
 
