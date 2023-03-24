@@ -34,7 +34,7 @@ public class Vector {
 
     /** 获取模 */
     public double mod() {
-        return Math.sqrt(Math.pow(x, 2) + Math.pow(y, 2));
+        return Math.sqrt(x * x + y * y);
     }
 
     /** 获取角度，和判题器范围相同 */

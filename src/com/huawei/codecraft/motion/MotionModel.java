@@ -13,8 +13,18 @@ public class MotionModel {
     public static final double LOADED_ANGULAR_ACC = 20.130082965; // 单位：rad/s
 
     public static final double PI = Math.PI;
+    public static final double PI2 = Math.PI * Math.PI;
     public static final double sqrtPI = Math.sqrt(PI);
     public static final double MIN_ERROR = 0.0001;
+
+    private double a;
+    private double b;
+    private double bc;
+    private double bs;
+    private double b0;
+    private double b0c;
+    private double b0s;
+    private double c;
 
     private ObjectPool<MotionState> statePool;
     private ObjectPool<MotionFrag> fragPool;
@@ -31,54 +41,63 @@ public class MotionModel {
      * @param frag:  机器人下一个切片
      */
     private void predictFrag(MotionState state, MotionFrag frag) {
-        // 预测角度
         double heading = state.getHeading();
-        heading += state.getW() * frag.getT() + 0.5 * frag.getAngularAcc() * frag.getT() * frag.getT();
+        double x = state.getPos().getX();
+        double y = state.getPos().getY();
+        double stateV = state.vMod();
+        double fragAcc = frag.getAngularAcc();
+        double fragT = frag.getT();
+        double fragLineAcc = frag.getLinearAcc();
+        double w = state.getW();
+
+        a = (w * w) / (2 * fragAcc) - heading;
+        b = (fragAcc * fragT + w) / (sqrt(fragAcc) * sqrtPI);
+        bc = FresnelC(b);
+        bs = FresnelS(b);
+
+        b0 = fragAcc / (sqrt(fragAcc) * sqrtPI);
+        b0c = FresnelC(b0);
+        b0s = FresnelS(b0);
+
+        c = w * sqrtPI;
+
+        // 加速度不为零
+        if (fragAcc >= MIN_ERROR) {
+            x += getIntegralXFront(stateV, fragAcc, heading, w, fragT);
+            x -= getIntegralXFront(stateV, fragAcc, heading, w, 0);
+            x += getIntegralXBack(fragLineAcc, fragAcc, heading, w, fragT);
+            x -= getIntegralXBack(fragLineAcc, fragAcc, heading, w, 0);
+            y += getIntegralYFront(stateV, fragAcc, heading, w, fragT);
+            y -= getIntegralYFront(stateV, fragAcc, heading, w, 0);
+            y += getIntegralYBack(fragLineAcc, fragAcc, heading, w, fragT);
+            y -= getIntegralYBack(fragLineAcc, fragAcc, heading, w, 0);
+        } else if (fragAcc < MIN_ERROR && w >= MIN_ERROR) {
+            // 加速度为0，且角速度不为0
+            x += getIntegralXAngular0(stateV, fragLineAcc, heading, w, fragT);
+            x -= getIntegralXAngular0(stateV, fragLineAcc, heading, w, 0);
+            y += getIntegralYAngular0(stateV, fragLineAcc, heading, w, fragT);
+            y -= getIntegralYAngular0(stateV, fragLineAcc, heading, w, 0);
+        } else if (fragAcc < MIN_ERROR && w < MIN_ERROR) {
+            // 加速度为0，且角速度为0
+            x += (stateV * fragT + fragLineAcc * (fragT * fragT)) * Math.cos(heading);
+            y += (stateV * fragT + fragLineAcc * (fragT * fragT)) * Math.sin(heading);
+        }
+
+        heading += w * fragT + 0.5 * fragAcc * fragT * fragT;
         // 恢复到-pai~pai
         if (heading > Math.PI) {
             heading -= 2 * Math.PI;
         } else if (heading < -Math.PI) {
             heading += 2 * Math.PI;
         }
-        // 预测位置
-        double x = state.getPos().getX();
-        double y = state.getPos().getY();
-        // 加速度不为零
-        if (frag.getAngularAcc() >= MIN_ERROR) {
-            x += getIntegralXFront(state.vMod(), frag.getAngularAcc(), state.getHeading(), state.getW(), frag.getT());
-            x -= getIntegralXFront(state.vMod(), frag.getAngularAcc(), state.getHeading(), state.getW(), 0);
-
-            x += getIntegralXBack(frag.getAngularAcc(), frag.getLinearAcc(), state.getHeading(), state.getW(),
-                    frag.getT());
-            x -= getIntegralXBack(frag.getAngularAcc(), frag.getLinearAcc(), state.getHeading(), state.getW(), 0);
-
-            y += getIntegralYFront(state.vMod(), frag.getAngularAcc(), state.getHeading(), state.getW(), frag.getT());
-            y -= getIntegralYFront(state.vMod(), frag.getAngularAcc(), state.getHeading(), state.getW(), 0);
-
-            y += getIntegralYBack(frag.getAngularAcc(), frag.getLinearAcc(), state.getHeading(), state.getW(),
-                    frag.getT());
-            y -= getIntegralYBack(frag.getAngularAcc(), frag.getLinearAcc(), state.getHeading(), state.getW(), 0);
-        } else if (frag.getAngularAcc() < MIN_ERROR && state.getW() >= MIN_ERROR) {
-            // 加速度为0，且角速度不为0
-            x += getIntegralXAngular0(state.vMod(), frag.getLinearAcc(), state.getHeading(), state.getW(), frag.getT());
-            x -= getIntegralXAngular0(state.vMod(), frag.getLinearAcc(), state.getHeading(), state.getW(), 0);
-            y += getIntegralYAngular0(state.vMod(), frag.getLinearAcc(), state.getHeading(), state.getW(), frag.getT());
-            y -= getIntegralYAngular0(state.vMod(), frag.getLinearAcc(), state.getHeading(), state.getW(), 0);
-        } else if (frag.getAngularAcc() < MIN_ERROR && state.getW() < MIN_ERROR) {
-            // 加速度为0，且角速度为0
-            x += (state.vMod() * frag.getT() + frag.getLinearAcc() * Math.pow(frag.getT(), 2))
-                    * Math.cos(state.getHeading());
-            y += (state.vMod() * frag.getT() + frag.getLinearAcc() * Math.pow(frag.getT(), 2))
-                    * Math.sin(state.getHeading());
-        }
 
         // 更新state并返回
         state.setPos(x, y);
         state.setHeading(heading);
-        double newVx = (state.vMod() + frag.getLinearAcc() * frag.getT()) * Math.cos(state.getHeading());
-        double newVy = (state.vMod() + frag.getLinearAcc() * frag.getT()) * Math.sin(state.getHeading());
+        double newVx = (stateV + fragLineAcc * fragT) * Math.cos(heading);
+        double newVy = (stateV + fragLineAcc * fragT) * Math.sin(heading);
         state.setVelocity(newVx, newVy);
-        state.setW(state.getW() + frag.getAngularAcc() * frag.getT());
+        state.setW(w + fragAcc * fragT);
 
         // double newVx = state.getVx() + frag.getLinearAcc() * frag.getT() *
         // Math.cos(state.getHeading());
@@ -246,36 +265,31 @@ public class MotionModel {
     private double getIntegralXAngular0(double v0, double linearAcc, double theta0, double omega0, double t) {
         double item1 = omega0 * (v0 + linearAcc * t) * Math.sin(theta0 + omega0 * t);
         double item2 = linearAcc * Math.cos(theta0 + omega0 * t);
-        return (item1 + item2) / Math.pow(omega0, 2);
+        return (item1 + item2) / (omega0 * omega0);
     }
 
     // 获取y轴积分结果，加速度为0，角速度不为零
     private double getIntegralYAngular0(double v0, double linearAcc, double theta0, double omega0, double t) {
         double item1 = -omega0 * (v0 + linearAcc * t) * Math.cos(theta0 + omega0 * t);
         double item2 = linearAcc * Math.sin(theta0 + omega0 * t);
-        return (item1 + item2) / Math.pow(omega0, 2);
+        return (item1 + item2) / (omega0 * omega0);
     }
 
     /**
      * 获取x轴积分后项结果,也就是对axcos(theta0+omega0t+alpha*t^2/2)求积分
      * 
      */
-    private double getIntegralXBack(double angularAcc, double linearAcc, double theta0, double omega0,
-            double t) {
+    private double getIntegralXBack(double linearAcc, double angularAcc, double theta0, double omega0, double t) {
         // 根据公式计算
         // (1/(ANGULAR_ACC^(3/2)))*v0
         double result = (1 / pow(angularAcc, 1.5)) * linearAcc;
 
-        double a = (pow(omega0, 2)) / (2 * angularAcc) - theta0;
-        double b = (angularAcc * t + omega0) / (sqrt(angularAcc) * sqrtPI);
-        double c = omega0 * sqrtPI;
-
         // -omega0*sqrtPI*cos(((omgea0^2)/(2*ANGULAR_ACC))-theta0)*FresnelC((ANGULAR_ACC*FRAME_TIME+omega0)/(Math.sqrt(ANGULAR_ACC)*sqrtPI))
-        double item1 = -c * Math.cos(a) * FresnelC(b);
+        double item1 = -c * Math.cos(a) * (t == 0 ? b0c : bc);
         // -omega0*sqrtPI*sin(((omgea0^2)/(2*ANGULAR_ACC))-theta0)*FresnelS((ANGULAR_ACC*FRAME_TIME+omega0)/(Math.sqrt(ANGULAR_ACC)*sqrtPI))
-        double item2 = -c * Math.sin(a) * FresnelS(b);
+        double item2 = -c * Math.sin(a) * (t == 0 ? b0s : bs);
         // Math.sqrt(ANGULAR_ACC)*sin((ANGULAR_ACC*pow(FRAME_TIME,2)/2)+theta0+omegea0*FRAME_TIME)
-        double item3 = sqrt(angularAcc) * Math.sin((angularAcc * pow(t, 2) / 2) + theta0 + omega0 * t);
+        double item3 = sqrt(angularAcc) * Math.sin((angularAcc * (t * t) / 2) + theta0 + omega0 * t);
         return result * (item1 + item2 + item3);
     }
 
@@ -285,13 +299,10 @@ public class MotionModel {
         // sqrtPI*v0/Math.sqrt(ANGULAR_ACC)
         double result = sqrtPI * v0 / sqrt(angularAcc);
 
-        double a = (pow(omega0, 2)) / (2 * angularAcc) - theta0;
-        double b = (angularAcc * t + omega0) / (sqrt(angularAcc) * sqrtPI);
-
         // cos((Math.pow(ANGULAR_ACC,2)/2*ANGULAR_ACC)-theta0)*FresnelC((ANGULAR_ACC*FRAME_TIME+omega0)/(Math.sqrt(ANGULAR_ACC)*sqrtPI))
-        double item1 = Math.cos(a) * FresnelC(b);
+        double item1 = Math.cos(a) * (t == 0 ? b0c : bc);
         // sin((Math.pow(ANGULAR_ACC,2)/2*ANGULAR_ACC)-theta0)*FresnelS((ANGULAR_ACC*FRAME_TIME+omega0)/(Math.sqrt(ANGULAR_ACC)*sqrtPI))
-        double item2 = Math.sin(a) * FresnelS(b);
+        double item2 = Math.sin(a) * (t == 0 ? b0s : bs);
         return result * (item1 + item2);
     }
 
@@ -301,53 +312,49 @@ public class MotionModel {
         // sqrtPI*v0/Math.sqrt(ANGULAR_ACC)
         double result = sqrtPI * v0 / sqrt(angularAcc);
 
-        double a = (pow(omega0, 2)) / (2 * angularAcc) - theta0;
-        double b = (angularAcc * t + omega0) / (sqrt(angularAcc) * sqrtPI);
-
         // cos((Math.pow(ANGULAR_ACC,2)/2*ANGULAR_ACC)-theta0)*FresnelS((ANGULAR_ACC*FRAME_TIME+omega0)/(Math.sqrt(ANGULAR_ACC)*sqrtPI))
-        double item1 = Math.cos(a) * FresnelS(b);
+        double item1 = Math.cos(a) * (t == 0 ? b0s : bs);
         // sin((pow(ANGULAR_ACC,2)/2*ANGULAR_ACC)-theta0)*FresnelC((ANGULAR_ACC*FRAME_TIME+omega0)/(Math.sqrt(ANGULAR_ACC)*sqrtPI))
-        double item2 = -Math.sin(a) * FresnelC(b);
+        double item2 = -Math.sin(a) * (t == 0 ? b0c : bc);
         return result * (item1 + item2);
     }
 
     // 获取y轴积分后项结果，也就是对axsin(theta0+omega0t+alpha*t^2/2)求积分
-    private double getIntegralYBack(double angularAcc, double linearAcc, double theta0, double omega0,
-            double t) {
+    private double getIntegralYBack(double linearAcc, double angularAcc, double theta0, double omega0, double t) {
         // 根据公式计算
         // (1/(ANGULAR_ACC^(3/2)))*v0
         double result = -(1 / pow(angularAcc, 1.5)) * linearAcc;
 
-        double a = (pow(omega0, 2)) / (2 * angularAcc) - theta0;
-        double b = (angularAcc * t + omega0) / (sqrt(angularAcc) * sqrtPI);
-        double c = omega0 * sqrtPI;
-
-        double item1 = -c * Math.sin(a) * FresnelC(b);
-        double item2 = c * Math.cos(a) * FresnelS(b);
-        double item3 = sqrt(angularAcc) * Math.cos((angularAcc * pow(t, 2) / 2) + theta0 + omega0 * t);
+        double item1 = -c * Math.sin(a) * (t == 0 ? b0c : bc);
+        double item2 = c * Math.cos(a) * (t == 0 ? b0s : bs);
+        double item3 = sqrt(angularAcc) * Math.cos((angularAcc * (t * t) / 2) + theta0 + omega0 * t);
         return result * (item1 + item2 + item3);
     }
 
     // 菲涅尔函数C
     private double FresnelC(double x) {
         // 根据公式计算
-        double k1 = x;
-        double k2 = pow(PI, 2) * pow(x, 5) / 40;
-        double k3 = pow(PI, 4) * pow(x, 9) / 3456;
-        double k4 = pow(PI, 6) * pow(x, 13) / 599040;
+        // double k1 = x;
+        // double k2 = pow(PI, 2) * pow(x, 5) / 40;
+        // double k3 = pow(PI, 4) * pow(x, 9) / 3456;
+        // double k4 = pow(PI, 6) * pow(x, 13) / 599040;
 
-        return k1 - k2 + k3 - k4;
+        // return k1 - k2 + k3 - k4;
+
+        double xp4 = x * x * x * x;
+        double PI2xp4 = PI2 * xp4;
+        return x * (1. + PI2xp4 * (-1. / 40. + PI2xp4 * (1. / 3456. - PI2xp4 /
+                599040.)));
     }
 
     // 菲涅尔函数S
     private double FresnelS(double x) {
         // 根据公式计算
-        double xp3 = pow(x, 3);
-        double xp4 = pow(x, 4);
-        double PI2 = pow(PI, 2);
+        double xp3 = x * x * x;
+        double xp4 = xp3 * x;
         double PI2xp4 = PI2 * xp4;
 
-        return PI * xp3 * (1 / 6 + PI2xp4 * (-1 / 336 + PI2xp4 * (1 / 42240 - PI2xp4 / 9676800)));
+        return PI * xp3 * (1. / 6. + PI2xp4 * (-1. / 336. + PI2xp4 * (1. / 42240. - PI2xp4 / 9676800.)));
     }
 
     private double pow(double x, double p) {
