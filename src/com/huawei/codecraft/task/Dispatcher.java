@@ -1,6 +1,5 @@
 package com.huawei.codecraft.task;
 
-import java.io.FileOutputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -8,6 +7,7 @@ import java.util.Map;
 import java.util.PriorityQueue;
 import java.util.stream.Collectors;
 
+import com.huawei.codecraft.ObjectPool;
 import com.huawei.codecraft.agent.Robot;
 import com.huawei.codecraft.agent.Workbench;
 import com.huawei.codecraft.constants.Const;
@@ -17,10 +17,6 @@ import com.huawei.codecraft.utils.Utils;
  * @description: 调度器类
  */
 public class Dispatcher {
-    private boolean saveChain;
-    private String chainPath = "./log/chain.txt";
-    private FileOutputStream chainStream;
-
     private List<Robot> robotList;
     private List<Robot> freeRobots;
     private List<Workbench> workbenchList;
@@ -28,35 +24,47 @@ public class Dispatcher {
     private Map<Integer, List<Workbench>> workbenchTypeMap;
     // key: 工作台种类, value: 以工作台产物为原料的所有任务
     private Map<Integer, List<Task>> taskTypeMap;
-    private PriorityQueue<TaskChain> oldTaskChainList[];
-    private PriorityQueue<TaskChain> newTaskChainList[];
+
     private Map<Robot, PriorityQueue<TaskChain>> taskChainQueueMap;
+    private PriorityQueue<TaskChain> tempQueue;
+
+    // 任务链池子
+    private ObjectPool<TaskChain> chainPool;
 
     public Dispatcher(List<Robot> robotList, List<Workbench> workbenchList,
-            Map<Integer, List<Workbench>> workbenchTypeMap, boolean saveChain) {
-        this.saveChain = saveChain;
-
+            Map<Integer, List<Workbench>> workbenchTypeMap, ObjectPool<TaskChain> chainPool) {
         this.robotList = robotList;
         this.freeRobots = new ArrayList<>();
         this.workbenchList = workbenchList;
 
         this.workbenchTypeMap = workbenchTypeMap;
         this.taskTypeMap = new HashMap<>();
+
         this.taskChainQueueMap = new HashMap<>();
-        this.oldTaskChainList = new PriorityQueue[4];
-        this.newTaskChainList = new PriorityQueue[4];
-        for(int i=0; i<4; i++){
-            this.oldTaskChainList[i] = new PriorityQueue<TaskChain>();
-            this.newTaskChainList[i] = new PriorityQueue<TaskChain>();
+        this.tempQueue = new PriorityQueue<>();
+        // 先新建队列，避免后续反复新建
+        for (Robot rb : robotList) {
+            taskChainQueueMap.put(rb, new PriorityQueue<>());
         }
 
-        if (saveChain) {
-            chainStream = Utils.getFileStream(chainPath);
-        }
-
+        this.chainPool = chainPool;
 
         // 初始化所有任务
         init();
+    }
+
+    public boolean isQueueMapEmpty(Robot rb) {
+        if (rb == null) {
+            for (PriorityQueue<TaskChain> queue : taskChainQueueMap.values()) {
+                if (queue.size() != 0) {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        PriorityQueue<TaskChain> queue = taskChainQueueMap.get(rb);
+        return queue.size() == 0;
     }
 
     /** 开始任务分配 */
@@ -67,27 +75,40 @@ public class Dispatcher {
         // 有空闲，构建任务链并分配给机器人
         if (!freeRobots.isEmpty()) {
             // 构建任务链
-            Map<Robot, PriorityQueue<TaskChain>> chainsMap = generateTaskChains();
+            generateTaskChains();
 
-            if (chainsMap == null) {
+            // 任务链为空
+            if (isQueueMapEmpty(null)) {
                 return;
             }
 
             // 分配任务链
-            while (chainsMap.size() != 0) {
+            while (!isQueueMapEmpty(null)) {
                 double max = 0.;
                 Robot receiver = null;
                 TaskChain bindChain = null;
-                for (Robot rb : chainsMap.keySet()) {
+
+                for (Robot rb : robotList) {
+                    // 检测机器人对应queue是否为空
+                    if (isQueueMapEmpty(rb)) {
+                        continue;
+                    }
+
+                    PriorityQueue<TaskChain> queue = taskChainQueueMap.get(rb);
+
+                    // 进行分配，寻找所有可用的chain
                     while (true) {
-                        TaskChain chain = chainsMap.get(rb).peek();
+                        TaskChain chain = queue.peek();
                         if (chain == null) {
                             bindChain = chain;
                             receiver = rb;
                             break;
                         }
+
+                        // 占用后将当前chain释放
                         if (chain.isOccupied()) {
-                            chainsMap.get(rb).poll();
+                            chainPool.release(chain);
+                            queue.poll();
                             continue;
                         }
 
@@ -100,15 +121,16 @@ public class Dispatcher {
                     }
                 }
 
+                // 没有可以分配的，将对应的chain全部释放
                 if (bindChain == null) {
-                    chainsMap.remove(receiver);
+                    clearChainMap(receiver);
                     continue;
                 }
 
-                receiver.bindChain(bindChain);
-
                 bindChain.occupy();
-                chainsMap.remove(receiver);
+                receiver.bindChain(bindChain);
+                // 绑定后将原始chain删除
+                clearChainMap(receiver);
             }
         }
     }
@@ -120,22 +142,29 @@ public class Dispatcher {
                 .collect(Collectors.toList());
     }
 
+    public void copyQueue(PriorityQueue<TaskChain> source, PriorityQueue<TaskChain> target) {
+        tempQueue.clear();
+        tempQueue.addAll(source);
+    }
+
     /** 在获取到初始任务链后，更新任务链，增加任务链长度 */
-    private void updateTaskChain(Map<Robot, PriorityQueue<TaskChain>> taskChainQueueMap) {
+    private void updateTaskChain() {
         // 以机器人的初始任务链为单位, 添加后续任务
         for (Robot rb : freeRobots) {
-
-            if (oldTaskChainList[rb.getId()] == null) {
+            if (isQueueMapEmpty(rb)) {
                 continue;
             }
 
-            for (TaskChain taskChain : oldTaskChainList[rb.getId()]) {
-                boolean addNewTaskChain = false;
+            // 将旧的queue内容拷贝一份，避免在遍历的过程中热更新产生错误
+            PriorityQueue<TaskChain> queue = taskChainQueueMap.get(rb);
+            copyQueue(queue, tempQueue);
+
+            // 是否有更改
+            for (TaskChain taskChain : tempQueue) {
                 Task lastTask = taskChain.getTasks().get(taskChain.length() - 1);
 
                 // 遍历任务链中最后一个任务的后续任务,如果没有后续任务进行下一次遍历
                 if (lastTask.getPostTaskList().isEmpty()) {
-                    newTaskChainList[rb.getId()].add(taskChain);
                     continue;
                 }
 
@@ -170,19 +199,14 @@ public class Dispatcher {
                     }
 
                     // 更新任务最早完成时间，并把该任务加入到这条任务链中
-                    TaskChain newTaskChain = new TaskChain(taskChain);
+                    TaskChain newTaskChain = chainPool.acquire();
+                    newTaskChain.update(taskChain);
                     newTaskChain.addTask(postTask);
 
                     // 保存
-                    newTaskChainList[rb.getId()].add(newTaskChain);
-                    addNewTaskChain = true;
-                }
-
-                if (!addNewTaskChain) {
-                    newTaskChainList[rb.getId()].add(taskChain);
+                    queue.add(newTaskChain);
                 }
             }
-            taskChainQueueMap.put(rb, newTaskChainList[rb.getId()]);
         }
     }
 
@@ -225,14 +249,27 @@ public class Dispatcher {
         }
     }
 
-    /** 生成初始任务链 */
-    public Map<Robot, PriorityQueue<TaskChain>> generateTaskChains() {
-        // key: 执行任务的机器人, value: 任务链列表
-        taskChainQueueMap.clear();
-        for(int i=0; i<4; i++){
-            oldTaskChainList[i].clear();
-            newTaskChainList[i].clear();
+    /** 清除map，如果传入null那么清除所有 */
+    public void clearChainMap(Robot rb) {
+        if (rb == null) {
+            // 释放所有chain对象
+            for (PriorityQueue<TaskChain> queue : taskChainQueueMap.values()) {
+                while (!queue.isEmpty()) {
+                    chainPool.release(queue.poll());
+                }
+            }
+        } else {
+            PriorityQueue<TaskChain> queue = taskChainQueueMap.get(rb);
+            while (!queue.isEmpty()) {
+                chainPool.release(queue.poll());
+            }
         }
+    }
+
+    /** 生成初始任务链 */
+    public void generateTaskChains() {
+        clearChainMap(null);
+
         // 遍历所有task
         for (List<Task> taskList : taskTypeMap.values()) {
             for (Task task : taskList) {
@@ -256,7 +293,6 @@ public class Dispatcher {
                 }
 
                 // 如果工作台可以投入生产，继续进行判断
-
                 // 遍历机器人列表，选择最近的任务链
                 for (Robot rb : freeRobots) {
                     double distance = Utils.computeDistance(from.getPos(), rb.getPos());
@@ -268,31 +304,24 @@ public class Dispatcher {
                     }
 
                     // 更新任务最快完成时间
-                    TaskChain taskChain = new TaskChain(rb, receiveTaskFrame);
+                    TaskChain taskChain = chainPool.acquire();
+                    taskChain.update(receiveTaskFrame);
                     taskChain.addTask(task);
 
                     // 保存任务链
-                    if (taskChainQueueMap.containsKey(rb)) {
-                        taskChainQueueMap.get(rb).add(taskChain);
-                    } else {
-                        PriorityQueue<TaskChain> taskChainQueue = oldTaskChainList[rb.getId()];
-                        taskChainQueue.add(taskChain);
-                        taskChainQueueMap.put(rb, taskChainQueue);
-                    }
+                    taskChainQueueMap.get(rb).add(taskChain);
                 }
 
             }
         }
 
         // 如果没有任务链，直接返回
-        if (taskChainQueueMap.isEmpty()) {
-            return null;
+        if (isQueueMapEmpty(null)) {
+            return;
         }
 
         // 这里更新两次是因为最长链长为3，减去初始链长1, 所以两次
-        updateTaskChain(taskChainQueueMap);
-        updateTaskChain(taskChainQueueMap);
-
-        return taskChainQueueMap;
+        updateTaskChain();
+        updateTaskChain();
     }
 }

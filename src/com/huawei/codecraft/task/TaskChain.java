@@ -3,29 +3,40 @@ package com.huawei.codecraft.task;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.huawei.codecraft.agent.Robot;
 import com.huawei.codecraft.constants.Const;
 
 public class TaskChain implements Comparable<TaskChain> {
-
-    // 执行任务链的机器人
-    private Robot Robot;
     // 用来存储任务链中的任务
     private List<Task> taskChain;
     // 在已有任务链的条件下，完成任务所需最快帧数
     private double totalFrame;
 
-    public TaskChain(Robot Robot, double totalFrame) {
-        this.Robot = Robot;
+    private static int count = 0;
+
+    public TaskChain(double totalFrame) {
         this.taskChain = new ArrayList<Task>();
         this.totalFrame = totalFrame;
+
+        count += 1;
+
+        // System.err.println(count);
     }
 
     public TaskChain(TaskChain chain) {
-        this.Robot = chain.getRobot();
-        this.taskChain = new ArrayList<>();
-        this.taskChain.addAll(chain.getTasks());
-        this.totalFrame = chain.getTotalFrame();
+        this.taskChain = new ArrayList<Task>();
+        this.taskChain.addAll(chain.taskChain);
+        this.totalFrame = chain.totalFrame;
+    }
+
+    public void update(TaskChain chain) {
+        this.taskChain.clear();
+        this.taskChain.addAll(chain.taskChain);
+        this.totalFrame = chain.totalFrame;
+    }
+
+    public void update(double totalFrame) {
+        this.taskChain.clear();
+        this.totalFrame = totalFrame;
     }
 
     /** 将该任务链上的工作台都置为使用中，避免后续机器人重复领取 */
@@ -99,16 +110,6 @@ public class TaskChain implements Comparable<TaskChain> {
     /** 设定预估帧数 */
     public void setTotalFrame(double totalFrame) {
         this.totalFrame = totalFrame;
-    }
-
-    /** 获取当前chain派发的机器人 */
-    public Robot getRobot() {
-        return Robot;
-    }
-
-    /** 设定负责机器人 */
-    public void setRobot(Robot robot) {
-        Robot = robot;
     }
 
     /** 当前task的预估收益 */
