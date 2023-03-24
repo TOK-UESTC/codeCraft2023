@@ -21,7 +21,7 @@ import com.huawei.codecraft.utils.Utils;
 import com.huawei.codecraft.vector.Coordinate;
 import com.huawei.codecraft.vector.Velocity;
 
-public class Robot {
+public class Robot implements Comparable<Robot> {
     private int workbenchIdx; // 所处工作台下标, -1表示没有处于任何工作台, [0, K-1]表是某工作台下标
     private int productType; // 携带物品类型[0, 7], 0表示未携带物品
     private int lastProductType; // 上一帧携带的品
@@ -44,8 +44,6 @@ public class Robot {
     private ObjectPool<Coordinate> coordPool;
     private ObjectPool<PIDModel> pidPool;
 
-    public static int robotID = 0;
-
     // 各种控制器
     private PIDModel PID;
     private ActionModel actionModel;
@@ -63,7 +61,7 @@ public class Robot {
     }
 
     public Robot(Coordinate pos, List<Robot> robotList, String[] args, ObjectPool<MotionState> statePool,
-            ObjectPool<MotionFrag> fragPool, ObjectPool<Coordinate> coordPool, ObjectPool<PIDModel> pidPool) {
+            ObjectPool<MotionFrag> fragPool, ObjectPool<Coordinate> coordPool, ObjectPool<PIDModel> pidPool, int id) {
         this.pos = pos;
         this.workbenchIdx = -1;
         this.productType = 0;
@@ -74,12 +72,12 @@ public class Robot {
         this.velocity = new Velocity(0, 0);
         this.heading = 0;
         this.task = null;
-        this.taskChain = null;
+        this.taskChain = new TaskChain(0);
         this.actions = new ArrayList<Action>();
         this.frameId = 0;
         this.robotList = robotList;
-        id = robotID;
-        robotID += 1;
+        this.id = id;
+
         motionStates = new HashMap<>();
 
         this.PID = new PIDModel(this);
@@ -447,9 +445,9 @@ public class Robot {
 
     /** 绑定任务链 */
     public void bindChain(TaskChain taskChain) {
-        this.taskChain = taskChain;
+        this.taskChain.update(taskChain);
         // 机器人绑定任务链的时候就会分配任务
-        this.task = taskChain.getTasks().get(0);
+        this.task = this.taskChain.getTasks().get(0);
     }
 
     /** 获取当前任务链 */
@@ -545,15 +543,15 @@ public class Robot {
         return frameId;
     }
 
-    /** hashcode */
+    /**
+     * 实现任务链排序，当前只是使用了任务链的预估收益
+     *
+     * @param o 比较对象
+     * @return
+     */
     @Override
-    public int hashCode() {
-        return id;
+    public int compareTo(Robot o) {
+        return Double.compare(this.getPriority(), o.getPriority());
     }
 
-    @Override
-    public boolean equals(Object o) {
-        Robot r = (Robot) o;
-        return this.id == r.id;
-    }
 }

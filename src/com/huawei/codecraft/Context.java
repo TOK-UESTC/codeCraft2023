@@ -19,7 +19,7 @@ import com.huawei.codecraft.motion.MotionFrag;
 import com.huawei.codecraft.motion.MotionState;
 import com.huawei.codecraft.pid.PIDModel;
 import com.huawei.codecraft.task.Dispatcher;
-import com.huawei.codecraft.task.Task;
+import com.huawei.codecraft.task.TaskChain;
 import com.huawei.codecraft.utils.Utils;
 import com.huawei.codecraft.vector.Coordinate;
 import com.huawei.codecraft.vector.Velocity;
@@ -33,8 +33,6 @@ public class Context {
 
     // 日志开关
     private static final boolean saveLog = false;
-    // 任务链记录开关
-    private static final boolean saveChain = false;
 
     // log用
     private String inFilePath = "./log/input.txt";
@@ -55,6 +53,7 @@ public class Context {
     private ObjectPool<MotionFrag> fragPool;
     private ObjectPool<Coordinate> coordPool;
     private ObjectPool<PIDModel> pidPool;
+    private ObjectPool<TaskChain> chainPool;
 
     Context(BufferedReader inStream, PrintStream outStream) {
         frameId = 0;
@@ -74,6 +73,7 @@ public class Context {
         this.fragPool = new ObjectPool<>(() -> new MotionFrag(0, 0, 0));
         this.coordPool = new ObjectPool<>(() -> new Coordinate(0, 0));
         this.pidPool = new ObjectPool<>(() -> new PIDModel((Robot) null));
+        this.chainPool = new ObjectPool<>(() -> new TaskChain(0));
     }
 
     /**
@@ -85,6 +85,7 @@ public class Context {
         int row = 0; // 地图行数
         double x, y; // 地图坐标
         int workbenchCount = 0; // 工作台数量
+        int robotCount = 0; // 机器人数量
 
         String line;
 
@@ -108,8 +109,9 @@ public class Context {
                         break;
                     // 机器人
                     case 'A':
-                        Robot robot = new Robot(new Coordinate(x, y), robotList, args, statePool, fragPool, coordPool,
-                                pidPool);
+                        Robot robot = new Robot(
+                                new Coordinate(x, y),
+                                robotList, args, statePool, fragPool, coordPool, pidPool, robotCount++);
                         robotList.add(robot);
                         break;
                     // 工作台
@@ -139,7 +141,7 @@ public class Context {
             Const.workbenchMapper.put(t, workbenchTypeMap.get(t).size());
         }        
 
-        dispatcher = new Dispatcher(robotList, workbenchList, workbenchTypeMap, saveChain);
+        dispatcher = new Dispatcher(robotList, workbenchList, workbenchTypeMap, chainPool);
         endStep();
     }
 
@@ -190,34 +192,27 @@ public class Context {
         if (frameId == 3770) {
             int i = 0;
         }
+        printLine(String.format("%d", frameId));
 
         // 调度器分配任务
         dispatcher.dispatch();
 
         List<Robot> rbList = new ArrayList<Robot>();
         rbList.addAll(robotList);
-        Collections.sort(rbList, new Comparator<Robot>() {
-            @Override
-            public int compare(Robot r1, Robot r2) {
-                return Double.compare(r1.getPriority(), r2.getPriority());
-            }
-        });
-        // for (Robot r : rbList) {
-        // r.clear();
-        // }
+        Collections.sort(rbList);
+
         for (Robot rb : rbList) {
             // 决策
             rb.step();
         }
 
-        printLine(String.format("%d", frameId));
-        for (int i = 0; i < 4; i++) {
-            Robot rb = rbList.get(i);
+        for (Robot rb : robotList) {
             // 打印决策
             for (Action a : rb.getActions()) {
                 printLine(a.toString(rb.getId()));
             }
         }
+
         endStep();
     }
 
