@@ -98,21 +98,6 @@ public class MotionModel {
         double newVy = (stateV + fragLineAcc * fragT) * Math.sin(heading);
         state.setVelocity(newVx, newVy);
         state.setW(w + fragAcc * fragT);
-
-        // double newVx = state.getVx() + frag.getLinearAcc() * frag.getT() *
-        // Math.cos(state.getHeading());
-        // double newVy = state.getVy() + frag.getLinearAcc() * frag.getT() *
-        // Math.sin(state.getHeading());
-        // Velocity newSpeed = new Velocity(newVx, newVy);
-
-        // state.setVx(newVx);
-        // state.setVy(newVy);
-
-        // if (newSpeed.mod() > Const.MAX_FORWARD_VELOCITY) {
-        // double angle =newSpeed.getAngle();
-        // state.setVx(Const.MAX_FORWARD_VELOCITY * Math.cos());
-        // state.setVy();
-        // }
     }
 
     /**
@@ -161,7 +146,6 @@ public class MotionModel {
      * @param targetAngularVelocity: 目标角度
      */
     public MotionState predict(MotionState state, double targetVelocity, double targetAngularVelocity) {
-
         // 计算合速度v0
         double v0 = state.vMod();
 

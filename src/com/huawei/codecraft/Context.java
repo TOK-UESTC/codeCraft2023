@@ -91,7 +91,7 @@ public class Context {
         String line;
 
         while (true) {
-            line = readLine();
+            line = inStream.nextLine();
 
             // 地图数据读取完毕
             if (line.equals("OK")) {
@@ -145,6 +145,11 @@ public class Context {
         }
 
         dispatcher = new Dispatcher(robotList, workbenchList, workbenchTypeMap, chainPool);
+
+        // 根据地图工作台情况，动态调整pid
+        for (Robot rb : robotList) {
+            rb.updatePID(workbenchCount);
+        }
     }
 
     /**
@@ -154,7 +159,7 @@ public class Context {
      */
     public void update() throws IOException {
         String line;
-        line = readLine();
+        line = inStream.nextLine();
 
         // 更新state
         String[] parts = line.split(" ");
@@ -162,9 +167,9 @@ public class Context {
         money = Integer.parseInt(parts[1]);
 
         // 更新工作台信息
-        int k = Integer.parseInt(readLine());
+        int k = Integer.parseInt(inStream.nextLine());
         for (int i = 0; i < k; i++) {
-            line = readLine();
+            line = inStream.nextLine();
 
             // 按照顺序读取
             Workbench wb = workbenchList.get(i);
@@ -173,7 +178,7 @@ public class Context {
 
         // 更新机器人信息
         for (int i = 0; i < 4; i++) {
-            line = readLine();
+            line = inStream.nextLine();
 
             // 按照顺序读取
             Robot rb = robotList.get(i);
@@ -184,7 +189,7 @@ public class Context {
         }
 
         // 更新结尾异常
-        if (!readLine().equals("OK")) {
+        if (!inStream.nextLine().equals("OK")) {
             System.err.println("update failed");
         }
     }
@@ -242,7 +247,6 @@ public class Context {
     /**
      * readline包装，方便log
      * 
-     * @throws IOException
      */
     public String readLine() {
         String line = inStream.nextLine();

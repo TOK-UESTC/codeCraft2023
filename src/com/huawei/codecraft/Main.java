@@ -36,8 +36,8 @@ public class Main {
         } else {
             ctx.init(args); // 初始化地图
             ctx.step(true); // 初始化过地图就开始计算任务链，避免跳帧
-            statistics.start(); // 开始计时
 
+            statistics.start(); // 开始计时
             while (ctx.getFrame() < totalFrame) {
                 // 更新信息
                 ctx.update();

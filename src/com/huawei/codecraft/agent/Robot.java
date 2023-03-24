@@ -56,6 +56,19 @@ public class Robot implements Comparable<Robot> {
         motionStates.clear();
     }
 
+    /** 更新PID */
+    public void updatePID(int count) {
+        if (count == 43) {
+            PID.update(6.2, 0.1, 1., 6.2, 0.1, 1.);
+        } else if (count == 25) {
+            PID.update(6.2, 0.1, 1., 6.2, 0.1, 1.);
+        } else if (count == 50) {
+            PID.update(6.2, 0.1, 1., 6.2, 0.1, 1.);
+        } else if (count == 18) {
+            PID.update(6.2, 0.1, 1., 6.2, 0.1, 1.);
+        }
+    }
+
     public int getId() {
         return id;
     }
@@ -77,10 +90,10 @@ public class Robot implements Comparable<Robot> {
         this.frameId = 0;
         this.robotList = robotList;
         this.id = id;
-
-        motionStates = new HashMap<>();
+        this.motionStates = new HashMap<>();
 
         this.PID = new PIDModel(this);
+        // 搜索用
         if (args.length == 7) {
             this.PID = new PIDModel(this, args);
         }

@@ -48,22 +48,6 @@ public class PIDModel {
         KdDistLoad = Double.parseDouble(args[6]);
     }
 
-    // public PIDModel(PIDModel model) {
-    // this.KpAngle = model.KpAngle;
-    // this.KiAngle = model.KiAngle;
-    // this.KdAngle = model.KdAngle;
-    // this.lastErrAngle = model.lastErrAngle;
-    // this.intAngle = model.intAngle;
-    // this.intMaxAngle = model.intMaxAngle;
-    // this.KpDist = model.KpDist;
-    // this.KiDist = model.KiDist;
-    // this.KdDist = model.KdDist;
-    // this.lastErrDist = model.lastErrDist;
-    // this.intDist = model.intDist;
-    // this.intMaxDist = model.intMaxDist;
-    // this.rb = model.rb;
-    // }
-
     public void update(PIDModel model) {
         this.KpAngle = model.KpAngle;
         this.KiAngle = model.KiAngle;
@@ -74,10 +58,23 @@ public class PIDModel {
         this.KpDist = model.KpDist;
         this.KiDist = model.KiDist;
         this.KdDist = model.KdDist;
+        this.KpDistLoad = model.KpDistLoad;
+        this.KiDistLoad = model.KiDistLoad;
+        this.KdDistLoad = model.KdDistLoad;
         this.lastErrDist = model.lastErrDist;
         this.intDist = model.intDist;
         this.intMaxDist = model.intMaxDist;
         this.rb = model.rb;
+    }
+
+    public void update(double KpDist, double KiDist, double KdDist, double KpDistLoad, double KiDistLoad,
+            double KdDistLoad) {
+        this.KpDist = KpDist;
+        this.KiDist = KiDist;
+        this.KdDist = KdDist;
+        this.KpDistLoad = KpDistLoad;
+        this.KiDistLoad = KiDistLoad;
+        this.KdDistLoad = KdDistLoad;
     }
 
     /** 根据当前MotionState与目标POS，计算控制律 */
@@ -110,29 +107,29 @@ public class PIDModel {
             angleErr = angleErr + 2 * Math.PI;
         }
 
-        // 判断离墙是否太近
-        double minWallDist = 2;
+        /// 判断离墙是否太近
+        double minWallDist = 4;
         // 减速系数
-        double deceleration = 0.4;
-        double minDistWallX = posX < 25 ? posX : 50 - posX;
-        double minDistWallY = posY < 25 ? posY : 50 - posY;
-
+        double deceleration = 0.3;
+        double minDistWallX = posX < 25 ? posX : (50 - posX);
+        double minDistWallY = posY < 25 ? posY : (50 - posY);
+        boolean closetoX = false;
+        boolean closetoY = false;
         // 根据当前角度与离墙距离的关系，进行距离误差的修正
-        if (posX < minWallDist && heading > Math.PI * 3 / 4 && heading < -Math.PI * 3 / 4) {
-            distErr = Math.min(distErr, deceleration * minDistWallX);
-        } else if (posX > 50 - minWallDist && heading < Math.PI / 4 && heading > -Math.PI / 4) {
-            distErr = Math.min(distErr, deceleration * minDistWallX);
+        if (posX < minWallDist && (heading > Math.PI * 5 / 8 || heading < -Math.PI * 5 / 8)) {
+            closetoX = true;
+        } else if (posX > 50 - minWallDist && heading < Math.PI * 3 / 8 && heading > -Math.PI * 3 / 8) {
+            closetoX = true;
         }
-        if (posY < minWallDist && heading < -Math.PI / 4 && heading > -Math.PI * 3 / 4) {
-            distErr = Math.min(distErr, deceleration * minDistWallY);
-        } else if (posY > 50 - minWallDist && heading > Math.PI / 4 && heading < Math.PI * 3 / 4) {
-            distErr = Math.min(distErr, deceleration * minDistWallY);
+        if (posY < minWallDist && heading < -Math.PI / 8 && heading > -Math.PI * 7 / 8) {
+            closetoY = true;
+        } else if (posY > 50 - minWallDist && heading > Math.PI / 8 && heading < Math.PI * 7 / 8) {
+            closetoY = true;
         }
 
-        // // 根据角度偏差，进行距离误差的修正
-        // if (Math.abs(angleErr) > Math.PI / 4) {
-        // distErr = distErr * deceleration;
-        // }
+        if (closetoX || closetoY) {
+            distErr = Math.min(distErr, deceleration * Math.min(minDistWallX, minDistWallY));
+        }
 
         // 距离环控制
         double lineVelocity = 0;
