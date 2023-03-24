@@ -9,9 +9,8 @@ import com.huawei.codecraft.vector.Coordinate;
 
 public class ActionModel {
     private Robot rb;
-    private MotionState ms;
 
-    Action rotateAction;    
+    Action rotateAction;
     Action forwardAction;
     Action buyAction;
     Action sellAction;
@@ -20,13 +19,14 @@ public class ActionModel {
 
     public ActionModel(Robot rb, ObjectPool<MotionState> statePool, ObjectPool<Coordinate> coordPool) {
         this.rb = rb;
-        this.ms = new MotionState(rb);
         // TODO:不优雅的实现
         this.rotateAction = new Action(ActionType.ROTATE);
         this.forwardAction = new Action(ActionType.FORWARD);
         this.buyAction = new Action(ActionType.BUY);
         this.sellAction = new Action(ActionType.SELL);
 
+        this.statePool = statePool;
+        this.coordPool = coordPool;
     }
 
     public void generate() {
