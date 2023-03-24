@@ -137,31 +137,31 @@ public class Robot implements Comparable<Robot> {
     }
     // MotionState ms, Coordinate target
 
-    /** 根据当前任务预估没有碰撞的最快到达frame */
-    public int predFrame() {
+    /**
+     * 根据当前任务预估没有碰撞的最快到达frame
+     * 
+     * @apiNote: 该方法会改变传入的motionState，以方便连续调用
+     */
+    public int predFrame(MotionState ms, Coordinate target) {
         int frame = 0;
-        Workbench wb = productType == 0 ? task.getFrom() : task.getTo();
 
         // 复制状态，避免直接对原数据进行操作
-        MotionState state = statePool.acquire();
-        state.update(this);
         PIDModel pidModel = pidPool.acquire();
         pidModel.update(PID);
 
         MotionState nextState;
         while (true) {
-            if (Utils.computeDistance(state.getPos(), wb.getPos()) < 0.4) {
+            if (Utils.computeDistance(ms.getPos(), target) < 0.4) {
                 break;
             }
 
-            double[] controlFactor = pidModel.control(state, wb.getPos());
-            nextState = motionModel.predict(state, controlFactor[0], controlFactor[1]);
-            statePool.release(state);
-            state = nextState;
+            double[] controlFactor = pidModel.control(ms, target);
+            nextState = motionModel.predict(ms, controlFactor[0], controlFactor[1]);
+            statePool.release(ms);
+            ms = nextState;
             frame++;
         }
 
-        statePool.release(state);
         pidPool.release(pidModel);
         return frame;
     }
@@ -448,6 +448,19 @@ public class Robot implements Comparable<Robot> {
         Workbench from = task.getFrom();
         Workbench to = task.getTo();
 
+        // 确认是否是刚接到的任务
+        if (leftFrame < 750 && productType == 0 && task == taskChain.getTasks().get(0)) {
+            MotionState state = statePool.acquire();
+            state.update(this);
+            // 时间不足时，不继续执行任务链
+            if (task != null && predFrame(state, task.getFrom().getPos())
+                    + predFrame(state, task.getTo().getPos()) > leftFrame) {
+                task = null;
+            }
+
+            statePool.release(state);
+        }
+
         // 买成功，不持有->持有
         // 生产工作台规划产品格被释放:from.setPlanProductStatus(0);
         // 如果这时规划原料格已满，那么清除原料格状态
@@ -463,10 +476,13 @@ public class Robot implements Comparable<Robot> {
 
             task = taskChain.getNextTask();
 
+            MotionState state = statePool.acquire();
+            state.update(this);
             // 时间不足时，不继续执行任务链
-            if (task != null && predFrame() > leftFrame) {
+            if (task != null && predFrame(state, task.getTo().getPos()) > leftFrame) {
                 task = null;
             }
+            statePool.release(state);
         }
     }
 

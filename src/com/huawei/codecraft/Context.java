@@ -28,6 +28,7 @@ public class Context {
     private PrintStream outStream;
 
     private int frameId;
+    private int leftFrame = Const.DURATION_OF_GAME * Const.FRAME_PER_SECOND;
     private int money;
 
     // 日志开关
@@ -144,7 +145,12 @@ public class Context {
             Const.workbenchMapper.put(t, workbenchTypeMap.get(t).size());
         }
 
-        dispatcher = new Dispatcher(robotList, workbenchList, workbenchTypeMap, chainPool);
+        dispatcher = new Dispatcher(robotList, workbenchList, workbenchTypeMap, chainPool, statePool);
+
+        // 搜索参数时停止pid更改
+        if (args.length == 7) {
+            return;
+        }
 
         // 根据地图工作台情况，动态调整pid
         for (Robot rb : robotList) {
@@ -164,6 +170,7 @@ public class Context {
         // 更新state
         String[] parts = line.split(" ");
         frameId = Integer.parseInt(parts[0]);
+        leftFrame = Const.DURATION_OF_GAME * Const.FRAME_PER_SECOND - frameId;
         money = Integer.parseInt(parts[1]);
 
         // 更新工作台信息
@@ -185,7 +192,7 @@ public class Context {
             rb.update(line.split(" "), frameId);
 
             // 根据买卖情况修改task
-            rb.checkDeal(Const.DURATION_OF_GAME * Const.FRAME_PER_SECOND - frameId);
+            rb.checkDeal(leftFrame);
         }
 
         // 更新结尾异常
@@ -200,7 +207,7 @@ public class Context {
             int i = 0;
         }
         if (init) {
-            dispatcher.dispatch();
+            dispatcher.dispatch(leftFrame);
 
             for (Robot rb : robotList) {
                 // 预决策，热池子
@@ -210,7 +217,7 @@ public class Context {
             printLine(String.format("%d", frameId));
 
             // 调度器分配任务
-            dispatcher.dispatch();
+            dispatcher.dispatch(leftFrame);
 
             // 按照优先级进行执行
             Collections.sort(sortRobotList);

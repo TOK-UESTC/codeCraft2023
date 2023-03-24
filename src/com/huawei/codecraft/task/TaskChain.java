@@ -101,9 +101,9 @@ public class TaskChain implements Comparable<TaskChain> {
         return totalFrame;
     }
 
-    /** 设定预估帧数 */
-    public void setTotalFrame(double totalFrame) {
-        this.totalFrame = totalFrame;
+    /** 增加预估帧数 */
+    public void addFrame(double frame) {
+        this.totalFrame += frame;
     }
 
     /** 当前task的预估收益 */

@@ -11,6 +11,7 @@ import com.huawei.codecraft.ObjectPool;
 import com.huawei.codecraft.agent.Robot;
 import com.huawei.codecraft.agent.Workbench;
 import com.huawei.codecraft.constants.Const;
+import com.huawei.codecraft.motion.MotionState;
 import com.huawei.codecraft.utils.Utils;
 
 /**
@@ -30,9 +31,11 @@ public class Dispatcher {
 
     // 任务链池子
     private ObjectPool<TaskChain> chainPool;
+    private ObjectPool<MotionState> statePool;
 
     public Dispatcher(List<Robot> robotList, List<Workbench> workbenchList,
-            Map<Integer, List<Workbench>> workbenchTypeMap, ObjectPool<TaskChain> chainPool) {
+            Map<Integer, List<Workbench>> workbenchTypeMap, ObjectPool<TaskChain> chainPool,
+            ObjectPool<MotionState> statePool) {
         this.robotList = robotList;
         this.freeRobots = new ArrayList<>();
         this.workbenchList = workbenchList;
@@ -48,6 +51,7 @@ public class Dispatcher {
         }
 
         this.chainPool = chainPool;
+        this.statePool = statePool;
 
         // 初始化所有任务
         init();
@@ -68,14 +72,14 @@ public class Dispatcher {
     }
 
     /** 开始任务分配 */
-    public void dispatch() {
+    public void dispatch(int leftFrame) {
         // 筛选空闲机器人，供后续使用
         updateFreeBot();
 
         // 有空闲，构建任务链并分配给机器人
         if (!freeRobots.isEmpty()) {
             // 构建任务链
-            generateTaskChains();
+            generateTaskChains(leftFrame);
 
             // 任务链为空
             if (isQueueMapEmpty(null)) {
@@ -148,7 +152,7 @@ public class Dispatcher {
     }
 
     /** 在获取到初始任务链后，更新任务链，增加任务链长度 */
-    private void updateTaskChain() {
+    private void updateTaskChain(int leftFrame) {
         // 以机器人的初始任务链为单位, 添加后续任务
         for (Robot rb : freeRobots) {
             if (isQueueMapEmpty(rb)) {
@@ -195,6 +199,14 @@ public class Dispatcher {
 
                     // 开始生产, 如果生产剩余时间比机器人最快到达时间更久，说明会出现等待
                     if (postFrom.getRest() > taskChain.getTotalFrame()) {
+                        continue;
+                    }
+
+                    // 获取完成任务时间
+                    double totalTime = taskChain.getTotalFrame() + postTask.getDistance() / Const.MAX_FORWARD_FRAME;
+
+                    // 时间不足，不生成任务
+                    if (totalTime > leftFrame) {
                         continue;
                     }
 
@@ -267,7 +279,7 @@ public class Dispatcher {
     }
 
     /** 生成初始任务链 */
-    public void generateTaskChains() {
+    public void generateTaskChains(int leftFrame) {
         clearChainMap(null);
 
         // 遍历所有task
@@ -303,6 +315,14 @@ public class Dispatcher {
                         continue;
                     }
 
+                    // 获取完成任务时间
+                    double totalTime = receiveTaskFrame + task.getDistance() / Const.MAX_FORWARD_FRAME;
+
+                    // 时间不足，不生成任务
+                    if (totalTime > leftFrame) {
+                        continue;
+                    }
+
                     // 更新任务最快完成时间
                     TaskChain taskChain = chainPool.acquire();
                     taskChain.update(receiveTaskFrame);
@@ -311,7 +331,6 @@ public class Dispatcher {
                     // 保存任务链
                     taskChainQueueMap.get(rb).add(taskChain);
                 }
-
             }
         }
 
@@ -321,7 +340,7 @@ public class Dispatcher {
         }
 
         // 这里更新两次是因为最长链长为3，减去初始链长1, 所以两次
-        updateTaskChain();
-        updateTaskChain();
+        updateTaskChain(leftFrame);
+        updateTaskChain(leftFrame);
     }
 }

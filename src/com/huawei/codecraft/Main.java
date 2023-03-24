@@ -14,7 +14,7 @@ public class Main {
     private static final PrintStream outStream = new PrintStream(new BufferedOutputStream(System.out));
 
     // 时间开关
-    private static final boolean showTime = false;
+    private static final boolean showTime = true;
 
     private static final int totalFrame = 50 * 60 * 3;
     private static final Context ctx = new Context(inStream, outStream);

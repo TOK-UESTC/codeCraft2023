@@ -21,7 +21,7 @@ function search()
         do
             for kdd in $(seq 0.7 0.1 1.3)
             do
-                ../robot.exe "java -classpath ./bin com.huawei.codecraft.Main restart $kpd $kid $kdd $kpd $kid $kdd" -f -d -m  ../maps/$name.txt | sed "s/$/ $kpd $kid $kdd $kpd $kid $kdd/"  >> score$name.txt &
+                ../robot.exe "java -classpath ./bin com.huawei.codecraft.Main restart $kpd $kid $kdd $kpd $kid $kdd" -f -d -m  ../maps/$name.txt |sed  ':a;N;$!ba;s/\n/ /g'|sed s/[[:space:]]//g | sed "s/$/ $kpd $kid $kdd $kpd $kid $kdd/"  >> score$name.txt &
                 let count+=1
                 while [ $(jobs -p | wc -l) -ge $max_processes ] ; do
                     sleep 1
