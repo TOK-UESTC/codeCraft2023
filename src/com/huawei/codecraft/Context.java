@@ -1,15 +1,14 @@
 package com.huawei.codecraft;
 
-import java.io.BufferedReader;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Scanner;
 
 import com.huawei.codecraft.action.Action;
 import com.huawei.codecraft.agent.Robot;
@@ -25,7 +24,7 @@ import com.huawei.codecraft.vector.Coordinate;
 import com.huawei.codecraft.vector.Velocity;
 
 public class Context {
-    private BufferedReader inStream;
+    private Scanner inStream;
     private PrintStream outStream;
 
     private int frameId;
@@ -42,6 +41,7 @@ public class Context {
 
     // key: 机器人ID value: 机器人对象
     private List<Robot> robotList = new ArrayList<Robot>();
+    private List<Robot> sortRobotList = new ArrayList<>();
     // key: 工作台ID value: 工作台对象
     private List<Workbench> workbenchList = new ArrayList<Workbench>();
     // key: 工作台类型 value: 工作台对象列表
@@ -55,7 +55,7 @@ public class Context {
     private ObjectPool<PIDModel> pidPool;
     private ObjectPool<TaskChain> chainPool;
 
-    Context(BufferedReader inStream, PrintStream outStream) {
+    Context(Scanner inStream, PrintStream outStream) {
         frameId = 0;
         money = 0;
 
@@ -69,11 +69,12 @@ public class Context {
         }
 
         // 初始化对象池，传入生成函数
-        this.statePool = new ObjectPool<>(() -> new MotionState(new Coordinate(0, 0), 0, new Velocity(0, 0), 0, false));
-        this.fragPool = new ObjectPool<>(() -> new MotionFrag(0, 0, 0));
-        this.coordPool = new ObjectPool<>(() -> new Coordinate(0, 0));
-        this.pidPool = new ObjectPool<>(() -> new PIDModel((Robot) null));
-        this.chainPool = new ObjectPool<>(() -> new TaskChain(0));
+        this.statePool = new ObjectPool<>(200,
+                () -> new MotionState(new Coordinate(0, 0), 0, new Velocity(0, 0), 0, false));
+        this.fragPool = new ObjectPool<>(200, () -> new MotionFrag(0, 0, 0));
+        this.coordPool = new ObjectPool<>(200, () -> new Coordinate(0, 0));
+        this.pidPool = new ObjectPool<>(200, () -> new PIDModel((Robot) null));
+        this.chainPool = new ObjectPool<>(200, () -> new TaskChain(0));
     }
 
     /**
@@ -81,7 +82,7 @@ public class Context {
      * 
      * @throws IOException
      */
-    public void init(String[] args) throws IOException {
+    public void init(String[] args) {
         int row = 0; // 地图行数
         double x, y; // 地图坐标
         int workbenchCount = 0; // 工作台数量
@@ -89,8 +90,8 @@ public class Context {
 
         String line;
 
-        while ((line = inStream.readLine()) != null) {
-            // line = readLine();
+        while (true) {
+            line = readLine();
 
             // 地图数据读取完毕
             if (line.equals("OK")) {
@@ -133,16 +134,17 @@ public class Context {
             row++;
         }
 
-        for(int t=1; t<=9;t++){
-            if(workbenchTypeMap.get(t) == null){
+        sortRobotList.addAll(robotList);
+
+        for (int t = 1; t <= 9; t++) {
+            if (workbenchTypeMap.get(t) == null) {
                 Const.workbenchMapper.put(t, 0);
                 continue;
             }
             Const.workbenchMapper.put(t, workbenchTypeMap.get(t).size());
-        }        
+        }
 
         dispatcher = new Dispatcher(robotList, workbenchList, workbenchTypeMap, chainPool);
-        endStep();
     }
 
     /**
@@ -188,31 +190,37 @@ public class Context {
     }
 
     /** 发起决策过程 */
-    public void step() {
+    public void step(boolean init) {
         if (frameId == 3770) {
             int i = 0;
         }
-        printLine(String.format("%d", frameId));
+        if (init) {
+            dispatcher.dispatch();
 
-        // 调度器分配任务
-        dispatcher.dispatch();
+            for (Robot rb : robotList) {
+                // 预决策，热池子
+                rb.step();
+            }
+        } else {
+            printLine(String.format("%d", frameId));
 
-        List<Robot> rbList = new ArrayList<Robot>();
-        rbList.addAll(robotList);
-        Collections.sort(rbList);
+            // 调度器分配任务
+            dispatcher.dispatch();
 
-        for (Robot rb : rbList) {
-            // 决策
-            rb.step();
-        }
+            // 按照优先级进行执行
+            Collections.sort(sortRobotList);
+            for (Robot rb : sortRobotList) {
+                // 决策
+                rb.step();
+            }
 
-        for (Robot rb : robotList) {
-            // 打印决策
-            for (Action a : rb.getActions()) {
-                printLine(a.toString(rb.getId()));
+            for (Robot rb : robotList) {
+                // 打印决策
+                for (Action a : rb.getActions()) {
+                    printLine(a.toString(rb.getId()));
+                }
             }
         }
-
         endStep();
     }
 
@@ -236,8 +244,8 @@ public class Context {
      * 
      * @throws IOException
      */
-    public String readLine() throws IOException {
-        String line = inStream.readLine();
+    public String readLine() {
+        String line = inStream.nextLine();
         if (saveLog) {
             try {
                 loginStream.write((line + '\n').getBytes());

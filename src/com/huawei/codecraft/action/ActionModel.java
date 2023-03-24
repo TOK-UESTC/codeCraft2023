@@ -73,7 +73,6 @@ public class ActionModel {
             if (rb.getWorkbenchIdx() == wb.getWorkbenchIdx()) {
                 // 购买行为
                 rb.addAction(this.buyAction.update(ActionType.BUY));
-                // }
             }
         } else {
             // 去售出

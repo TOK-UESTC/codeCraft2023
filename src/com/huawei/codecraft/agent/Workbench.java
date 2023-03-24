@@ -22,13 +22,20 @@ public class Workbench {
         this.type = type;
         this.pos = pos;
         this.workbenchIdx = workbenchIdx;
-        this.rest = -1;
+        this.rest = getRestTime(type);
         this.productStatus = 0;
         this.lastMaterialStatus = 0;
         this.planProductStatus = 0;
         this.materialStatus = 0;
         this.planMaterialStatus = 0;
         this.optionalTasks = new ArrayList<>();
+    }
+
+    private int getRestTime(int type) {
+        if (type == 1 || type == 2 || type == 3) {
+            return 50;
+        }
+        return -1;
     }
 
     public int getLastMaterialStatus() {
@@ -93,7 +100,7 @@ public class Workbench {
 
     /** 是否空闲，rest==-1 */
     public boolean isFree() {
-        return (rest == -1)&&(productStatus == 0);
+        return (rest == -1) && (productStatus == 0);
     }
 
     /** 是否已经有产物, productStatus==1 */

@@ -7,7 +7,9 @@ public class Statistics {
 
     public Statistics(int totalFrame) {
         this.totalFrame = totalFrame;
+    }
 
+    public void start() {
         startTime = System.nanoTime();
         lastTime = System.nanoTime();
     }

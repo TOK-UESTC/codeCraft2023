@@ -11,15 +11,9 @@ public class TaskChain implements Comparable<TaskChain> {
     // 在已有任务链的条件下，完成任务所需最快帧数
     private double totalFrame;
 
-    private static int count = 0;
-
     public TaskChain(double totalFrame) {
         this.taskChain = new ArrayList<Task>();
         this.totalFrame = totalFrame;
-
-        count += 1;
-
-        // System.err.println(count);
     }
 
     public TaskChain(TaskChain chain) {

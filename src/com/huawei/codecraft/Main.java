@@ -1,21 +1,20 @@
 package com.huawei.codecraft;
 
 import java.io.BufferedOutputStream;
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.io.PrintStream;
+import java.util.Scanner;
 
 import com.huawei.codecraft.utils.Statistics;
 
 public class Main {
 
-    private static final BufferedReader inStream = new BufferedReader(new InputStreamReader(System.in));
+    private static final Scanner inStream = new Scanner(System.in);
 
     private static final PrintStream outStream = new PrintStream(new BufferedOutputStream(System.out));
 
     // 时间开关
-    private static final boolean showTime = true;
+    private static final boolean showTime = false;
 
     private static final int totalFrame = 50 * 60 * 3;
     private static final Context ctx = new Context(inStream, outStream);
@@ -36,13 +35,14 @@ public class Main {
             System.out.println("err");
         } else {
             ctx.init(args); // 初始化地图
-            // 经验证，答题器并不会输出第0帧的信息，故可以忽略控制台输出的
-            // player skipped frames: 0
+            ctx.step(true); // 初始化过地图就开始计算任务链，避免跳帧
+            statistics.start(); // 开始计时
+
             while (ctx.getFrame() < totalFrame) {
                 // 更新信息
                 ctx.update();
                 // 输出策略
-                ctx.step();
+                ctx.step(false);
 
                 if (showTime) {
                     statistics.showTime(ctx.getFrame());

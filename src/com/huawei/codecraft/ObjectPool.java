@@ -11,10 +11,15 @@ public class ObjectPool<T> {
     private final Set<T> used;
     private final Supplier<T> supplier;
 
-    public ObjectPool(Supplier<T> supplier) {
+    public ObjectPool(int initCount, Supplier<T> supplier) {
         this.supplier = supplier;
         pool = new ArrayList<>();
         used = new HashSet<>();
+
+        // 先开辟池子，避免冷启动过慢
+        for (int i = 0; i < initCount; i++) {
+            pool.add(supplier.get());
+        }
     }
 
     public T acquire() {

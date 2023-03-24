@@ -66,8 +66,8 @@ public class Robot implements Comparable<Robot> {
         this.workbenchIdx = -1;
         this.productType = 0;
         this.lastProductType = 0;
-        this.timeCoefficients = 1;
-        this.collisionCoefficients = 1;
+        this.timeCoefficients = 0;
+        this.collisionCoefficients = 0;
         this.angularVelocity = 0;
         this.velocity = new Velocity(0, 0);
         this.heading = 0;
@@ -122,6 +122,36 @@ public class Robot implements Comparable<Robot> {
         Workbench wb = productType == 0 ? task.getFrom() : task.getTo();
         return Utils.computeDistance(pos, wb.getPos());
     }
+    // MotionState ms, Coordinate target
+
+    /** 根据当前任务预估没有碰撞的最快到达frame */
+    public int predFrame() {
+        int frame = 0;
+        Workbench wb = productType == 0 ? task.getFrom() : task.getTo();
+
+        // 复制状态，避免直接对原数据进行操作
+        MotionState state = statePool.acquire();
+        state.update(this);
+        PIDModel pidModel = pidPool.acquire();
+        pidModel.update(PID);
+
+        MotionState nextState;
+        while (true) {
+            if (Utils.computeDistance(state.getPos(), wb.getPos()) < 0.4) {
+                break;
+            }
+
+            double[] controlFactor = pidModel.control(state, wb.getPos());
+            nextState = motionModel.predict(state, controlFactor[0], controlFactor[1]);
+            statePool.release(state);
+            state = nextState;
+            frame++;
+        }
+
+        statePool.release(state);
+        pidPool.release(pidModel);
+        return frame;
+    }
 
     /**
      * 根据当前任务产生预测，暴露在外供给robot直接调用
@@ -144,6 +174,7 @@ public class Robot implements Comparable<Robot> {
 
         int nextFrameId = frameId + 1;
         int predictFrameLength = 200;
+
         for (int i = 0; i < predictFrameLength; i++) {
             double[] controlFactor = pidModel.control(state, wb.getPos());
             state = motionModel.predict(state, controlFactor[0], controlFactor[1]);
@@ -420,13 +451,8 @@ public class Robot implements Comparable<Robot> {
             task = taskChain.getNextTask();
 
             // 时间不足时，不继续执行任务链
-            if (task != null) {
-                // 运动需要的frame
-                double moveFrame = task.getDistance() / Const.MAX_FORWARD_FRAME;
-
-                if (moveFrame > leftFrame) {
-                    task = null;
-                }
+            if (task != null && predFrame() > leftFrame) {
+                task = null;
             }
         }
     }
