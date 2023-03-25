@@ -15,13 +15,13 @@ function search()
 {
     name=$1
     echo "" > score$name.txt
-    for kpd in $(seq 4.2 0.1 7.2)
+    for kpd in $(seq 5.5 0.1 8.0)
     do
         for kid in $(seq 0.0 0.01 0.2)
         do
             for kdd in $(seq 0.7 0.1 1.3)
             do
-                ../robot.exe "java -classpath ./bin com.huawei.codecraft.Main restart $kpd $kid $kdd $kpd $kid $kdd" -f -d -m  ../maps/$name.txt |sed  ':a;N;$!ba;s/\n/ /g'|sed s/[[:space:]]//g | sed "s/$/ $kpd $kid $kdd $kpd $kid $kdd/"  >> score$name.txt &
+                ../robot.exe "java -classpath ./bin com.huawei.codecraft.Main restart $kpd $kid $kdd $kpd $kid $kdd" -f -d -m  ../maps/$name.txt |sed  ':a;N;$!ba;s/\n/ /g'|sed s/[[:space:]]//g | sed "s/$/ $kpd, $kid, $kdd, $kpd, $kid, $kdd/"  >> score$name.txt &
                 let count+=1
                 while [ $(jobs -p | wc -l) -ge $max_processes ] ; do
                     sleep 1

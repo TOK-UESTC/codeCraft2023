@@ -32,6 +32,8 @@ public class Robot implements Comparable<Robot> {
     private double heading; // 朝向 [-pi, pi] 0 表示右方向, pi/2表示上方向
     private Coordinate pos; // 机器人坐标位置
 
+    private long lastTime;
+
     private Task task; // 机器人当前任务
     private TaskChain taskChain; // 任务链
     private ArrayList<Action> actions; // 机器人当前动作序列
@@ -39,6 +41,8 @@ public class Robot implements Comparable<Robot> {
     private int frameId;
     private List<Robot> robotList;
     private Map<Integer, MotionState> motionStates; // 机器人运动状态序列
+
+    private boolean newTask = false; // 标志位，表明是否新领取了chain
 
     private ObjectPool<MotionState> statePool;
     private ObjectPool<Coordinate> coordPool;
@@ -59,13 +63,13 @@ public class Robot implements Comparable<Robot> {
     /** 更新PID */
     public void updatePID(int count) {
         if (count == 43) {
-            PID.update(6.2, 0.1, 1., 6.2, 0.1, 1.);
+            PID.update(6.0, 0.17, 0.9, 6.0, 0.17, 0.9);
         } else if (count == 25) {
-            PID.update(6.2, 0.1, 1., 6.2, 0.1, 1.);
+            PID.update(7.2, 0.10, 1.3, 7.2, 0.10, 1.3);
         } else if (count == 50) {
-            PID.update(6.2, 0.1, 1., 6.2, 0.1, 1.);
+            PID.update(7.1, 0.15, 0.7, 7.1, 0.15, 0.7);
         } else if (count == 18) {
-            PID.update(6.2, 0.1, 1., 6.2, 0.1, 1.);
+            PID.update(7.0, 0.05, 0.8, 7.0, 0.05, 0.8);
         }
     }
 
@@ -135,7 +139,6 @@ public class Robot implements Comparable<Robot> {
         Workbench wb = productType == 0 ? task.getFrom() : task.getTo();
         return Utils.computeDistance(pos, wb.getPos());
     }
-    // MotionState ms, Coordinate target
 
     /**
      * 根据当前任务预估没有碰撞的最快到达frame
@@ -151,7 +154,7 @@ public class Robot implements Comparable<Robot> {
 
         MotionState nextState;
         while (true) {
-            if (Utils.computeDistance(ms.getPos(), target) < 0.4) {
+            if (Utils.computeDistance(ms.getPos(), target) < 0.2) {
                 break;
             }
 
@@ -294,7 +297,7 @@ public class Robot implements Comparable<Robot> {
             }
 
             range += 0.5;
-            if (range > 10) {
+            if (range > 4) {
                 break;
             }
         }
@@ -449,16 +452,18 @@ public class Robot implements Comparable<Robot> {
         Workbench to = task.getTo();
 
         // 确认是否是刚接到的任务
-        if (leftFrame < 750 && productType == 0 && task == taskChain.getTasks().get(0)) {
+        if (leftFrame < 800 && productType == 0 && newTask == true) {
             MotionState state = statePool.acquire();
             state.update(this);
             // 时间不足时，不继续执行任务链
             if (task != null && predFrame(state, task.getFrom().getPos())
-                    + predFrame(state, task.getTo().getPos()) > leftFrame) {
+                    + predFrame(state, task.getTo().getPos()) > leftFrame + 5) {
                 task = null;
             }
 
             statePool.release(state);
+
+            newTask = false;
         }
 
         // 买成功，不持有->持有
@@ -479,7 +484,7 @@ public class Robot implements Comparable<Robot> {
             MotionState state = statePool.acquire();
             state.update(this);
             // 时间不足时，不继续执行任务链
-            if (task != null && predFrame(state, task.getTo().getPos()) > leftFrame) {
+            if (task != null && predFrame(state, task.getTo().getPos()) > leftFrame + 5) {
                 task = null;
             }
             statePool.release(state);
@@ -503,6 +508,7 @@ public class Robot implements Comparable<Robot> {
         this.taskChain.update(taskChain);
         // 机器人绑定任务链的时候就会分配任务
         this.task = this.taskChain.getTasks().get(0);
+        this.newTask = true;
     }
 
     /** 获取当前任务链 */

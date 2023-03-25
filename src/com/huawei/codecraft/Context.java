@@ -49,6 +49,7 @@ public class Context {
     private Map<Integer, List<Workbench>> workbenchTypeMap = new HashMap<Integer, List<Workbench>>();
 
     private Dispatcher dispatcher;
+    private long lastTime;
 
     private ObjectPool<MotionState> statePool;
     private ObjectPool<MotionFrag> fragPool;
@@ -161,11 +162,13 @@ public class Context {
     /**
      * 与判题器交互，更新信息
      * 
-     * @throws IOException
      */
-    public void update() throws IOException {
+    public void update() {
         String line;
+        lastTime = System.currentTimeMillis();
         line = inStream.nextLine();
+        double time = System.currentTimeMillis() - lastTime;
+        // System.err.printf("time: %f\n", time);
 
         // 更新state
         String[] parts = line.split(" ");
@@ -193,6 +196,7 @@ public class Context {
 
             // 根据买卖情况修改task
             rb.checkDeal(leftFrame);
+
         }
 
         // 更新结尾异常

@@ -9,6 +9,7 @@ import com.huawei.codecraft.vector.Coordinate;
 
 public class ActionModel {
     private Robot rb;
+    private int marker;
 
     Action rotateAction;
     Action forwardAction;
@@ -17,8 +18,12 @@ public class ActionModel {
     private ObjectPool<MotionState> statePool;
     private ObjectPool<Coordinate> coordPool;
 
+    private int counter = -1;
+    private Coordinate nextPos = new Coordinate(0, 0);
+
     public ActionModel(Robot rb, ObjectPool<MotionState> statePool, ObjectPool<Coordinate> coordPool) {
         this.rb = rb;
+        this.marker = rb.getId();
         // TODO:不优雅的实现
         this.rotateAction = new Action(ActionType.ROTATE);
         this.forwardAction = new Action(ActionType.FORWARD);
@@ -32,6 +37,7 @@ public class ActionModel {
     public void generate() {
         generateShopActions();
         generateMoveActions();
+        counter += 1;
     }
 
     /** 距离加角度PID */
@@ -45,9 +51,14 @@ public class ActionModel {
         MotionState state = statePool.acquire();
         state.update(rb);
 
+        // TODO: 需要每帧都预测么？
         Coordinate next = rb.predict();
-        double[] controlFactor = rb.control(state, next);
+        nextPos.setValue(next);
         coordPool.release(next);
+
+        // Coordinate next = rb.predict();
+        double[] controlFactor = rb.control(state, nextPos);
+        // coordPool.release(next);
         statePool.release(state);
         // 产生转向动作
         rb.addAction(this.rotateAction.update(ActionType.ROTATE, controlFactor[1]));
