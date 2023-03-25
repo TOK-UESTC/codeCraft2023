@@ -1,29 +1,27 @@
 package com.huawei.codecraft.action;
 
+import javax.swing.text.Utilities;
+
 import com.huawei.codecraft.ObjectPool;
 import com.huawei.codecraft.agent.Robot;
 import com.huawei.codecraft.agent.Workbench;
 import com.huawei.codecraft.constants.ActionType;
+import com.huawei.codecraft.constants.Const;
 import com.huawei.codecraft.motion.MotionState;
+import com.huawei.codecraft.utils.Utils;
 import com.huawei.codecraft.vector.Coordinate;
 
 public class ActionModel {
     private Robot rb;
-    private int marker;
-
     Action rotateAction;
     Action forwardAction;
     Action buyAction;
     Action sellAction;
     private ObjectPool<MotionState> statePool;
     private ObjectPool<Coordinate> coordPool;
-
-    private int counter = -1;
     private Coordinate nextPos = new Coordinate(0, 0);
-
     public ActionModel(Robot rb, ObjectPool<MotionState> statePool, ObjectPool<Coordinate> coordPool) {
         this.rb = rb;
-        this.marker = rb.getId();
         // TODO:不优雅的实现
         this.rotateAction = new Action(ActionType.ROTATE);
         this.forwardAction = new Action(ActionType.FORWARD);
@@ -37,7 +35,6 @@ public class ActionModel {
     public void generate() {
         generateShopActions();
         generateMoveActions();
-        counter += 1;
     }
 
     /** 距离加角度PID */
@@ -80,10 +77,13 @@ public class ActionModel {
         // 购买
         if (rb.getProductType() == 0) {
             wb = rb.getTask().getFrom();
+            Workbench to = rb.getTask().getTo();
             // 判断是否在目标工作台附近，并且当前已经调转，开始朝向下一个工作台
-            if (rb.getWorkbenchIdx() == wb.getWorkbenchIdx()) {
+            if (rb.getWorkbenchIdx() == wb.getWorkbenchIdx() && Utils.computeDistance(wb.getPos(), to.getPos())
+                    / Const.MAX_FORWARD_FRAME * 1.2 < Const.leftFrame) {
                 // 购买行为
                 rb.addAction(this.buyAction.update(ActionType.BUY));
+                // }
             }
         } else {
             // 去售出

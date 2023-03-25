@@ -1,7 +1,9 @@
 package com.huawei.codecraft.task;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import com.huawei.codecraft.agent.Workbench;
 import com.huawei.codecraft.constants.Const;
@@ -20,6 +22,27 @@ public class Task {
 
     private boolean visited; // 是否被访问
     private List<Task> postTaskList; // 后继任务列表
+    // 为了产出4，5，6均衡, 我们为4，5，6号工作台产能计数
+    private static Map<Integer, Integer> balanceMap;
+
+    static {
+        balanceMap = new HashMap<>();
+        balanceMap.put(4, 1);
+        balanceMap.put(5, 1);
+        balanceMap.put(6, 1);
+        balanceMap.put(10, 1); // 表示产出最大值
+    }
+
+    public static void updateBalanceMap(int key){
+        balanceMap.put(key, balanceMap.get(key)+1);
+        if(balanceMap.get(key) > balanceMap.get(10)){
+            balanceMap.put(10, balanceMap.get(key));
+        }
+    }
+
+    public static Map<Integer, Integer> getBalanceMap(int key){
+        return balanceMap;
+    }
 
     public Task(Workbench from, Workbench to) {
         this.from = from;
@@ -30,7 +53,7 @@ public class Task {
         this.price = priceInfo[0];
         this.sellPrice = priceInfo[1];
 
-        // 计算工作台距离
+        // 计算工作台距离图1
         this.distance = Utils.computeDistance(from.getPos(), to.getPos());
 
         /*
@@ -114,26 +137,100 @@ public class Task {
         } else {
             timeCoefficient = (1 - Math.sqrt(1 - Math.pow(1 - (predictedFrame / 9000), 2))) * (1 - 0.8) + 0.8;
         }
-        // 增添需求权重
-        int status = to.getMaterialStatus();
-        double weightCommand = 1;
-        for(int i=1; i<7; i++){
-            weightCommand += (((status&(1<<i))!=0)?1:0);
+
+        return getWeight()*((sellPrice * timeCoefficient) - price);
+    }
+
+    private double getWeight(){
+        // 1号地图, 生产者少， 消费者多
+        if(Const.workbenchMapper.get(1) == 1 && Const.workbenchMapper.get(2) == 1){
+            int status = to.getPlanMaterialStatus() | to.getMaterialStatus();
+            double weightCommand = 1;
+            for(int i=1; i<7; i++){
+                weightCommand += (((status&(1<<i))!=0)?1:0);
+            }
+            // 添加跨生产线衰减
+            double weightCross = isCross();
+            // 4,5,6均衡生产
+            double weightBalance = 1.;
+            if (to.getType() == 4 || to.getType() == 5 || to.getType() == 6) {
+                weightBalance = balanceMap.get(to.getType()) == getMinValue()?2.:1.;
+            }
+            return weightCommand / weightCross*weightBalance;
+
+        }
+        // 2号地图,
+        if(Const.workbenchMapper.get(9) == 0 || Const.workbenchMapper.get(7) == 2){
+            int status = to.getPlanMaterialStatus() | to.getMaterialStatus();
+            double weightCommand = 1;
+            for(int i=1; i<7; i++){
+                weightCommand += (((status&(1<<i))!=0)?1:0);
+            }
+            // 4,5,6均衡生产
+            double weightBalance = 1.;
+            if (to.getType() == 4 || to.getType() == 5 || to.getType() == 6) {
+                weightBalance = balanceMap.get(to.getType()) == getMinValue()?4.:1.;
+            }
+
+            // 稀缺性
+            double weightScarcity = 1.;
+            if(from.getType() == 4){
+                weightScarcity *= 4.;
+            }
+            return weightScarcity*weightCommand*weightBalance;
+
         }
 
-        // 添加阻塞权重
-        double weightBlock = 1.;
-        if(from.isBlocked()){
-            weightBlock = 4.;
+        // 3号地图
+        if(Const.workbenchMapper.get(7) == 0){
+            int status = to.getMaterialStatus();
+            double weightCommand = 1;
+            for(int i=1; i<7; i++){
+                weightCommand += (((status&(1<<i))!=0)?1:0);
+            }
+
+            // 阻塞资源
+            double weightBlock = 1.;
+            if(from.isBlocked()){
+                weightBlock = 4.;
+            }
+            // // 只要56
+            // double weightSelect = 1.;
+            // if(to.getType() == 6 || to.getType() == 5){
+            //     weightSelect = 4.;
+            // }
+
+            // 跨级损失
+            double cross = isCross();
+
+            double weightScarcity = getWeightScarcity();
+
+            return weightScarcity*weightBlock*weightCommand/cross;
+        }
+        // 4号地图
+        if(Const.workbenchMapper.get(9) == 0 || Const.workbenchMapper.get(7) == 1){
+            int status = to.getPlanMaterialStatus() | to.getMaterialStatus();
+            double weightCommand = 1;
+            for(int i=1; i<7; i++){
+                weightCommand += (((status&(1<<i))!=0)?1:0);
+            }
+            // 4,5,6均衡生产
+            double weightBalance = 1.;
+            if (to.getType() == 4 || to.getType() == 5 || to.getType() == 6) {
+                weightBalance = balanceMap.get(to.getType()) == getMinValue()?4.:1.;
+            }
+            
+
+            return weightCommand*weightBalance;
         }
 
-        // 添加跨生产线衰减
-        double weightCross = isCross();
+        return 1.;
+    }
 
-        // 稀缺增益
-        double weightScarcity = getWeightScarcity();
-
-        return weightScarcity*weightBlock*weightCommand*((sellPrice * timeCoefficient) - price)/weightCross;
+    private int getMinValue(){
+        int min1 = balanceMap.get(4)<balanceMap.get(5)?balanceMap.get(4):balanceMap.get(5);
+        int min2 = balanceMap.get(4)<balanceMap.get(6)?balanceMap.get(4):balanceMap.get(6);
+        return min1<min2?min1:min2;
     }
 
     private double getWeightScarcity(){
