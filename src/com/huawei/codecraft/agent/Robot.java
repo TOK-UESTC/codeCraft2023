@@ -448,11 +448,14 @@ public class Robot implements Comparable<Robot> {
             return;
         }
 
+        // 检查开始时间点
+        int leftFrameCheckPoint = 800;
+
         Workbench from = task.getFrom();
         Workbench to = task.getTo();
 
         // 确认是否是刚接到的任务
-        if (leftFrame < 800 && productType == 0 && newTask == true) {
+        if (leftFrame < leftFrameCheckPoint && productType == 0 && newTask == true) {
             MotionState state = statePool.acquire();
             state.update(this);
             // 时间不足时，不继续执行任务链
@@ -484,7 +487,8 @@ public class Robot implements Comparable<Robot> {
             MotionState state = statePool.acquire();
             state.update(this);
             // 时间不足时，不继续执行任务链
-            if (task != null && predFrame(state, task.getTo().getPos()) > leftFrame + 5) {
+            if (task != null && leftFrame < leftFrameCheckPoint
+                    && predFrame(state, task.getTo().getPos()) > leftFrame + 5) {
                 task = null;
             }
             statePool.release(state);
