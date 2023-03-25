@@ -6,6 +6,7 @@ import java.util.List;
 import com.huawei.codecraft.constants.Const;
 
 public class TaskChain implements Comparable<TaskChain> {
+
     // 用来存储任务链中的任务
     private List<Task> taskChain;
     // 在已有任务链的条件下，完成任务所需最快帧数
@@ -42,6 +43,19 @@ public class TaskChain implements Comparable<TaskChain> {
         for (Task task : taskChain) {
             task.getFrom().setPlanProductStatus(1);
             task.getTo().updatePlanMaterialStatus(task.getFrom().getType(), false);
+            // 更新balanceMap
+            // 图1专属操作
+            if (Const.workbenchMapper.get(1) == 1 && Const.workbenchMapper.get(2) == 1) {
+                if (task.getTo().getType() == 4 || task.getTo().getType() == 5 || task.getTo().getType() == 6) {
+                    Task.updateBalanceMap(task.getTo().getType());
+                }
+            }
+            // 图2,4专属操作
+            if (Const.workbenchMapper.get(9) == 0) {
+                if (task.getTo().getType() == 4 || task.getTo().getType() == 5 || task.getTo().getType() == 6) {
+                    Task.updateBalanceMap(task.getTo().getType());
+                }
+            }
         }
     }
 
@@ -101,9 +115,9 @@ public class TaskChain implements Comparable<TaskChain> {
         return totalFrame;
     }
 
-    /** 增加预估帧数 */
-    public void addFrame(double frame) {
-        this.totalFrame += frame;
+    /** 设定预估帧数 */
+    public void setTotalFrame(double totalFrame) {
+        this.totalFrame = totalFrame;
     }
 
     /** 当前task的预估收益 */

@@ -26,6 +26,7 @@ public class Const {
     public static final Map<Integer, Integer[]> priceMapper;
     // key: 工作台类型类型， value: [工作台数量]
     public static final Map<Integer, Integer> workbenchMapper;
+    public static int leftFrame = 0;
 
     static {
         priceMapper = new HashMap<Integer, Integer[]>();
@@ -40,5 +41,6 @@ public class Const {
 
     static {
         workbenchMapper = new HashMap<Integer, Integer>();
+        leftFrame = 9000;
     }
 }
