@@ -76,11 +76,17 @@ public class Workbench {
 
     /** 查看是否含有某个原材料 */
     public boolean hasMaterial(int type) {
+        if(this.type == 8 || this.type == 9){
+            return false;
+        }
         return ((1 << type) & materialStatus) != 0;
     }
 
     /** 查看是否规划中已经占用该工作台原料格 */
     public boolean hasPlanMaterial(int type) {
+        if(this.type == 8 || this.type == 9){
+            return false;
+        }
         return ((1 << type) & planMaterialStatus) != 0;
     }
 

@@ -227,6 +227,10 @@ public class Context {
             Collections.sort(sortRobotList);
             for (Robot rb : sortRobotList) {
                 // 决策
+                rb.clearStates();;
+            }
+            for (Robot rb : sortRobotList) {
+                // 决策
                 rb.step();
             }
 
