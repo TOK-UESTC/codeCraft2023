@@ -63,13 +63,13 @@ public class Robot implements Comparable<Robot> {
     /** 更新PID */
     public void updatePID(int count) {
         if (count == 43) {
-            PID.update(6.9, 0.07, 0.9, 6.9, 0.07, 0.9);
+            PID.update(5.5, 0.07, 1.3, 5.5, 0.07, 1.3);
         } else if (count == 25) {
-            PID.update(6.3, 0.10, 1.2, 6.3, 0.10, 1.2);
+            PID.update(5.5, 0.10, 1.8, 5.5, 0.10, 1.8);
         } else if (count == 50) {
-            PID.update(7.1, 0.15, 0.7, 7.1, 0.15, 0.7);
+            PID.update(6.00, 0.20, 2.00, 6.00, 0.20, 2.00);
         } else if (count == 18) {
-            PID.update(7.0, 0.05, 0.8, 7.0, 0.05, 0.8);
+            PID.update(7.20, 0.05, 1.20, 6.20, 0.06, 1.50);
         }
     }
 

@@ -14,6 +14,16 @@ cd ..
 function search()
 {
     name=$1
+    if [$name -eq 2]
+    then
+        kpdl=6.2
+        kidl=0.06
+        kddl=1.5
+    else
+        kpdl=7.6
+        kidl=0.04
+        kddl=0.5
+    fi
     echo "" > score$name.txt
     for kpd in $(seq 5.5 0.1 8.0)
     do
@@ -21,7 +31,7 @@ function search()
         do
             for kdd in $(seq 0.7 0.1 1.3)
             do
-                ../robot.exe "java -classpath ./bin com.huawei.codecraft.Main restart $kpd $kid $kdd $kpd $kid $kdd" -f -d -m  ../maps/$name.txt |sed  ':a;N;$!ba;s/\n/ /g'|sed s/[[:space:]]//g | sed "s/$/ $kpd, $kid, $kdd, $kpd, $kid, $kdd/"  >> score$name.txt &
+                ../robot.exe "java -classpath ./bin com.huawei.codecraft.Main restart $kpd $kid $kdd $kpdl $kidl $kddl" -f -d -m  ../maps/$name.txt |sed  ':a;N;$!ba;s/\n/ /g'|sed s/[[:space:]]//g | sed "s/$/ $kpd, $kid, $kdd, $kpdl, $kidl, $kddl/"  >> score$name.txt &
                 let count+=1
                 while [ $(jobs -p | wc -l) -ge $max_processes ] ; do
                     sleep 1
